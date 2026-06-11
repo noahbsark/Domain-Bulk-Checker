@@ -191,96 +191,141 @@ function cleanKeyword(value) {
 
 function scoreDomain(resultOrDomain, availableValue, statusValue) {
   const domain = typeof resultOrDomain === "string" ? resultOrDomain : resultOrDomain.normalized_domain;
-  const available = typeof resultOrDomain === "string" ? availableValue : resultOrDomain.available;
   const status = typeof resultOrDomain === "string" ? statusValue : resultOrDomain.availability_status;
   const keywords = getKeywords();
 
-  if (!domain) return { score: 0, notes: "No valid domain." };
+  if (!domain || status === "invalid_input") return { score: 0, notes: "No valid domain." };
 
-  const sld = secondLevelName(domain).replace(/\./g, "");
+  // This is a true quality score, not an availability score.
+  // Availability is handled separately in the Status / Available columns and in sorting.
+  const sldRaw = secondLevelName(domain).toLowerCase();
+  const sld = sldRaw.replace(/\./g, "");
   const suffix = effectiveSuffix(domain);
-  let score = 50;
-  const notes = [];
+  const len = sld.length;
+  let score = 20;
+  const notes = ["quality score excludes availability"];
 
-  if (available === true) {
-    score += 15;
-    notes.push("possibly available +15");
-  } else if (available === false) {
-    score -= 45;
-    notes.push("taken -45");
-  } else if (status === "invalid_input") {
-    score -= 60;
-    notes.push("invalid -60");
-  } else {
-    score -= 5;
-    notes.push("unknown -5");
-  }
-
+  // TLD quality, max 14.
   if (suffix === "com") {
-    score += 18;
-    notes.push(".com +18");
-  } else if (["net", "org"].includes(suffix)) {
-    score += 10;
-    notes.push(`.${suffix} +10`);
+    score += 14;
+    notes.push(".com +14");
+  } else if (["org", "net"].includes(suffix)) {
+    score += 9;
+    notes.push(`.${suffix} +9`);
   } else if (["co", "io", "ai", "app", "dev", "legal", "law"].includes(suffix)) {
     score += 7;
     notes.push(`.${suffix} +7`);
   } else {
-    score += 2;
-    notes.push(`.${suffix || "tld"} +2`);
+    score += 3;
+    notes.push(`.${suffix || "tld"} +3`);
   }
 
-  const len = sld.length;
-  if (len <= 8) {
-    score += 16;
-    notes.push("very short +16");
-  } else if (len <= 12) {
-    score += 13;
-    notes.push("short +13");
-  } else if (len <= 16) {
-    score += 9;
-    notes.push("medium +9");
-  } else if (len <= 22) {
-    score += 4;
-    notes.push("long +4");
-  } else if (len > 30) {
-    score -= 8;
-    notes.push("very long -8");
+  // Length quality, intentionally granular so good names do not all tie at 100.
+  let lengthPoints = 0;
+  if (len <= 3) lengthPoints = 2;
+  else if (len <= 5) lengthPoints = 10;
+  else if (len <= 8) lengthPoints = 18;
+  else if (len <= 12) lengthPoints = 24;
+  else if (len <= 15) lengthPoints = 20;
+  else if (len <= 18) lengthPoints = 14;
+  else if (len <= 22) lengthPoints = 8;
+  else if (len <= 26) lengthPoints = 2;
+  else lengthPoints = -6;
+  score += lengthPoints;
+  notes.push(`length ${len} ${lengthPoints >= 0 ? "+" : ""}${lengthPoints}`);
+
+  // Keyword score, max 18. Stronger for exact / clean placement, weaker for buried terms.
+  let keywordPoints = 0;
+  const cleanDomain = cleanKeyword(domain);
+  for (const keyword of keywords) {
+    if (!keyword) continue;
+    let points = 0;
+    if (sld === keyword) points = 18;
+    else if (sld.startsWith(keyword)) points = 16;
+    else if (sld.endsWith(keyword)) points = 14;
+    else if (sld.includes(keyword) || cleanDomain.includes(keyword)) points = 12;
+    keywordPoints = Math.max(keywordPoints, points);
+  }
+  if (keywordPoints) {
+    score += keywordPoints;
+    notes.push(`best keyword match +${keywordPoints}`);
+  } else if (keywords.length) {
+    notes.push("no target keyword match +0");
   }
 
+  // Useful commercial / intent words. Count only the best two so filler cannot max the score.
+  const intentWords = [
+    ["help", 9], ["guide", 9], ["kit", 9], ["form", 8], ["forms", 8],
+    ["tool", 8], ["tools", 8], ["program", 7], ["planner", 7], ["plan", 6],
+    ["course", 6], ["service", 6], ["support", 6], ["assistant", 5], ["coach", 5],
+    ["academy", 4], ["hub", 4], ["works", 4], ["focus", 4], ["portal", 3],
+    ["online", 3], ["path", 3], ["route", 2], ["wizard", 2]
+  ];
+  const matchedIntent = [];
+  for (const [word, points] of intentWords) {
+    if (sld.includes(word)) matchedIntent.push([word, points]);
+  }
+  matchedIntent.sort((a, b) => b[1] - a[1]);
+  const intentPoints = matchedIntent.slice(0, 2).reduce((sum, item) => sum + item[1], 0);
+  if (intentPoints) {
+    score += intentPoints;
+    notes.push(`intent words ${matchedIntent.slice(0, 2).map(item => item[0]).join("/")} +${intentPoints}`);
+  }
+
+  // Helpful audience / positioning prefixes.
+  let prefixPoints = 0;
+  if (sld.startsWith("diy")) prefixPoints = 5;
+  else if (sld.startsWith("self")) prefixPoints = 5;
+  else if (sld.startsWith("easy")) prefixPoints = 4;
+  else if (sld.startsWith("my")) prefixPoints = 3;
+  else if (sld.startsWith("own")) prefixPoints = 2;
+  if (prefixPoints) {
+    score += prefixPoints;
+    notes.push(`clear audience prefix +${prefixPoints}`);
+  }
+
+  // Readability / trust basics.
   if (sld.includes("-")) {
-    score -= 12;
-    notes.push("hyphen -12");
+    score -= 10;
+    notes.push("hyphen -10");
   } else {
-    score += 7;
-    notes.push("no hyphen +7");
+    score += 4;
+    notes.push("no hyphen +4");
   }
 
   if (/\d/.test(sld)) {
-    score -= 8;
-    notes.push("number -8");
+    score -= 10;
+    notes.push("number -10");
   } else {
-    score += 5;
-    notes.push("no number +5");
+    score += 4;
+    notes.push("no number +4");
   }
 
   if (/[aeiou]/.test(sld)) {
-    score += 3;
-    notes.push("has vowel +3");
+    score += 2;
+    notes.push("readable vowels +2");
   } else {
     score -= 4;
-    notes.push("hard to read -4");
+    notes.push("hard to pronounce -4");
   }
 
-  let keywordPoints = 0;
-  for (const keyword of keywords) {
-    if (keyword && (sld.includes(keyword) || cleanKeyword(domain).includes(keyword))) {
-      keywordPoints += 8;
-      notes.push(`keyword '${keyword}' +8`);
+  // Penalize weak/filler words and awkward length. These help break the old 100-or-low pattern.
+  const weakWords = [["solution", 5], ["pathway", 4], ["express", 3], ["plus", 3], ["pro", 3], ["247", 8], ["24", 5]];
+  for (const [word, penalty] of weakWords) {
+    if (sld.includes(word)) {
+      score -= penalty;
+      notes.push(`${word} filler -${penalty}`);
     }
-    if (keywordPoints >= 24) break;
   }
-  score += Math.min(keywordPoints, 24);
+  if (len > 18) {
+    const longPenalty = Math.min(12, Math.ceil((len - 18) * 1.5));
+    score -= longPenalty;
+    notes.push(`extra length -${longPenalty}`);
+  }
+  if (/(.)\1\1/.test(sld)) {
+    score -= 4;
+    notes.push("repeated characters -4");
+  }
 
   return {
     score: Math.max(0, Math.min(100, Math.round(score))),
@@ -582,6 +627,14 @@ function clampNumber(value, min, max, fallback) {
   return Math.max(min, Math.min(max, parsed));
 }
 
+
+function availabilitySortValue(row) {
+  if (row.available === true) return 0;
+  if (row.available === null || row.available === undefined) return 1;
+  if (row.available === false) return 2;
+  return 3;
+}
+
 function displayedResults() {
   const status = el.filterStatus.value;
   const search = String(el.filterSearch.value || "").toLowerCase().trim();
@@ -620,9 +673,12 @@ function displayedResults() {
     if (sort === "status_asc") return String(a.availability_status).localeCompare(String(b.availability_status));
     if (sort === "favorites_first") {
       const favDelta = Number(favorites.has(b.normalized_domain)) - Number(favorites.has(a.normalized_domain));
-      return favDelta || Number(b.domain_score || 0) - Number(a.domain_score || 0);
+      return favDelta || availabilitySortValue(a) - availabilitySortValue(b) || Number(b.domain_score || 0) - Number(a.domain_score || 0);
     }
-    return Number(b.domain_score || 0) - Number(a.domain_score || 0);
+    // Default: available first, then best quality score, then shorter names.
+    return availabilitySortValue(a) - availabilitySortValue(b)
+      || Number(b.domain_score || 0) - Number(a.domain_score || 0)
+      || Number(a.name_length || 999) - Number(b.name_length || 999);
   });
   return rows;
 }

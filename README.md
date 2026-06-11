@@ -13,9 +13,9 @@ A static, browser-based domain checker that can be hosted on GitHub Pages.
 - Removes taken/registered rows.
 - Opens all visible, available, or favorite Namecheap links in browser tabs.
 - Adds favorites/shortlist stars.
-- Scores domains based on availability, TLD, length, hyphens, numbers, readability, and your target keywords.
+- Scores domain quality based on TLD, length, hyphens, numbers, readability, intent words, and your target keywords. Availability is shown separately and no longer inflates the quality score.
 - Filters by status, TLD, search text, max length, hyphens, and numbers.
-- Sorts by best score, shortest domain, status, domain name, or favorites first.
+- Sorts by available + best quality, shortest domain, status, domain name, or favorites first.
 - Saves your input, filters, results, and favorites in browser localStorage.
 - Exports all results or favorites to CSV.
 - Copies available, favorite, visible domains, or visible Namecheap links to clipboard.
@@ -67,3 +67,7 @@ http://localhost:8000
 - `index.html` — page markup
 - `style.css` — styling
 - `app.js` — all checking, scoring, filtering, and export logic
+
+## Quality scoring update
+
+The quality score intentionally does **not** include availability. This prevents every available `.com` keyword domain from tying at 100. The default sort still shows possibly available domains first, then ranks them by quality score.
