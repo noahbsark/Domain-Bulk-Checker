@@ -12,7 +12,7 @@
       <div>
         <h1>No-Key Domain Bulk Checker</h1>
         <p>
-          Paste URLs or domains, check public RDAP/DNS signals, remove taken rows, then open the remaining Namecheap lookup links.
+          Paste URLs or domains, filter out taken names, favorite your shortlist, score the best options, and open Namecheap lookup links in bulk.
         </p>
       </div>
       <div class="badge">GitHub Pages ready</div>
@@ -44,6 +44,9 @@
         <label>Timeout ms
           <input id="timeoutInput" type="number" min="1000" max="60000" value="12000" />
         </label>
+        <label class="wide">Target keywords / phrases
+          <input id="keywordsInput" type="text" placeholder="probate, estate, will" />
+        </label>
         <label class="check"><input id="useRdapInput" type="checkbox" checked /> Try RDAP first</label>
         <label class="check"><input id="useDnsInput" type="checkbox" checked /> Use DNS fallback</label>
         <label class="check"><input id="dedupeInput" type="checkbox" checked /> De-dupe domains</label>
@@ -53,12 +56,21 @@
     <section class="panel actions-panel">
       <div class="button-row wrap">
         <button id="checkBtn" type="button" class="primary">Check pasted links</button>
+        <button id="stopBtn" type="button" class="ghost" disabled>Stop</button>
         <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
-        <button id="openAllBtn" type="button" class="success">Open ALL Namecheap links in browser</button>
+        <button id="keepAvailableBtn" type="button" class="success ghost">Keep available only</button>
+        <button id="openAllBtn" type="button" class="success">Open ALL visible Namecheap links</button>
         <button id="openAvailableBtn" type="button" class="success ghost">Open available only</button>
-        <button id="exportBtn" type="button">Export CSV</button>
+        <button id="openFavoritesBtn" type="button" class="success ghost">Open favorites</button>
+      </div>
+      <div class="button-row wrap secondary-actions">
         <button id="copyAvailableBtn" type="button">Copy available domains</button>
-        <button id="copyAllBtn" type="button">Copy all domains</button>
+        <button id="copyFavoritesBtn" type="button">Copy favorites</button>
+        <button id="copyVisibleBtn" type="button">Copy visible domains</button>
+        <button id="copyLinksBtn" type="button">Copy visible Namecheap links</button>
+        <button id="exportBtn" type="button">Export CSV</button>
+        <button id="exportFavoritesBtn" type="button">Export favorites</button>
+        <button id="clearSessionBtn" type="button" class="ghost">Clear saved session</button>
       </div>
       <div class="status-row">
         <div id="statusText">Ready.</div>
@@ -71,29 +83,73 @@
       <div class="summary-card green"><span id="summaryAvailable">0</span><label>Possibly available</label></div>
       <div class="summary-card red"><span id="summaryTaken">0</span><label>Taken</label></div>
       <div class="summary-card yellow"><span id="summaryUnknown">0</span><label>Unknown</label></div>
+      <div class="summary-card purple"><span id="summaryFavorites">0</span><label>Favorites</label></div>
       <div class="summary-card gray"><span id="summaryInvalid">0</span><label>Invalid</label></div>
+    </section>
+
+    <section class="panel compact filters-panel">
+      <div class="panel-title-row">
+        <h2>Filters and sorting</h2>
+        <span id="visibleCount" class="muted">0 visible</span>
+      </div>
+      <div class="filters-grid">
+        <label>Status
+          <select id="filterStatus">
+            <option value="all">All rows</option>
+            <option value="available">Possibly available</option>
+            <option value="taken">Taken / registered</option>
+            <option value="unknown">Unknown</option>
+            <option value="invalid">Invalid</option>
+            <option value="favorites">Favorites only</option>
+          </select>
+        </label>
+        <label>Search
+          <input id="filterSearch" type="search" placeholder="domain, note, keyword" />
+        </label>
+        <label>TLD
+          <input id="filterTld" type="text" placeholder="com" />
+        </label>
+        <label>Max name length
+          <input id="filterMaxLen" type="number" min="1" max="100" placeholder="any" />
+        </label>
+        <label>Sort
+          <select id="sortSelect">
+            <option value="score_desc">Best score first</option>
+            <option value="score_asc">Lowest score first</option>
+            <option value="domain_asc">Domain A-Z</option>
+            <option value="length_asc">Shortest first</option>
+            <option value="status_asc">Status</option>
+            <option value="favorites_first">Favorites first</option>
+          </select>
+        </label>
+        <label class="check"><input id="filterNoHyphen" type="checkbox" /> Hide hyphens</label>
+        <label class="check"><input id="filterNoNumbers" type="checkbox" /> Hide numbers</label>
+      </div>
     </section>
 
     <section class="panel results-panel">
       <div class="panel-title-row">
         <h2>Results</h2>
-        <span class="muted">Namecheap links are clickable</span>
+        <span class="muted">Star favorites, then open or export just your shortlist.</span>
       </div>
       <div class="table-wrap">
         <table id="resultsTable">
           <thead>
             <tr>
-              <th>Input</th>
-              <th>Normalized domain</th>
+              <th>★</th>
+              <th>Domain</th>
+              <th>Score</th>
               <th>Status</th>
               <th>Available?</th>
               <th>Namecheap</th>
+              <th>TLD</th>
+              <th>Name length</th>
               <th>Check source</th>
               <th>Notes</th>
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="empty"><td colspan="7">No results yet.</td></tr>
+            <tr class="empty"><td colspan="10">No results yet.</td></tr>
           </tbody>
         </table>
       </div>

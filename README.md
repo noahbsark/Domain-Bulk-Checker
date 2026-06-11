@@ -5,21 +5,35 @@ A static, browser-based domain checker that can be hosted on GitHub Pages.
 ## What it does
 
 - Paste many URLs/domains at once.
-- Normalizes URLs to root domains.
+- Normalizes URLs to registrable domains.
 - Generates direct Namecheap lookup links.
 - Tries public RDAP checks first.
 - Falls back to Google DNS-over-HTTPS when RDAP is blocked by browser/CORS.
 - Shows clickable Namecheap links in the table.
 - Removes taken/registered rows.
-- Opens all remaining Namecheap links in browser tabs.
-- Exports CSV.
-- Copies available domains to clipboard.
+- Opens all visible, available, or favorite Namecheap links in browser tabs.
+- Adds favorites/shortlist stars.
+- Scores domains based on availability, TLD, length, hyphens, numbers, readability, and your target keywords.
+- Filters by status, TLD, search text, max length, hyphens, and numbers.
+- Sorts by best score, shortest domain, status, domain name, or favorites first.
+- Saves your input, filters, results, and favorites in browser localStorage.
+- Exports all results or favorites to CSV.
+- Copies available, favorite, visible domains, or visible Namecheap links to clipboard.
 
 ## Important limitation
 
 This is a no-key static web app. It has no backend. Public RDAP endpoints may block browser requests with CORS, and DNS checks are not the same as registrar purchase availability.
 
 Treat results as a fast filter only. Always confirm on Namecheap before buying.
+
+## Suggested workflow
+
+1. Paste domains or URLs.
+2. Add target keywords like `probate, estate, will`.
+3. Click **Check pasted links**.
+4. Click **Remove taken / registered URLs** or filter to **Possibly available**.
+5. Star the domains you like.
+6. Click **Open favorites** or **Export favorites**.
 
 ## GitHub Pages setup
 
@@ -33,8 +47,6 @@ Treat results as a fast filter only. Always confirm on Namecheap before buying.
 4. Go to the repo's **Settings → Pages**.
 5. Use **Deploy from a branch**, select your branch, and choose `/ (root)` as the folder.
 6. Open the published Pages URL after GitHub finishes deploying.
-
-GitHub Pages can publish from a branch and use either the repository root or `/docs` folder as the publishing source.
 
 ## Local preview
 
@@ -54,4 +66,4 @@ http://localhost:8000
 
 - `index.html` — page markup
 - `style.css` — styling
-- `app.js` — all checking logic
+- `app.js` — all checking, scoring, filtering, and export logic
