@@ -71,3 +71,22 @@ http://localhost:8000
 ## Quality scoring update
 
 The quality score intentionally does **not** include availability. This prevents every available `.com` keyword domain from tying at 100. The default sort still shows possibly available domains first, then ranks them by quality score.
+
+## Better scoring model
+
+The scoring model now uses bounded components instead of one large bonus for `.com` + keyword:
+
+- TLD strength: up to 15 points
+- Length: up to 20 points
+- Target keyword fit: up to 25 points
+- Buyer/search intent words: up to 15 points
+- Clarity/readability: up to 15 points
+- Brand/trust basics: up to 10 points
+- Penalties and caps for hyphens, numbers, filler terms, hard-to-parse names, and overly long names
+
+Examples of things it now handles better:
+
+- `probatehelp.com` can score very high because it is short, clear, and high-intent.
+- `diyprobatesolution.com` scores lower because it is longer and uses a weaker filler word.
+- `probate247.com` scores lower because numbers hurt trust and memorability.
+- Taken domains can still have high quality scores; availability is shown separately.
