@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>No-Key Domain Bulk Checker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <h1>No-Key Domain Bulk Checker</h1>
+        <p>
+          Paste URLs or domains, check public RDAP/DNS signals, remove taken rows, then open the remaining Namecheap lookup links.
+        </p>
+      </div>
+      <div class="badge">GitHub Pages ready</div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-title-row">
+        <h2>Links / domains to check</h2>
+        <span id="inputCount" class="muted">0 lines</span>
+      </div>
+      <textarea id="inputBox" spellcheck="false" placeholder="doyourownprobate.com&#10;https://example.com/page&#10;probateprogram.com"></textarea>
+      <div class="button-row wrap">
+        <button id="loadTxtBtn" type="button">Load TXT/CSV</button>
+        <input id="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" hidden />
+        <button id="clearInputBtn" type="button">Clear input</button>
+        <button id="pasteDemoBtn" type="button" class="ghost">Paste demo</button>
+      </div>
+    </section>
+
+    <section class="panel compact">
+      <h2>Options</h2>
+      <div class="options-grid">
+        <label>Workers
+          <input id="workersInput" type="number" min="1" max="10" value="2" />
+        </label>
+        <label>Delay ms
+          <input id="delayInput" type="number" min="0" max="10000" value="250" />
+        </label>
+        <label>Timeout ms
+          <input id="timeoutInput" type="number" min="1000" max="60000" value="12000" />
+        </label>
+        <label class="check"><input id="useRdapInput" type="checkbox" checked /> Try RDAP first</label>
+        <label class="check"><input id="useDnsInput" type="checkbox" checked /> Use DNS fallback</label>
+        <label class="check"><input id="dedupeInput" type="checkbox" checked /> De-dupe domains</label>
+      </div>
+    </section>
+
+    <section class="panel actions-panel">
+      <div class="button-row wrap">
+        <button id="checkBtn" type="button" class="primary">Check pasted links</button>
+        <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
+        <button id="openAllBtn" type="button" class="success">Open ALL Namecheap links in browser</button>
+        <button id="openAvailableBtn" type="button" class="success ghost">Open available only</button>
+        <button id="exportBtn" type="button">Export CSV</button>
+        <button id="copyAvailableBtn" type="button">Copy available domains</button>
+        <button id="copyAllBtn" type="button">Copy all domains</button>
+      </div>
+      <div class="status-row">
+        <div id="statusText">Ready.</div>
+        <progress id="progress" value="0" max="1"></progress>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="Summary">
+      <div class="summary-card"><span id="summaryChecked">0</span><label>Checked</label></div>
+      <div class="summary-card green"><span id="summaryAvailable">0</span><label>Possibly available</label></div>
+      <div class="summary-card red"><span id="summaryTaken">0</span><label>Taken</label></div>
+      <div class="summary-card yellow"><span id="summaryUnknown">0</span><label>Unknown</label></div>
+      <div class="summary-card gray"><span id="summaryInvalid">0</span><label>Invalid</label></div>
+    </section>
+
+    <section class="panel results-panel">
+      <div class="panel-title-row">
+        <h2>Results</h2>
+        <span class="muted">Namecheap links are clickable</span>
+      </div>
+      <div class="table-wrap">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>Normalized domain</th>
+              <th>Status</th>
+              <th>Available?</th>
+              <th>Namecheap</th>
+              <th>Check source</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr class="empty"><td colspan="7">No results yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel note">
+      <h2>Important limitation</h2>
+      <p>
+        This is a static browser app. It has no API key and no backend. RDAP or DNS results are only a filter.
+        Anything marked <strong>possibly available</strong> still needs confirmation on Namecheap before purchase.
+      </p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
