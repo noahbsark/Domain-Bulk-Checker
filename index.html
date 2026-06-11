@@ -12,7 +12,7 @@
       <div>
         <h1>No-Key Domain Bulk Checker</h1>
         <p>
-          Paste URLs or domains, filter out taken names, favorite your shortlist, rank more realistic quality scores, and open Namecheap lookup links in bulk.
+          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with explanations, shortlist favorites, and open Namecheap lookup links in bulk.
         </p>
       </div>
       <div class="badge">GitHub Pages ready</div>
@@ -53,6 +53,39 @@
       </div>
     </section>
 
+    <section class="panel compact advanced-panel">
+      <details id="advancedScoringDetails">
+        <summary>
+          <span>Advanced scoring</span>
+          <small>Optional — default works fine for most batches</small>
+        </summary>
+        <div class="options-grid advanced-grid">
+          <label>Scoring style
+            <select id="scoringStyleInput">
+              <option value="general">General</option>
+              <option value="trust">Trust-heavy</option>
+              <option value="brandable">Brandable / SaaS</option>
+              <option value="local">Local service</option>
+              <option value="ecommerce">Ecommerce / product</option>
+              <option value="content">Course / content</option>
+            </select>
+          </label>
+          <label>Top picks count
+            <input id="topPickCountInput" type="number" min="1" max="100" value="20" />
+          </label>
+          <label class="wide">Positive words
+            <input id="positiveWordsInput" type="text" placeholder="guide, kit, forms, help, app" />
+          </label>
+          <label class="wide">Negative words
+            <input id="negativeWordsInput" type="text" placeholder="wizard, 247, express, guru" />
+          </label>
+        </div>
+        <p class="muted advanced-help">
+          Positive and negative words tune the score for the niche you are checking. They do not affect availability checks.
+        </p>
+      </details>
+    </section>
+
     <section class="panel actions-panel">
       <div class="button-row wrap">
         <button id="checkBtn" type="button" class="primary">Check pasted links</button>
@@ -68,6 +101,9 @@
         <button id="copyFavoritesBtn" type="button">Copy favorites</button>
         <button id="copyVisibleBtn" type="button">Copy visible domains</button>
         <button id="copyLinksBtn" type="button">Copy visible Namecheap links</button>
+        <button id="showTopPicksBtn" type="button">Show top picks</button>
+        <button id="copyTopPicksBtn" type="button">Copy top picks</button>
+        <button id="openTopPicksBtn" type="button">Open top picks</button>
         <button id="exportBtn" type="button">Export CSV</button>
         <button id="exportFavoritesBtn" type="button">Export favorites</button>
         <button id="clearSessionBtn" type="button" class="ghost">Clear saved session</button>
@@ -101,6 +137,7 @@
             <option value="unknown">Unknown</option>
             <option value="invalid">Invalid</option>
             <option value="favorites">Favorites only</option>
+            <option value="top_picks">Top picks</option>
           </select>
         </label>
         <label>Search
@@ -130,7 +167,7 @@
     <section class="panel results-panel">
       <div class="panel-title-row">
         <h2>Results</h2>
-        <span class="muted">Star favorites, then open or export just your shortlist.</span>
+        <span class="muted">Scores are explainable. Star favorites, filter top picks, then open or export your shortlist.</span>
       </div>
       <div class="table-wrap">
         <table id="resultsTable">
@@ -139,6 +176,8 @@
               <th>★</th>
               <th>Domain</th>
               <th>Quality score</th>
+              <th>Rating</th>
+              <th>Why score?</th>
               <th>Status</th>
               <th>Available?</th>
               <th>Namecheap</th>
@@ -149,7 +188,7 @@
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="empty"><td colspan="10">No results yet.</td></tr>
+            <tr class="empty"><td colspan="12">No results yet.</td></tr>
           </tbody>
         </table>
       </div>

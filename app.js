@@ -43,6 +43,13 @@ const el = {
   useRdapInput: document.getElementById("useRdapInput"),
   useDnsInput: document.getElementById("useDnsInput"),
   dedupeInput: document.getElementById("dedupeInput"),
+  scoringStyleInput: document.getElementById("scoringStyleInput"),
+  positiveWordsInput: document.getElementById("positiveWordsInput"),
+  negativeWordsInput: document.getElementById("negativeWordsInput"),
+  topPickCountInput: document.getElementById("topPickCountInput"),
+  showTopPicksBtn: document.getElementById("showTopPicksBtn"),
+  copyTopPicksBtn: document.getElementById("copyTopPicksBtn"),
+  openTopPicksBtn: document.getElementById("openTopPicksBtn"),
   checkBtn: document.getElementById("checkBtn"),
   stopBtn: document.getElementById("stopBtn"),
   removeTakenBtn: document.getElementById("removeTakenBtn"),
@@ -223,205 +230,390 @@ const WEAK_OR_HYPE_TERMS = new Map([
   ["247", 14], ["24", 9], ["genius", 6], ["wizard", 5], ["buddy", 5], ["route", 3], ["portal", 3]
 ]);
 
+function getDelimitedWords(element) {
+  if (!element) return [];
+  return String(element.value || "")
+    .toLowerCase()
+    .split(/[,;\n]+/)
+    .map(part => part.trim())
+    .filter(Boolean)
+    .flatMap(part => part.split(/\s+/))
+    .map(cleanKeyword)
+    .filter(word => word.length >= 2)
+    .slice(0, 50);
+}
+
+function getPositiveWords() {
+  return [...new Set(getDelimitedWords(el.positiveWordsInput))];
+}
+
+function getNegativeWords() {
+  return [...new Set(getDelimitedWords(el.negativeWordsInput))];
+}
+
+const GENERIC_DOMAIN_WORDS = [
+  "app", "apps", "ai", "data", "cloud", "sync", "flow", "desk", "crm", "sales", "lead", "leads", "client", "clients",
+  "marketing", "market", "seo", "ads", "media", "brand", "brands", "studio", "agency", "lab", "labs", "stack", "base",
+  "local", "near", "city", "home", "house", "roof", "lawn", "clean", "cleaning", "repair", "plumbing", "electric", "hvac",
+  "care", "health", "fitness", "wellness", "doctor", "dental", "pet", "pets", "food", "coffee", "shop", "store", "supply",
+  "supplies", "gear", "goods", "box", "club", "direct", "delivery", "buy", "sell", "deals", "discount", "review", "reviews",
+  "compare", "best", "top", "rank", "finder", "find", "search", "now", "today", "hq", "go", "get", "try", "use", "join",
+  "learn", "school", "class", "classes", "course", "courses", "academy", "training", "lesson", "lessons", "blueprint", "playbook"
+];
+
+const DEFAULT_POSITIVE_TERMS = new Map([
+  ["help", 9], ["guide", 9], ["kit", 8], ["tool", 8], ["tools", 8], ["app", 8], ["forms", 8], ["form", 7],
+  ["planner", 7], ["checklist", 7], ["template", 7], ["templates", 7], ["course", 6], ["academy", 5],
+  ["service", 6], ["services", 6], ["shop", 6], ["store", 6], ["supply", 5], ["finder", 6], ["compare", 5],
+  ["reviews", 5], ["direct", 4], ["simple", 4], ["easy", 3], ["clear", 4], ["smart", 3]
+]);
+
+const DEFAULT_NEGATIVE_TERMS = new Map([
+  ["247", 13], ["24", 8], ["guru", 8], ["genius", 7], ["wizard", 7], ["ninja", 8], ["hack", 8],
+  ["hacks", 8], ["buddy", 5], ["plus", 5], ["pro", 5], ["express", 5], ["solution", 5], ["solutions", 5],
+  ["pathway", 5], ["route", 3], ["portal", 3], ["online", 2], ["best", 4], ["top", 3], ["cheap", 9]
+]);
+
+const SCORING_PROFILES = {
+  general: {
+    label: "General",
+    weights: { tld: 12, length: 18, keyword: 22, clarity: 16, brand: 16, intent: 10, fit: 6 },
+    positives: {}, negatives: {},
+    strictTrust: false,
+    keywordOptional: false
+  },
+  trust: {
+    label: "Trust-heavy",
+    weights: { tld: 13, length: 16, keyword: 22, clarity: 18, brand: 13, intent: 10, fit: 8 },
+    positives: { guide: 3, help: 3, forms: 3, planner: 2, service: 2, services: 2, clear: 2, simple: 2 },
+    negatives: { wizard: 8, genius: 8, guru: 8, ninja: 8, hack: 8, cheap: 7, express: 4, 247: 8, buddy: 4 },
+    strictTrust: true,
+    keywordOptional: false
+  },
+  brandable: {
+    label: "Brandable / SaaS",
+    weights: { tld: 12, length: 22, keyword: 14, clarity: 14, brand: 22, intent: 8, fit: 8 },
+    positives: { app: 4, ai: 3, data: 3, cloud: 3, flow: 3, base: 2, stack: 2, lab: 2, labs: 2 },
+    negatives: { services: 5, service: 4, solutions: 8, solution: 8, online: 4, express: 4, 247: 8 },
+    strictTrust: false,
+    keywordOptional: true
+  },
+  local: {
+    label: "Local service",
+    weights: { tld: 12, length: 14, keyword: 24, clarity: 18, brand: 12, intent: 12, fit: 8 },
+    positives: { local: 4, near: 3, service: 4, services: 4, repair: 4, home: 3, care: 3, clean: 3, cleaning: 3 },
+    negatives: { app: 2, ai: 2, wizard: 5, genius: 5, 247: 5, solutions: 3 },
+    strictTrust: false,
+    keywordOptional: false
+  },
+  ecommerce: {
+    label: "Ecommerce / product",
+    weights: { tld: 12, length: 17, keyword: 22, clarity: 15, brand: 16, intent: 12, fit: 6 },
+    positives: { shop: 5, store: 5, supply: 4, supplies: 4, gear: 4, goods: 3, direct: 3, deals: 2 },
+    negatives: { services: 4, service: 3, solution: 5, solutions: 5, wizard: 4, 247: 4 },
+    strictTrust: false,
+    keywordOptional: false
+  },
+  content: {
+    label: "Course / content",
+    weights: { tld: 11, length: 15, keyword: 23, clarity: 17, brand: 13, intent: 14, fit: 7 },
+    positives: { guide: 5, course: 5, courses: 5, academy: 4, learn: 4, kit: 4, checklist: 4, blueprint: 4, playbook: 4, training: 4 },
+    negatives: { solutions: 5, solution: 5, portal: 3, 247: 5, wizard: 3 },
+    strictTrust: false,
+    keywordOptional: false
+  }
+};
+
+function getScoringProfile() {
+  const key = el.scoringStyleInput?.value || "general";
+  return SCORING_PROFILES[key] || SCORING_PROFILES.general;
+}
+
 function scoreDomain(resultOrDomain, availableValue, statusValue) {
   const domain = typeof resultOrDomain === "string" ? resultOrDomain : resultOrDomain.normalized_domain;
   const status = typeof resultOrDomain === "string" ? statusValue : resultOrDomain.availability_status;
   const targetKeywords = getKeywords();
+  const positiveWords = getPositiveWords();
+  const negativeWords = getNegativeWords();
+  const profile = getScoringProfile();
 
-  if (!domain || status === "invalid_input") return { score: 0, notes: "No valid domain." };
+  if (!domain || status === "invalid_input") {
+    return scoreResult(0, "Invalid", "No valid domain to score.", {}, "No valid domain.");
+  }
 
   const sldRaw = secondLevelName(domain).toLowerCase();
   const sld = sldRaw.replace(/[^a-z0-9]/g, "");
   const suffix = effectiveSuffix(domain);
   const len = sld.length;
-  const tokens = tokenizeDomainName(sldRaw, targetKeywords);
+  const tokens = tokenizeDomainName(sldRaw, targetKeywords, positiveWords, negativeWords);
   const knownTokens = tokens.filter(t => !t.unknown).map(t => t.text);
   const unknownChars = tokens.filter(t => t.unknown).reduce((sum, t) => sum + t.text.length, 0);
   const coverage = len ? Math.max(0, Math.min(1, (len - unknownChars) / len)) : 0;
   const tokenSet = new Set(knownTokens);
-  const notes = ["quality score only; availability is separate"];
 
-  // Component scoring is intentionally bounded so no single thing can force a 100.
-  const tldScore = scoreTld(suffix);
-  const lengthScore = scoreLength(len);
-  const keywordScore = scoreKeywordFit(sld, targetKeywords);
-  const intentScore = scoreIntent(tokenSet, sld);
-  const clarityScore = scoreClarity(sld, knownTokens, coverage, targetKeywords);
-  const brandScore = scoreBrandBasics(sldRaw, sld);
+  const components = {
+    tld: weightedScore(rawTldScore(suffix), profile.weights.tld),
+    length: weightedScore(rawLengthScore(len), profile.weights.length),
+    keyword: weightedScore(rawKeywordScore(sld, targetKeywords, profile.keywordOptional), profile.weights.keyword),
+    clarity: weightedScore(rawClarityScore(sld, knownTokens, coverage, targetKeywords), profile.weights.clarity),
+    brand: weightedScore(rawBrandScore(sldRaw, sld, len), profile.weights.brand),
+    intent: weightedScore(rawIntentScore(tokenSet, sld, positiveWords, profile), profile.weights.intent),
+    fit: weightedScore(rawStyleFitScore(tokenSet, sld, profile), profile.weights.fit)
+  };
 
-  notes.push(`TLD ${tldScore}/15`);
-  notes.push(`length ${len}: ${lengthScore}/20`);
-  if (targetKeywords.length) notes.push(`keyword fit ${keywordScore}/25`);
-  else notes.push("keyword fit skipped; add target keywords for better ranking");
-  notes.push(`buyer intent ${intentScore}/15`);
-  notes.push(`clarity ${clarityScore}/15`);
-  notes.push(`brand basics ${brandScore}/10`);
+  const strengths = [];
+  const issues = [];
+  const tweaks = [];
 
-  let score = tldScore + lengthScore + keywordScore + intentScore + clarityScore + brandScore;
+  addStrengthsAndIssues({ suffix, len, targetKeywords, sld, sldRaw, knownTokens, coverage, tokenSet, components, strengths, issues, profile });
 
-  const penalties = [];
-  const penalty = scorePenalties(sldRaw, sld, knownTokens, coverage, targetKeywords, penalties);
-  score -= penalty;
-  if (penalty) notes.push(`penalties -${penalty}: ${penalties.join(", ")}`);
+  let score = Object.values(components).reduce((sum, value) => sum + value, 0);
+  const penalty = scorePenaltyDetails({ sldRaw, sld, knownTokens, coverage, targetKeywords, positiveWords, negativeWords, profile, issues, tweaks });
+  score -= penalty.total;
 
-  // Realistic caps prevent mediocre-but-available names from clustering at 100.
-  const caps = [];
-  let cap = 96;
-  if (targetKeywords.length && keywordScore === 0) {
-    cap = Math.min(cap, 74);
-    caps.push("no target keyword cap 74");
-  }
-  if (coverage < 0.65) {
-    cap = Math.min(cap, 72);
-    caps.push("low readability cap 72");
-  }
-  if (len > 22) {
-    cap = Math.min(cap, 70);
-    caps.push("very long cap 70");
-  } else if (len > 18) {
-    cap = Math.min(cap, 82);
-    caps.push("long name cap 82");
-  }
-  if (sldRaw.includes("-")) {
-    cap = Math.min(cap, 72);
-    caps.push("hyphen cap 72");
-  }
-  if (/\d/.test(sld)) {
-    cap = Math.min(cap, 68);
-    caps.push("number cap 68");
-  }
-  if (["solution", "solutions", "pathway", "express", "genius", "wizard", "buddy"].some(w => sld.includes(w)) || tokenSet.has("pro") || tokenSet.has("plus") || sld.endsWith("pro") || sld.endsWith("plus")) {
-    cap = Math.min(cap, 88);
-    caps.push("hype/filler cap 88");
-  }
-  if (caps.length) notes.push(caps.join("; "));
+  const capInfo = scoreCaps({ sldRaw, sld, len, coverage, targetKeywords, components, profile });
+  if (capInfo.reasons.length) issues.push(...capInfo.reasons);
 
-  const finalScore = Math.max(0, Math.min(cap, Math.round(score)));
-  notes.push(scoreBand(finalScore));
+  const finalScore = Math.max(0, Math.min(capInfo.cap, Math.round(score)));
+  const label = scoreLabel(finalScore);
+  const explanation = buildScoreExplanation(finalScore, label, strengths, issues);
+  const notes = [
+    `${profile.label} scoring; availability is separate`,
+    `TLD ${components.tld}/${profile.weights.tld}`,
+    `length ${components.length}/${profile.weights.length}`,
+    targetKeywords.length ? `keyword fit ${components.keyword}/${profile.weights.keyword}` : `keyword fit ${components.keyword}/${profile.weights.keyword}; add target keywords for better ranking`,
+    `clarity ${components.clarity}/${profile.weights.clarity}`,
+    `brand ${components.brand}/${profile.weights.brand}`,
+    `intent ${components.intent}/${profile.weights.intent}`,
+    `style fit ${components.fit}/${profile.weights.fit}`,
+    penalty.total ? `penalties -${penalty.total}: ${penalty.reasons.join(", ")}` : "no major penalties",
+    capInfo.reasons.length ? `caps: ${capInfo.reasons.join(", ")}` : "no score caps",
+    scoreBand(finalScore)
+  ].join("; ");
 
   return {
     score: finalScore,
-    notes: notes.join("; ")
+    label,
+    explanation,
+    notes,
+    components,
+    strengths,
+    issues,
+    style: profile.label
   };
 }
 
-function scoreTld(suffix) {
-  if (suffix === "com") return 15;
-  if (["org", "net"].includes(suffix)) return 10;
-  if (["co", "io", "ai", "app", "dev", "legal", "law"].includes(suffix)) return 7;
-  if (String(suffix || "").includes(".")) return 6;
-  return 3;
+function scoreResult(score, label, explanation, components, notes) {
+  return { score, label, explanation, components, notes, strengths: [], issues: [], style: getScoringProfile().label };
 }
 
-function scoreLength(len) {
+function weightedScore(raw0to100, weight) {
+  return Math.round(Math.max(0, Math.min(100, raw0to100)) * weight / 100);
+}
+
+function rawTldScore(suffix) {
+  if (suffix === "com") return 100;
+  if (["org", "net"].includes(suffix)) return 72;
+  if (["co", "io", "ai", "app", "dev"].includes(suffix)) return 60;
+  if (["legal", "law", "finance", "shop", "store"].includes(suffix)) return 55;
+  if (String(suffix || "").includes(".")) return 45;
+  return 30;
+}
+
+function rawLengthScore(len) {
   if (len <= 0) return 0;
-  if (len <= 3) return 4;
-  if (len <= 5) return 12;
-  if (len <= 8) return 19;
-  if (len <= 11) return 20;
-  if (len <= 13) return 18;
-  if (len <= 15) return 16;
-  if (len <= 17) return 12;
-  if (len <= 19) return 8;
-  if (len <= 22) return 4;
-  return 0;
+  if (len <= 3) return 35;
+  if (len <= 5) return 65;
+  if (len <= 8) return 94;
+  if (len <= 11) return 100;
+  if (len <= 13) return 92;
+  if (len <= 15) return 82;
+  if (len <= 17) return 66;
+  if (len <= 19) return 48;
+  if (len <= 22) return 28;
+  return 10;
 }
 
-function scoreKeywordFit(sld, targetKeywords) {
-  if (!targetKeywords.length) return 0;
+function rawKeywordScore(sld, targetKeywords, keywordOptional) {
+  if (!targetKeywords.length) return keywordOptional ? 72 : 45;
   let best = 0;
+  let count = 0;
   for (const keyword of targetKeywords) {
     if (!keyword) continue;
-    if (sld === keyword) best = Math.max(best, 25);
-    else if (sld.startsWith(keyword) || sld.endsWith(keyword)) best = Math.max(best, 22);
-    else if (sld.includes(keyword)) best = Math.max(best, 18);
+    if (sld === keyword) best = Math.max(best, 100);
+    else if (sld.startsWith(keyword) || sld.endsWith(keyword)) best = Math.max(best, 92);
+    else if (sld.includes(keyword)) best = Math.max(best, 78);
+    if (sld.includes(keyword)) count += 1;
   }
-  const matchedCount = targetKeywords.filter(k => k && sld.includes(k)).length;
-  if (matchedCount >= 2) best = Math.min(25, best + 3);
+  if (count >= 2) best = Math.min(100, best + 8);
   return best;
 }
 
-function scoreIntent(tokenSet, sld) {
-  const found = [];
-  for (const [term, points] of PRIMARY_INTENT_TERMS.entries()) {
-    if (tokenSet.has(term) || sld.includes(term)) found.push(points);
-  }
-  found.sort((a, b) => b - a);
-  if (!found.length) return 0;
-  return Math.min(15, found[0] + Math.round((found[1] || 0) * 0.35));
-}
-
-function scoreClarity(sld, knownTokens, coverage, targetKeywords) {
+function rawClarityScore(sld, knownTokens, coverage, targetKeywords) {
   let score = 0;
-  if (coverage >= 0.95) score += 9;
-  else if (coverage >= 0.8) score += 7;
-  else if (coverage >= 0.65) score += 4;
-  else if (coverage >= 0.5) score += 2;
+  if (coverage >= 0.95) score += 45;
+  else if (coverage >= 0.8) score += 36;
+  else if (coverage >= 0.65) score += 25;
+  else if (coverage >= 0.5) score += 14;
+  else score += 5;
 
   const tokenCount = knownTokens.length;
-  if (tokenCount >= 2 && tokenCount <= 3) score += 4;
-  else if (tokenCount === 1 || tokenCount === 4) score += 2;
+  if (tokenCount >= 2 && tokenCount <= 3) score += 30;
+  else if (tokenCount === 1 || tokenCount === 4) score += 18;
+  else if (tokenCount === 5) score += 8;
 
   const firstKeywordIndex = knownTokens.findIndex(t => targetKeywords.includes(t));
-  if (firstKeywordIndex === 0) score += 2;
-  else if (firstKeywordIndex > 0 && firstKeywordIndex <= 2) score += 1;
+  if (firstKeywordIndex === 0) score += 12;
+  else if (firstKeywordIndex > 0 && firstKeywordIndex <= 2) score += 7;
 
-  let positioning = 0;
-  for (const [term, points] of POSITIONING_TERMS.entries()) {
-    if (knownTokens.includes(term) || sld.startsWith(term)) positioning = Math.max(positioning, points);
+  if (/^[a-z0-9]+$/.test(sld)) score += 8;
+  if (/(.)\1\1/.test(sld)) score -= 8;
+  return Math.max(0, Math.min(100, score));
+}
+
+function rawBrandScore(sldRaw, sld, len) {
+  let score = 45;
+  if (!sldRaw.includes("-")) score += 15;
+  if (!/\d/.test(sld)) score += 15;
+  if (/[aeiou]/.test(sld)) score += 10;
+  if (!/(.)\1\1/.test(sld)) score += 6;
+  if (!/(q[^u]|zx|xq|qz|vv|ww|yy)/.test(sld)) score += 6;
+  if (len >= 6 && len <= 13) score += 12;
+  if (len > 18) score -= 15;
+  return Math.max(0, Math.min(100, score));
+}
+
+function rawIntentScore(tokenSet, sld, positiveWords, profile) {
+  let best = 0;
+  for (const [term, points] of DEFAULT_POSITIVE_TERMS.entries()) {
+    if (tokenSet.has(term) || sld.includes(term)) best = Math.max(best, Math.min(100, points * 10));
   }
-  score += Math.min(3, positioning);
-
-  return Math.min(15, score);
+  for (const [term, points] of Object.entries(profile.positives || {})) {
+    if (tokenSet.has(term) || sld.includes(term)) best = Math.max(best, Math.min(100, 55 + points * 9));
+  }
+  for (const word of positiveWords) {
+    if (word && (tokenSet.has(word) || sld.includes(word))) best = Math.max(best, 95);
+  }
+  return best;
 }
 
-function scoreBrandBasics(sldRaw, sld) {
-  let score = 0;
-  if (!sldRaw.includes("-")) score += 3;
-  if (!/\d/.test(sld)) score += 3;
-  if (/[aeiou]/.test(sld)) score += 2;
-  if (!/(.)\1\1/.test(sld)) score += 1;
-  if (!/(q[^u]|zx|xq|qz|vv|ww)/.test(sld)) score += 1;
-  return Math.min(10, score);
+function rawStyleFitScore(tokenSet, sld, profile) {
+  let score = 55;
+  for (const [term, points] of Object.entries(profile.positives || {})) {
+    if (tokenSet.has(term) || sld.includes(term)) score += points * 6;
+  }
+  for (const [term, points] of Object.entries(profile.negatives || {})) {
+    if (tokenSet.has(term) || sld.includes(term)) score -= points * 5;
+  }
+  if (profile.strictTrust) {
+    if (["trust", "clear", "simple", "guide", "help", "forms", "service", "planner"].some(t => tokenSet.has(t) || sld.includes(t))) score += 12;
+    if (["wizard", "genius", "guru", "ninja", "hack", "cheap", "247"].some(t => tokenSet.has(t) || sld.includes(t))) score -= 22;
+  }
+  return Math.max(0, Math.min(100, score));
 }
 
-function scorePenalties(sldRaw, sld, knownTokens, coverage, targetKeywords, penalties) {
+function scorePenaltyDetails(ctx) {
+  const { sldRaw, sld, knownTokens, coverage, targetKeywords, negativeWords, profile, issues } = ctx;
+  const reasons = [];
   let total = 0;
 
-  if (sldRaw.includes("-")) { total += 10; penalties.push("hyphen"); }
-  if (/\d/.test(sld)) { total += 12; penalties.push("number"); }
-  if (/(.)\1\1/.test(sld)) { total += 5; penalties.push("repeated characters"); }
-  if (knownTokens.length > 4) { total += 5; penalties.push("too many words"); }
-  if (knownTokens.length > 5) { total += 5; penalties.push("wordy"); }
-  if (coverage < 0.5) { total += 6; penalties.push("hard to parse"); }
+  function add(points, reason) {
+    total += points;
+    reasons.push(reason);
+  }
+
+  if (sldRaw.includes("-")) add(9, "hyphen");
+  if (/\d/.test(sld)) add(11, "number");
+  if (/(.)\1\1/.test(sld)) add(5, "repeated characters");
+  if (knownTokens.length > 4) add(4, "many words");
+  if (knownTokens.length > 5) add(5, "wordy");
+  if (coverage < 0.5) add(7, "hard to parse");
 
   const tokenSet = new Set(knownTokens);
-  for (const [term, points] of WEAK_OR_HYPE_TERMS.entries()) {
-    let matched = tokenSet.has(term);
-    if (!matched) {
-      if (["247"].includes(term)) matched = sld.includes(term);
-      else if (["24"].includes(term)) matched = /(^|[^0-9])24($|[^0-9])/.test(sld);
-      else if (["pro", "plus"].includes(term)) matched = tokenSet.has(term) || sld.endsWith(term);
-      else matched = sld.includes(term);
+  for (const [term, points] of DEFAULT_NEGATIVE_TERMS.entries()) {
+    if (matchesTerm(term, tokenSet, sld)) add(points, term);
+  }
+  for (const [term, points] of Object.entries(profile.negatives || {})) {
+    if (matchesTerm(term, tokenSet, sld)) add(points, `${term} in ${profile.label} mode`);
+  }
+  for (const word of negativeWords) {
+    if (word && matchesTerm(word, tokenSet, sld)) add(12, `custom negative: ${word}`);
+  }
+
+  if (lenWithoutTarget(sld, targetKeywords) > 18 && targetKeywords.length) add(4, "long extra wording");
+  if (sld.length > 18) add(Math.min(14, Math.ceil((sld.length - 18) * 1.6)), "extra length");
+
+  if (total && reasons.length) issues.push(`penalty for ${reasons.slice(0, 3).join(", ")}`);
+  return { total, reasons };
+}
+
+function matchesTerm(term, tokenSet, sld) {
+  if (tokenSet.has(term)) return true;
+  if (["247", "24"].includes(term)) return sld.includes(term);
+  if (["pro", "plus"].includes(term)) return tokenSet.has(term) || sld.endsWith(term);
+  return sld.includes(term);
+}
+
+function scoreCaps(ctx) {
+  const { sldRaw, sld, len, coverage, targetKeywords, components, profile } = ctx;
+  let cap = 97;
+  const reasons = [];
+  function apply(value, reason) {
+    if (value < cap) {
+      cap = value;
+      reasons.push(reason);
     }
-    if (matched) {
-      total += points;
-      penalties.push(term);
-    }
+  }
+  if (targetKeywords.length && components.keyword === 0 && !profile.keywordOptional) apply(76, "no target keyword");
+  if (coverage < 0.65) apply(76, "harder to read");
+  if (len > 22) apply(72, "very long");
+  else if (len > 18) apply(84, "long name");
+  if (sldRaw.includes("-")) apply(75, "hyphen");
+  if (/\d/.test(sld)) apply(70, "number");
+  if (/(wizard|genius|guru|ninja|hack|247|cheap)/.test(sld)) apply(profile.strictTrust ? 70 : 84, "gimmicky word");
+  return { cap, reasons };
+}
+
+function addStrengthsAndIssues(ctx) {
+  const { suffix, len, targetKeywords, sld, sldRaw, knownTokens, coverage, tokenSet, components, strengths, issues, profile } = ctx;
+  if (suffix === "com") strengths.push(".com extension");
+  else issues.push(`${suffix || "non-standard"} TLD is less universal than .com`);
+
+  if (len >= 6 && len <= 13) strengths.push("good length");
+  else if (len > 18) issues.push("long name");
+  else if (len <= 4) issues.push("very short, may be less descriptive");
+
+  const keywordHits = targetKeywords.filter(k => k && sld.includes(k));
+  if (targetKeywords.length) {
+    if (keywordHits.length) strengths.push(`matches ${keywordHits.slice(0, 2).join(" + ")}`);
+    else issues.push("does not include target keyword");
   }
 
-  if (lenWithoutTarget(sld, targetKeywords) > 18 && targetKeywords.length) {
-    total += 4;
-    penalties.push("long extra wording");
-  }
+  if (coverage >= 0.8 && knownTokens.length >= 2 && knownTokens.length <= 3) strengths.push("easy to parse");
+  else if (coverage < 0.65) issues.push("harder to parse into words");
 
-  if (sld.length > 18) {
-    const longPenalty = Math.min(14, Math.ceil((sld.length - 18) * 1.6));
-    total += longPenalty;
-    penalties.push("extra length");
-  }
+  if (!sldRaw.includes("-") && !/\d/.test(sld)) strengths.push("no hyphen or number");
+  if (sldRaw.includes("-")) issues.push("hyphen hurts memorability");
+  if (/\d/.test(sld)) issues.push("number hurts trust/readability");
 
-  return total;
+  const profileHits = Object.keys(profile.positives || {}).filter(t => tokenSet.has(t) || sld.includes(t));
+  if (profileHits.length) strengths.push(`${profile.label} fit: ${profileHits.slice(0, 2).join(", ")}`);
+  if (components.intent >= Math.max(6, Math.round(profile.weights.intent * 0.7))) strengths.push("clear user intent word");
+}
+
+function buildScoreExplanation(score, label, strengths, issues) {
+  const positive = strengths.length ? strengths.slice(0, 3).join(", ") : "decent baseline";
+  const negative = issues.length ? ` Tradeoffs: ${issues.slice(0, 2).join(", ")}.` : " No major tradeoffs.";
+  return `${score} — ${label}. ${positive}.${negative}`;
+}
+
+function scoreLabel(score) {
+  if (score >= 90) return "Excellent";
+  if (score >= 80) return "Strong";
+  if (score >= 70) return "Good";
+  if (score >= 55) return "Okay";
+  if (score >= 40) return "Weak";
+  return "Avoid";
 }
 
 function lenWithoutTarget(sld, targetKeywords) {
@@ -432,8 +624,8 @@ function lenWithoutTarget(sld, targetKeywords) {
   return stripped.length;
 }
 
-function tokenizeDomainName(sldRaw, targetKeywords) {
-  const dictionary = [...new Set([...targetKeywords, ...QUALITY_WORDS])]
+function tokenizeDomainName(sldRaw, targetKeywords, positiveWords = [], negativeWords = []) {
+  const dictionary = [...new Set([...targetKeywords, ...positiveWords, ...negativeWords, ...QUALITY_WORDS, ...GENERIC_DOMAIN_WORDS])]
     .map(cleanKeyword)
     .filter(Boolean)
     .sort((a, b) => b.length - a.length);
@@ -484,7 +676,11 @@ function enhanceResult(result) {
     effective_tld: effectiveSuffix(result.normalized_domain || ""),
     name_length: sld.length || "",
     domain_score: score.score,
-    score_notes: score.notes
+    score_label: score.label,
+    score_explanation: score.explanation,
+    score_notes: score.notes,
+    score_components: score.components ? JSON.stringify(score.components) : "",
+    scoring_style: score.style || getScoringProfile().label
   };
 }
 
@@ -794,9 +990,10 @@ function displayedResults() {
     if (status === "unknown" && !(row.available === null && row.availability_status !== "invalid_input")) return false;
     if (status === "invalid" && row.availability_status !== "invalid_input") return false;
     if (status === "favorites" && !favorites.has(domain)) return false;
+    if (status === "top_picks" && row.available !== true) return false;
 
     if (search) {
-      const haystack = [row.input, domain, row.availability_status, row.check_source, row.notes, row.error, row.score_notes]
+      const haystack = [row.input, domain, row.availability_status, row.check_source, row.notes, row.error, row.score_label, row.score_explanation, row.score_notes]
         .join(" ").toLowerCase();
       if (!haystack.includes(search)) return false;
     }
@@ -821,20 +1018,21 @@ function displayedResults() {
       || Number(b.domain_score || 0) - Number(a.domain_score || 0)
       || Number(a.name_length || 999) - Number(b.name_length || 999);
   });
+  if (status === "top_picks") rows = rows.slice(0, topPickLimit());
   return rows;
 }
 
 function renderResults() {
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="10">No results yet.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="12">No results yet.</td></tr>';
     el.visibleCount.textContent = "0 visible";
     updateSummary();
     return;
   }
 
   if (!visibleRows.length) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="10">No rows match the current filters.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="12">No rows match the current filters.</td></tr>';
     el.visibleCount.textContent = `0 visible of ${results.filter(Boolean).length}`;
     updateSummary();
     return;
@@ -852,6 +1050,8 @@ function renderResults() {
       <td><button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(result.normalized_domain)}" title="${starTitle}">${favorite ? "★" : "☆"}</button></td>
       <td><strong>${escapeHtml(result.normalized_domain)}</strong><div class="subtle">${escapeHtml(result.input || "")}</div></td>
       <td><span class="score-badge score-${scoreClass(result.domain_score)}" title="${escapeAttr(result.score_notes || "")}">${escapeHtml(result.domain_score ?? "")}</span></td>
+      <td><span class="rating-pill rating-${scoreClass(result.domain_score)}">${escapeHtml(result.score_label || "")}</span></td>
+      <td><details class="score-details"><summary>${escapeHtml(result.score_explanation || "")}</summary><div>${escapeHtml(result.score_notes || "")}</div></details></td>
       <td>${escapeHtml(result.availability_status)}</td>
       <td>${availableText}</td>
       <td>${linkHtml}</td>
@@ -964,6 +1164,38 @@ function copyVisibleLinks() {
   copyText(links.join("\n"), "visible Namecheap links");
 }
 
+function topPickLimit() {
+  return clampNumber(el.topPickCountInput?.value || 20, 1, 100, 20);
+}
+
+function topPickRows() {
+  return results
+    .filter(r => r && r.available === true)
+    .map(enhanceResult)
+    .sort((a, b) => Number(b.domain_score || 0) - Number(a.domain_score || 0) || Number(a.name_length || 999) - Number(b.name_length || 999))
+    .slice(0, topPickLimit());
+}
+
+function showTopPicks() {
+  el.filterStatus.value = "top_picks";
+  el.sortSelect.value = "score_desc";
+  const picks = topPickRows();
+  const cutoff = picks.length ? Number(picks[picks.length - 1].domain_score || 0) : 0;
+  el.filterSearch.value = "";
+  renderResults();
+  setStatus(picks.length ? `Top ${picks.length} available picks start at quality score ${cutoff}. Use Copy top picks or Open top picks.` : "No possibly available rows to show as top picks.");
+  saveState();
+}
+
+function copyTopPicks() {
+  const rows = topPickRows();
+  copyText(uniqueDomains(rows).join("\n"), `top ${rows.length} picks`);
+}
+
+function openTopPicks() {
+  openLinks(topPickRows(), "top-pick");
+}
+
 function exportCsv(scope = "all") {
   const rows = scope === "favorites" ? results.filter(r => r && favorites.has(r.normalized_domain)) : results.filter(Boolean);
   if (!rows.length) {
@@ -971,7 +1203,8 @@ function exportCsv(scope = "all") {
     return;
   }
   const columns = [
-    "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_notes",
+    "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label",
+    "score_explanation", "scoring_style", "score_components", "score_notes",
     "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
   ];
   const csv = [
@@ -1023,7 +1256,7 @@ function setChecking(checking) {
   const otherButtons = [
     el.removeTakenBtn, el.keepAvailableBtn, el.openAllBtn, el.openAvailableBtn, el.openFavoritesBtn,
     el.exportBtn, el.exportFavoritesBtn, el.copyAvailableBtn, el.copyFavoritesBtn, el.copyVisibleBtn,
-    el.copyLinksBtn, el.clearSessionBtn
+    el.copyLinksBtn, el.showTopPicksBtn, el.copyTopPicksBtn, el.openTopPicksBtn, el.clearSessionBtn
   ];
   for (const btn of otherButtons) btn.disabled = checking;
 }
@@ -1040,6 +1273,10 @@ function currentSettings() {
     delay: el.delayInput.value,
     timeout: el.timeoutInput.value,
     keywords: el.keywordsInput.value,
+    scoringStyle: el.scoringStyleInput?.value || "general",
+    positiveWords: el.positiveWordsInput?.value || "",
+    negativeWords: el.negativeWordsInput?.value || "",
+    topPickCount: el.topPickCountInput?.value || "20",
     useRdap: el.useRdapInput.checked,
     useDns: el.useDnsInput.checked,
     dedupe: el.dedupeInput.checked,
@@ -1058,6 +1295,10 @@ function applySettings(settings = {}) {
   if (settings.delay !== undefined) el.delayInput.value = settings.delay;
   if (settings.timeout !== undefined) el.timeoutInput.value = settings.timeout;
   if (settings.keywords !== undefined) el.keywordsInput.value = settings.keywords;
+  if (settings.scoringStyle !== undefined && el.scoringStyleInput) el.scoringStyleInput.value = settings.scoringStyle;
+  if (settings.positiveWords !== undefined && el.positiveWordsInput) el.positiveWordsInput.value = settings.positiveWords;
+  if (settings.negativeWords !== undefined && el.negativeWordsInput) el.negativeWordsInput.value = settings.negativeWords;
+  if (settings.topPickCount !== undefined && el.topPickCountInput) el.topPickCountInput.value = settings.topPickCount;
   if (settings.useRdap !== undefined) el.useRdapInput.checked = Boolean(settings.useRdap);
   if (settings.useDns !== undefined) el.useDnsInput.checked = Boolean(settings.useDns);
   if (settings.dedupe !== undefined) el.dedupeInput.checked = Boolean(settings.dedupe);
@@ -1166,7 +1407,8 @@ function clearSession() {
   favorites = new Set();
   el.inputBox.value = "";
   applySettings({
-    workers: "2", delay: "250", timeout: "12000", keywords: "", useRdap: true, useDns: true, dedupe: true,
+    workers: "2", delay: "250", timeout: "12000", keywords: "", scoringStyle: "general",
+    positiveWords: "", negativeWords: "", topPickCount: "20", useRdap: true, useDns: true, dedupe: true,
     filterStatus: "all", filterSearch: "", filterTld: "", filterMaxLen: "", filterNoHyphen: false, filterNoNumbers: false, sort: "score_desc"
   });
   updateInputCount();
@@ -1216,6 +1458,9 @@ function bindEvents() {
   el.copyFavoritesBtn.addEventListener("click", copyFavorites);
   el.copyVisibleBtn.addEventListener("click", copyVisible);
   el.copyLinksBtn.addEventListener("click", copyVisibleLinks);
+  el.showTopPicksBtn.addEventListener("click", showTopPicks);
+  el.copyTopPicksBtn.addEventListener("click", copyTopPicks);
+  el.openTopPicksBtn.addEventListener("click", openTopPicks);
   el.clearSessionBtn.addEventListener("click", clearSession);
 
   const filterControls = [
@@ -1226,15 +1471,17 @@ function bindEvents() {
     control.addEventListener("change", () => { renderResults(); saveState(); });
   }
 
-  const optionControls = [el.workersInput, el.delayInput, el.timeoutInput, el.useRdapInput, el.useDnsInput, el.dedupeInput];
-  for (const control of optionControls) {
+  const optionControls = [el.workersInput, el.delayInput, el.timeoutInput, el.useRdapInput, el.useDnsInput, el.dedupeInput, el.topPickCountInput];
+  for (const control of optionControls.filter(Boolean)) {
     control.addEventListener("change", saveState);
     control.addEventListener("input", saveState);
   }
 
-  el.keywordsInput.addEventListener("input", () => {
-    rescoreResults();
-  });
+  const scoringControls = [el.keywordsInput, el.scoringStyleInput, el.positiveWordsInput, el.negativeWordsInput];
+  for (const control of scoringControls.filter(Boolean)) {
+    control.addEventListener("input", rescoreResults);
+    control.addEventListener("change", rescoreResults);
+  }
 
   el.resultsBody.addEventListener("click", event => {
     const button = event.target.closest("button[data-favorite]");
