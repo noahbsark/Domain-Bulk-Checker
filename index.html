@@ -12,7 +12,7 @@
       <div>
         <h1>No-Key Domain Bulk Checker</h1>
         <p>
-          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with phrase-quality, pattern-quality, memorability, optional preference calibration, score distribution auditing, batch rank percentiles, similar variant grouping, shortlist top picks, and open Namecheap lookup links in bulk.
+          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with explanations, shortlist favorites, and open Namecheap lookup links in bulk.
         </p>
       </div>
       <div class="badge">GitHub Pages ready</div>
@@ -71,7 +71,7 @@
             </select>
           </label>
           <label>Top picks count
-            <input id="topPickCountInput" type="number" min="1" max="100" value="25" />
+            <input id="topPickCountInput" type="number" min="1" max="100" value="20" />
           </label>
           <label class="wide">Positive words
             <input id="positiveWordsInput" type="text" placeholder="guide, kit, forms, help, app" />
@@ -79,15 +79,9 @@
           <label class="wide">Negative words
             <input id="negativeWordsInput" type="text" placeholder="wizard, 247, express, guru" />
           </label>
-          <label class="wide tall">Domains you like <span class="muted">optional calibration</span>
-            <textarea id="likedExamplesInput" class="small-textarea" spellcheck="false" placeholder="one domain per line, e.g. stripe.com&#10;notion.com&#10;legalzoom.com"></textarea>
-          </label>
-          <label class="wide tall">Domains you dislike <span class="muted">optional calibration</span>
-            <textarea id="dislikedExamplesInput" class="small-textarea" spellcheck="false" placeholder="one domain per line, e.g. best-widget-247.com&#10;myawesomelongsolutions.com"></textarea>
-          </label>
         </div>
         <p class="muted advanced-help">
-          Positive/negative words and liked/disliked examples tune the score for the niche you are checking. They do not affect availability checks.
+          Positive and negative words tune the score for the niche you are checking. They do not affect availability checks.
         </p>
       </details>
     </section>
@@ -107,7 +101,7 @@
         <button id="copyFavoritesBtn" type="button">Copy favorites</button>
         <button id="copyVisibleBtn" type="button">Copy visible domains</button>
         <button id="copyLinksBtn" type="button">Copy visible Namecheap links</button>
-        <button id="showTopPicksBtn" type="button">Show best 25</button>
+        <button id="showTopPicksBtn" type="button">Show top picks</button>
         <button id="copyTopPicksBtn" type="button">Copy top picks</button>
         <button id="openTopPicksBtn" type="button">Open top picks</button>
         <button id="exportBtn" type="button">Export CSV</button>
@@ -127,21 +121,6 @@
       <div class="summary-card yellow"><span id="summaryUnknown">0</span><label>Unknown</label></div>
       <div class="summary-card purple"><span id="summaryFavorites">0</span><label>Favorites</label></div>
       <div class="summary-card gray"><span id="summaryInvalid">0</span><label>Invalid</label></div>
-    </section>
-
-    <section class="panel compact audit-panel" aria-label="Rating audit">
-      <div class="panel-title-row">
-        <h2>Rating audit</h2>
-        <span id="auditVerdict" class="audit-verdict neutral">Run a check to audit scores</span>
-      </div>
-      <div class="audit-grid">
-        <div class="audit-card"><span id="auditMedian">—</span><label>Median available score</label></div>
-        <div class="audit-card"><span id="auditTopScore">—</span><label>Top available score</label></div>
-        <div class="audit-card"><span id="auditEliteCount">—</span><label>95+ available names</label></div>
-        <div class="audit-card"><span id="auditStrongCount">—</span><label>90+ available names</label></div>
-      </div>
-      <div id="scoreDistribution" class="score-distribution" aria-label="Available score distribution"></div>
-      <p id="auditAdvice" class="muted audit-advice">This audits the score distribution among possibly available domains. A healthy batch usually has a small 95+ tier and a wider middle.</p>
     </section>
 
     <section class="panel compact filters-panel">
@@ -188,7 +167,7 @@
     <section class="panel results-panel">
       <div class="panel-title-row">
         <h2>Results</h2>
-        <span class="muted">Scores use short badges, phrase-quality, pattern-quality, memorability, preference calibration, and similar-name grouping so top picks are more diverse.</span>
+        <span class="muted">Scores are explainable. Star favorites, filter top picks, then open or export your shortlist.</span>
       </div>
       <div class="table-wrap">
         <table id="resultsTable">
@@ -197,14 +176,8 @@
               <th>★</th>
               <th>Domain</th>
               <th>Quality score</th>
-              <th>Batch rank</th>
               <th>Rating</th>
               <th>Why score?</th>
-              <th>Phrase</th>
-              <th>Pattern</th>
-              <th>Memory</th>
-              <th>Preference</th>
-              <th>Similar group</th>
               <th>Status</th>
               <th>Available?</th>
               <th>Namecheap</th>
@@ -215,7 +188,7 @@
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="empty"><td colspan="18">No results yet.</td></tr>
+            <tr class="empty"><td colspan="12">No results yet.</td></tr>
           </tbody>
         </table>
       </div>
