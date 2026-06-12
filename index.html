@@ -12,7 +12,7 @@
       <div>
         <h1>No-Key Domain Bulk Checker</h1>
         <p>
-          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with explanations, shortlist favorites, and open Namecheap lookup links in bulk.
+          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with phrase-quality checks and short score badges, group similar variants, shortlist top picks, and open Namecheap lookup links in bulk.
         </p>
       </div>
       <div class="badge">GitHub Pages ready</div>
@@ -71,7 +71,7 @@
             </select>
           </label>
           <label>Top picks count
-            <input id="topPickCountInput" type="number" min="1" max="100" value="20" />
+            <input id="topPickCountInput" type="number" min="1" max="100" value="25" />
           </label>
           <label class="wide">Positive words
             <input id="positiveWordsInput" type="text" placeholder="guide, kit, forms, help, app" />
@@ -101,7 +101,7 @@
         <button id="copyFavoritesBtn" type="button">Copy favorites</button>
         <button id="copyVisibleBtn" type="button">Copy visible domains</button>
         <button id="copyLinksBtn" type="button">Copy visible Namecheap links</button>
-        <button id="showTopPicksBtn" type="button">Show top picks</button>
+        <button id="showTopPicksBtn" type="button">Show best 25</button>
         <button id="copyTopPicksBtn" type="button">Copy top picks</button>
         <button id="openTopPicksBtn" type="button">Open top picks</button>
         <button id="exportBtn" type="button">Export CSV</button>
@@ -167,7 +167,7 @@
     <section class="panel results-panel">
       <div class="panel-title-row">
         <h2>Results</h2>
-        <span class="muted">Scores are explainable. Star favorites, filter top picks, then open or export your shortlist.</span>
+        <span class="muted">Scores use short badges, phrase-quality checks, and similar-name grouping so top picks are more diverse.</span>
       </div>
       <div class="table-wrap">
         <table id="resultsTable">
@@ -178,6 +178,8 @@
               <th>Quality score</th>
               <th>Rating</th>
               <th>Why score?</th>
+              <th>Phrase</th>
+              <th>Similar group</th>
               <th>Status</th>
               <th>Available?</th>
               <th>Namecheap</th>
@@ -188,7 +190,7 @@
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="empty"><td colspan="12">No results yet.</td></tr>
+            <tr class="empty"><td colspan="14">No results yet.</td></tr>
           </tbody>
         </table>
       </div>
