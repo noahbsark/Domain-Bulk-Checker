@@ -14,6 +14,9 @@ Static GitHub Pages web app for checking domain lists and ranking the results wi
 - Score domain quality separately from availability
 - Explain scores with short score badges and expandable details
 - Detect phrase quality, typo-looking endings, awkward word forms, and trust/risk words
+- Score domain pattern quality, such as keyword + purpose word, modifier + keyword + purpose word, weak suffixes, and crowded patterns
+- Score memorability using length, word count, word boundaries, typing friction, and letter balance
+- Optionally calibrate scoring from examples of domains you like and dislike, fully local in the browser
 - Use stricter Excellent/Strong labels so only the clearest names land at the top
 - Show diverse top picks by grouping similar variants
 - Group similar names so near-duplicates are easier to compare
@@ -21,7 +24,7 @@ Static GitHub Pages web app for checking domain lists and ranking the results wi
 
 ## Important limitation
 
-This app has no backend and no API key. RDAP/DNS checks are only a filter. Anything marked `possibly_available` should still be confirmed at the registrar before purchase.
+This app has no backend and no API key. RDAP/DNS checks and preference calibration run in the browser. RDAP/DNS checks are only a filter. Anything marked `possibly_available` should still be confirmed at the registrar before purchase.
 
 ## Deploy to GitHub Pages
 

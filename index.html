@@ -12,7 +12,7 @@
       <div>
         <h1>No-Key Domain Bulk Checker</h1>
         <p>
-          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with phrase-quality checks and short score badges, group similar variants, shortlist top picks, and open Namecheap lookup links in bulk.
+          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with phrase-quality, pattern-quality, memorability, and optional preference calibration, group similar variants, shortlist top picks, and open Namecheap lookup links in bulk.
         </p>
       </div>
       <div class="badge">GitHub Pages ready</div>
@@ -79,9 +79,15 @@
           <label class="wide">Negative words
             <input id="negativeWordsInput" type="text" placeholder="wizard, 247, express, guru" />
           </label>
+          <label class="wide tall">Domains you like <span class="muted">optional calibration</span>
+            <textarea id="likedExamplesInput" class="small-textarea" spellcheck="false" placeholder="one domain per line, e.g. stripe.com&#10;notion.com&#10;legalzoom.com"></textarea>
+          </label>
+          <label class="wide tall">Domains you dislike <span class="muted">optional calibration</span>
+            <textarea id="dislikedExamplesInput" class="small-textarea" spellcheck="false" placeholder="one domain per line, e.g. best-widget-247.com&#10;myawesomelongsolutions.com"></textarea>
+          </label>
         </div>
         <p class="muted advanced-help">
-          Positive and negative words tune the score for the niche you are checking. They do not affect availability checks.
+          Positive/negative words and liked/disliked examples tune the score for the niche you are checking. They do not affect availability checks.
         </p>
       </details>
     </section>
@@ -167,7 +173,7 @@
     <section class="panel results-panel">
       <div class="panel-title-row">
         <h2>Results</h2>
-        <span class="muted">Scores use short badges, phrase-quality checks, and similar-name grouping so top picks are more diverse.</span>
+        <span class="muted">Scores use short badges, phrase-quality, pattern-quality, memorability, preference calibration, and similar-name grouping so top picks are more diverse.</span>
       </div>
       <div class="table-wrap">
         <table id="resultsTable">
@@ -179,6 +185,9 @@
               <th>Rating</th>
               <th>Why score?</th>
               <th>Phrase</th>
+              <th>Pattern</th>
+              <th>Memory</th>
+              <th>Preference</th>
               <th>Similar group</th>
               <th>Status</th>
               <th>Available?</th>
@@ -190,7 +199,7 @@
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="empty"><td colspan="14">No results yet.</td></tr>
+            <tr class="empty"><td colspan="17">No results yet.</td></tr>
           </tbody>
         </table>
       </div>

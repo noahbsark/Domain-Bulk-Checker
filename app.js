@@ -46,6 +46,8 @@ const el = {
   scoringStyleInput: document.getElementById("scoringStyleInput"),
   positiveWordsInput: document.getElementById("positiveWordsInput"),
   negativeWordsInput: document.getElementById("negativeWordsInput"),
+  likedExamplesInput: document.getElementById("likedExamplesInput"),
+  dislikedExamplesInput: document.getElementById("dislikedExamplesInput"),
   topPickCountInput: document.getElementById("topPickCountInput"),
   showTopPicksBtn: document.getElementById("showTopPicksBtn"),
   copyTopPicksBtn: document.getElementById("copyTopPicksBtn"),
@@ -251,6 +253,63 @@ function getNegativeWords() {
   return [...new Set(getDelimitedWords(el.negativeWordsInput))];
 }
 
+function getExampleDomains(element) {
+  if (!element) return [];
+  const lines = String(element.value || "").split(/\r?\n|[,;]+/).map(line => line.trim()).filter(Boolean);
+  const domains = [];
+  for (const line of lines) {
+    const row = normalizeDomain(line);
+    if (!row.error && row.domain) domains.push(row.domain);
+  }
+  return [...new Set(domains)].slice(0, 80);
+}
+
+function buildPreferenceModel(targetKeywords, positiveWords, negativeWords) {
+  const liked = getExampleDomains(el.likedExamplesInput);
+  const disliked = getExampleDomains(el.dislikedExamplesInput);
+  const likedTerms = new Map();
+  const dislikedTerms = new Map();
+  const likedPatterns = new Map();
+  const dislikedPatterns = new Map();
+  const likedLengths = [];
+  const dislikedLengths = [];
+
+  function add(map, key, amount = 1) {
+    if (!key) return;
+    map.set(key, (map.get(key) || 0) + amount);
+  }
+
+  function ingest(domain, termMap, patternMap, lengths) {
+    const sldRaw = secondLevelName(domain).toLowerCase();
+    const sld = sldRaw.replace(/[^a-z0-9]/g, "");
+    const tokens = tokenizeDomainName(sldRaw, targetKeywords, positiveWords, negativeWords)
+      .filter(t => !t.unknown)
+      .map(t => t.text);
+    const tokenSet = new Set(tokens);
+    lengths.push(sld.length);
+    for (const token of tokens) add(termMap, token);
+    for (const signal of domainPatternSignals({ sldRaw, sld, knownTokens: tokens, tokenSet, coverage: tokens.length ? 1 : 0, targetKeywords })) {
+      add(patternMap, signal);
+    }
+  }
+
+  liked.forEach(domain => ingest(domain, likedTerms, likedPatterns, likedLengths));
+  disliked.forEach(domain => ingest(domain, dislikedTerms, dislikedPatterns, dislikedLengths));
+
+  return {
+    liked, disliked,
+    likedTerms, dislikedTerms,
+    likedPatterns, dislikedPatterns,
+    likedAvgLen: average(likedLengths),
+    dislikedAvgLen: average(dislikedLengths)
+  };
+}
+
+function average(values) {
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
 const GENERIC_DOMAIN_WORDS = [
   "app", "apps", "ai", "data", "cloud", "sync", "flow", "desk", "crm", "sales", "lead", "leads", "client", "clients",
   "marketing", "market", "seo", "ads", "media", "brand", "brands", "studio", "agency", "lab", "labs", "stack", "base",
@@ -309,6 +368,22 @@ const NATURAL_PAIR_BONUSES = [
   ["tax", "help"], ["tax", "guide"], ["tax", "forms"], ["local", "service"],
   ["shop", "supply"], ["pet", "care"], ["home", "repair"]
 ];
+
+
+const PATTERN_PURPOSE_WORDS = new Set([
+  "help", "guide", "guides", "kit", "tool", "tools", "app", "apps", "forms", "form", "finder", "shop", "store",
+  "checklist", "planner", "template", "templates", "course", "academy", "service", "services", "supply", "supplies"
+]);
+
+const PATTERN_MODIFIERS = new Set([
+  "my", "your", "diy", "self", "easy", "simple", "local", "clear", "smart", "quick", "best", "top", "get", "go", "try", "use"
+]);
+
+const WEAK_PATTERN_ENDINGS = new Set([
+  "solution", "solutions", "portal", "central", "pathway", "route", "option", "options", "pro", "plus", "express", "online", "hq", "now", "today"
+]);
+
+const MEMORABILITY_BAD_BIGRAMS = /(q[^u]|zx|xq|qz|vv|ww|yy|kkk|xxx|zzz)/;
 
 const TOP_PICK_DIVERSITY_FILL = true;
 
@@ -374,6 +449,7 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
   const positiveWords = getPositiveWords();
   const negativeWords = getNegativeWords();
   const profile = getScoringProfile();
+  const preferenceModel = buildPreferenceModel(targetKeywords, positiveWords, negativeWords);
 
   if (!domain || status === "invalid_input") {
     return scoreResult(0, "Invalid", "No valid domain to score.", {}, "No valid domain.");
@@ -414,7 +490,19 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
   const market = marketabilityAdjustment({ sldRaw, sld, len, knownTokens, coverage, targetKeywords, tokenSet, suffix, profile, strengths, issues });
   score += market.adjust;
 
-  const capInfo = scoreCaps({ sldRaw, sld, len, coverage, targetKeywords, components, profile, phrase });
+  const pattern = patternQualityAnalysis({ sldRaw, sld, len, knownTokens, coverage, targetKeywords, tokenSet, suffix, profile, strengths, issues });
+  score += pattern.adjust;
+  components.pattern = pattern.adjust;
+
+  const memorability = memorabilityAnalysis({ sldRaw, sld, len, knownTokens, coverage, targetKeywords, tokenSet, suffix, profile, strengths, issues });
+  score += memorability.adjust;
+  components.memorability = memorability.adjust;
+
+  const preference = preferenceAdjustment({ sldRaw, sld, len, knownTokens, coverage, targetKeywords, tokenSet, profile, preferenceModel, strengths, issues });
+  score += preference.adjust;
+  components.preference = preference.adjust;
+
+  const capInfo = scoreCaps({ sldRaw, sld, len, coverage, targetKeywords, components, profile, phrase, pattern, memorability });
   if (capInfo.reasons.length) issues.push(...capInfo.reasons);
 
   const calibrated = calibrateScore(score, { len, knownTokens, coverage, tokenSet, targetKeywords, suffix, profile });
@@ -432,6 +520,9 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
     `style fit ${components.fit}/${profile.weights.fit}`,
     market.adjust ? `marketability ${market.adjust > 0 ? "+" : ""}${market.adjust}: ${market.reasons.join(", ")}` : "marketability neutral",
     `phrase quality ${phrase.label}: ${phrase.reasons.join(", ") || "normal"}`,
+    `pattern quality ${pattern.label}: ${pattern.reasons.join(", ") || "normal"}`,
+    `memorability ${memorability.label}: ${memorability.reasons.join(", ") || "normal"}`,
+    preference.adjust ? `preference calibration ${preference.adjust > 0 ? "+" : ""}${preference.adjust}: ${preference.reasons.join(", ")}` : "preference calibration neutral",
     penalty.total ? `penalties -${penalty.total}: ${penalty.reasons.join(", ")}` : "no major penalties",
     capInfo.reasons.length ? `caps: ${capInfo.reasons.join(", ")}` : "no score caps",
     scoreBand(finalScore)
@@ -445,6 +536,12 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
     components,
     phraseQuality: phrase.label,
     phraseReasons: phrase.reasons,
+    patternQuality: pattern.label,
+    patternReasons: pattern.reasons,
+    memorability: memorability.label,
+    memorabilityReasons: memorability.reasons,
+    preferenceLabel: preference.label,
+    preferenceReasons: preference.reasons,
     strengths,
     issues,
     style: profile.label
@@ -679,6 +776,202 @@ function marketabilityAdjustment(ctx) {
   return { adjust, reasons };
 }
 
+
+function domainPatternSignals(ctx) {
+  const { sldRaw, sld, knownTokens, tokenSet, coverage, targetKeywords } = ctx;
+  const tokenCount = knownTokens.length;
+  const first = knownTokens[0] || "";
+  const last = knownTokens[tokenCount - 1] || "";
+  const signals = [];
+  const keywordHit = targetKeywords.some(k => k && (tokenSet.has(k) || sld.includes(k)));
+
+  if (tokenCount === 2) signals.push("two_word");
+  if (tokenCount === 3) signals.push("three_word");
+  if (tokenCount >= 4) signals.push("long_phrase");
+  if (PATTERN_MODIFIERS.has(first)) signals.push(`prefix:${first}`);
+  if (PATTERN_PURPOSE_WORDS.has(last)) signals.push(`purpose:${last}`);
+  if (WEAK_PATTERN_ENDINGS.has(last)) signals.push(`weak_end:${last}`);
+  if (keywordHit && PATTERN_PURPOSE_WORDS.has(last)) signals.push("keyword_purpose");
+  if (keywordHit && WEAK_PATTERN_ENDINGS.has(last)) signals.push("keyword_weak_end");
+  if (tokenCount === 3 && PATTERN_MODIFIERS.has(first) && PATTERN_PURPOSE_WORDS.has(last)) signals.push("modifier_keyword_purpose");
+  if (sldRaw.includes("-")) signals.push("hyphenated");
+  if (/\d/.test(sld)) signals.push("numbered");
+  if (coverage < 0.7) signals.push("low_parse_coverage");
+  return signals;
+}
+
+function patternQualityAnalysis(ctx) {
+  const { sldRaw, sld, len, knownTokens, coverage, targetKeywords, tokenSet, suffix, profile, strengths, issues } = ctx;
+  const reasons = [];
+  let adjust = 0;
+  let cap = 97;
+  const tokenCount = knownTokens.length;
+  const first = knownTokens[0] || "";
+  const last = knownTokens[tokenCount - 1] || "";
+  const keywordHit = targetKeywords.some(k => k && (tokenSet.has(k) || sld.includes(k)));
+  const hasPurposeEnd = PATTERN_PURPOSE_WORDS.has(last);
+  const weakEnd = WEAK_PATTERN_ENDINGS.has(last);
+
+  function add(points, reason, isIssue = points < 0) {
+    adjust += points;
+    reasons.push(reason);
+    if (points > 0) strengths.push(reason);
+    if (isIssue && points < 0) issues.push(reason);
+  }
+
+  if (tokenCount === 2 && keywordHit && hasPurposeEnd) add(8, "strong keyword+purpose pattern");
+  else if (tokenCount === 2 && hasPurposeEnd) add(5, "clear two-word pattern");
+  else if (tokenCount === 3 && PATTERN_MODIFIERS.has(first) && keywordHit && hasPurposeEnd) add(6, "modifier+keyword+purpose pattern");
+  else if (tokenCount === 3 && keywordHit && hasPurposeEnd) add(4, "clear three-word pattern");
+  else if (tokenCount >= 4) {
+    add(-5, "too many pattern pieces");
+    cap = Math.min(cap, 88);
+  }
+
+  if (weakEnd) {
+    add(-7, `weak pattern ending: ${last}`);
+    cap = Math.min(cap, profile.strictTrust ? 78 : 86);
+  }
+  if (keywordHit && weakEnd) {
+    add(-3, "keyword with vague suffix");
+    cap = Math.min(cap, 84);
+  }
+  if (PATTERN_MODIFIERS.has(first) && tokenCount >= 4) {
+    add(-4, `extra modifier: ${first}`);
+    cap = Math.min(cap, 86);
+  }
+  if (coverage < 0.72 && len >= 12) {
+    add(-6, "unclear pattern split");
+    cap = Math.min(cap, 82);
+  }
+  if (suffix === "com" && tokenCount >= 2 && tokenCount <= 3 && coverage >= 0.85 && !weakEnd) add(2, "clean .com pattern");
+  if (sldRaw.includes("-") || /\d/.test(sld)) {
+    add(-5, "pattern friction");
+    cap = Math.min(cap, /\d/.test(sld) ? 72 : 78);
+  }
+
+  let label = "Balanced";
+  if (adjust >= 8) label = "Strong";
+  else if (adjust >= 4) label = "Good";
+  else if (adjust <= -8 || cap <= 78) label = "Weak";
+  else if (adjust < 0 || cap <= 86) label = "Tradeoff";
+  return { adjust, cap, label, reasons };
+}
+
+function memorabilityAnalysis(ctx) {
+  const { sldRaw, sld, len, knownTokens, coverage, tokenSet, suffix, strengths, issues } = ctx;
+  const reasons = [];
+  let adjust = 0;
+  let cap = 97;
+  const tokenCount = knownTokens.length;
+  const vowels = (sld.match(/[aeiou]/g) || []).length;
+  const vowelRatio = len ? vowels / len : 0;
+
+  function add(points, reason, isIssue = points < 0) {
+    adjust += points;
+    reasons.push(reason);
+    if (points > 0) strengths.push(reason);
+    if (isIssue && points < 0) issues.push(reason);
+  }
+
+  if (len >= 6 && len <= 10) add(6, "easy to remember length");
+  else if (len <= 13) add(4, "memorable length");
+  else if (len <= 16) add(1, "acceptable length");
+  else if (len >= 19) {
+    add(-8, "harder to remember length");
+    cap = Math.min(cap, 84);
+  } else if (len >= 17) add(-4, "longer than ideal");
+
+  if (tokenCount === 2) add(6, "two-word memory hook");
+  else if (tokenCount === 3) add(2, "three-word memory hook");
+  else if (tokenCount >= 4) {
+    add(-5, "wordy memory load");
+    cap = Math.min(cap, 86);
+  }
+
+  if (coverage >= 0.9) add(3, "clear word boundaries");
+  else if (coverage < 0.7) {
+    add(-6, "unclear word boundaries");
+    cap = Math.min(cap, 82);
+  }
+
+  if (vowelRatio >= 0.25 && vowelRatio <= 0.55) add(2, "easy vowel balance");
+  else if (vowelRatio < 0.18 || vowelRatio > 0.65) add(-3, "awkward vowel balance");
+  if (MEMORABILITY_BAD_BIGRAMS.test(sld)) add(-5, "awkward letter cluster");
+  if (/(.)\1\1/.test(sld)) add(-4, "repeated letters");
+  if (sldRaw.includes("-") || /\d/.test(sld)) {
+    add(-5, "harder to say/type");
+    cap = Math.min(cap, /\d/.test(sld) ? 72 : 78);
+  }
+  if (suffix === "com" && !sldRaw.includes("-") && !/\d/.test(sld) && len <= 13) add(2, "simple .com recall");
+
+  let label = "Clear";
+  if (adjust >= 12) label = "Sticky";
+  else if (adjust >= 6) label = "Memorable";
+  else if (adjust <= -8 || cap <= 78) label = "Forgettable";
+  else if (adjust < 0 || cap <= 86) label = "Tradeoff";
+  return { adjust, cap, label, reasons };
+}
+
+function preferenceAdjustment(ctx) {
+  const { sldRaw, sld, len, knownTokens, coverage, targetKeywords, tokenSet, preferenceModel, strengths, issues } = ctx;
+  const reasons = [];
+  const likedCount = preferenceModel?.liked?.length || 0;
+  const dislikedCount = preferenceModel?.disliked?.length || 0;
+  if (!likedCount && !dislikedCount) return { adjust: 0, label: "Neutral", reasons };
+
+  let adjust = 0;
+  function add(points, reason, isIssue = points < 0) {
+    adjust += points;
+    reasons.push(reason);
+    if (points > 0) strengths.push(reason);
+    if (isIssue && points < 0) issues.push(reason);
+  }
+
+  const signals = domainPatternSignals({ sldRaw, sld, knownTokens, tokenSet, coverage, targetKeywords });
+  const seenTokens = new Set(knownTokens);
+  let likedTermHits = 0;
+  let dislikedTermHits = 0;
+  for (const token of seenTokens) {
+    const liked = preferenceModel.likedTerms.get(token) || 0;
+    const disliked = preferenceModel.dislikedTerms.get(token) || 0;
+    if (liked > disliked) {
+      likedTermHits += 1;
+      add(Math.min(3, liked - disliked), `matches liked word: ${token}`);
+    } else if (disliked > liked) {
+      dislikedTermHits += 1;
+      add(-Math.min(4, disliked - liked + 1), `matches disliked word: ${token}`);
+    }
+  }
+
+  let patternDelta = 0;
+  for (const signal of signals) {
+    patternDelta += (preferenceModel.likedPatterns.get(signal) || 0) - (preferenceModel.dislikedPatterns.get(signal) || 0);
+  }
+  if (patternDelta > 0) add(Math.min(5, patternDelta), "matches liked pattern");
+  if (patternDelta < 0) add(Math.max(-6, patternDelta), "matches disliked pattern");
+
+  if (Number.isFinite(preferenceModel.likedAvgLen)) {
+    const distance = Math.abs(len - preferenceModel.likedAvgLen);
+    if (distance <= 2) add(2, "near liked length");
+    else if (distance >= 7 && likedCount >= 2) add(-2, "far from liked length");
+  }
+  if (Number.isFinite(preferenceModel.dislikedAvgLen)) {
+    const distance = Math.abs(len - preferenceModel.dislikedAvgLen);
+    if (distance <= 2 && dislikedCount >= 2) add(-3, "near disliked length");
+  }
+
+  adjust = Math.max(-12, Math.min(10, adjust));
+  let label = "Neutral";
+  if (adjust >= 5) label = "Liked fit";
+  else if (adjust > 0) label = "Slight fit";
+  else if (adjust <= -5) label = "Disliked fit";
+  else if (adjust < 0) label = "Slight miss";
+
+  if (likedTermHits && dislikedTermHits) reasons.push("mixed preference signals");
+  return { adjust, label, reasons };
+}
+
 function calibrateScore(rawScore, ctx) {
   const { len, knownTokens, coverage, tokenSet, targetKeywords, suffix } = ctx;
   let value = rawScore;
@@ -741,7 +1034,7 @@ function matchesTerm(term, tokenSet, sld) {
 }
 
 function scoreCaps(ctx) {
-  const { sldRaw, sld, len, coverage, targetKeywords, components, profile, phrase } = ctx;
+  const { sldRaw, sld, len, coverage, targetKeywords, components, profile, phrase, pattern, memorability } = ctx;
   let cap = 97;
   const reasons = [];
   function apply(value, reason) {
@@ -758,6 +1051,8 @@ function scoreCaps(ctx) {
   if (/\d/.test(sld)) apply(70, "number");
   if (/(wizard|genius|guru|ninja|hack|247|cheap)/.test(sld)) apply(profile.strictTrust ? 70 : 84, "gimmicky word");
   if (phrase && Number.isFinite(phrase.cap)) apply(phrase.cap, `phrase quality: ${phrase.label}`);
+  if (pattern && Number.isFinite(pattern.cap)) apply(pattern.cap, `pattern quality: ${pattern.label}`);
+  if (memorability && Number.isFinite(memorability.cap)) apply(memorability.cap, `memorability: ${memorability.label}`);
   return { cap, reasons };
 }
 
@@ -796,6 +1091,9 @@ function buildScoreExplanation(score, label, strengths, issues) {
   if (joined.includes("very compact") || joined.includes("compact") || joined.includes("good length")) badges.push("short");
   if (joined.includes("matches") || joined.includes("keyword")) badges.push("keyword fit");
   if (joined.includes("purpose") || joined.includes("intent")) badges.push("buyer intent");
+  if (joined.includes("pattern")) badges.push("strong pattern");
+  if (joined.includes("remember") || joined.includes("memory") || joined.includes("sticky")) badges.push("memorable");
+  if (joined.includes("liked")) badges.push("preference fit");
   if (joined.includes("natural phrase") || joined.includes("clear keyword phrase")) badges.push("natural phrase");
   if (joined.includes("easy to parse") || joined.includes("two-word") || joined.includes("three-word")) badges.push("clear");
   if (joined.includes("no hyphen")) badges.push("clean");
@@ -805,6 +1103,9 @@ function buildScoreExplanation(score, label, strengths, issues) {
   if (issueText.includes("awkward") || issueText.includes("ambiguous")) tradeoff = "awkward phrase";
   else if (issueText.includes("harder to parse") || issueText.includes("unclear")) tradeoff = "parse tradeoff";
   else if (issueText.includes("gimmicky") || issueText.includes("trust/risk")) tradeoff = "trust tradeoff";
+  else if (issueText.includes("disliked")) tradeoff = "preference tradeoff";
+  else if (issueText.includes("pattern")) tradeoff = "pattern tradeoff";
+  else if (issueText.includes("memory") || issueText.includes("forgettable")) tradeoff = "memory tradeoff";
   else if (issueText.includes("long")) tradeoff = "longer name";
   else if (issues.length) tradeoff = issues[0];
 
@@ -961,6 +1262,12 @@ function enhanceResult(result) {
     score_components: score.components ? JSON.stringify(score.components) : "",
     phrase_quality: score.phraseQuality || "",
     phrase_reasons: score.phraseReasons ? score.phraseReasons.join("; ") : "",
+    pattern_quality: score.patternQuality || "",
+    pattern_reasons: score.patternReasons ? score.patternReasons.join("; ") : "",
+    memorability: score.memorability || "",
+    memorability_reasons: score.memorabilityReasons ? score.memorabilityReasons.join("; ") : "",
+    preference_fit: score.preferenceLabel || "",
+    preference_reasons: score.preferenceReasons ? score.preferenceReasons.join("; ") : "",
     scoring_style: score.style || getScoringProfile().label,
     similarity_key: similarityKey(result.normalized_domain || "")
   };
@@ -1275,7 +1582,7 @@ function displayedResults() {
     if (status === "top_picks" && row.available !== true) return false;
 
     if (search) {
-      const haystack = [row.input, domain, row.availability_status, row.check_source, row.notes, row.error, row.score_label, row.score_explanation, row.phrase_quality, row.phrase_reasons, row.score_notes]
+      const haystack = [row.input, domain, row.availability_status, row.check_source, row.notes, row.error, row.score_label, row.score_explanation, row.phrase_quality, row.phrase_reasons, row.pattern_quality, row.pattern_reasons, row.memorability, row.memorability_reasons, row.preference_fit, row.preference_reasons, row.score_notes]
         .join(" ").toLowerCase();
       if (!haystack.includes(search)) return false;
     }
@@ -1307,14 +1614,14 @@ function displayedResults() {
 function renderResults() {
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="14">No results yet.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="17">No results yet.</td></tr>';
     el.visibleCount.textContent = "0 visible";
     updateSummary();
     return;
   }
 
   if (!visibleRows.length) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="14">No rows match the current filters.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="17">No rows match the current filters.</td></tr>';
     el.visibleCount.textContent = `0 visible of ${results.filter(Boolean).length}`;
     updateSummary();
     return;
@@ -1336,6 +1643,9 @@ function renderResults() {
       <td><span class="rating-pill rating-${scoreClass(result.domain_score)}">${escapeHtml(result.score_label || "")}</span></td>
       <td><details class="score-details"><summary>${escapeHtml(result.score_explanation || "")}</summary><div>${escapeHtml(result.score_notes || "")}</div></details></td>
       <td><span class="phrase-pill phrase-${phraseClass(result.phrase_quality)}" title="${escapeAttr(result.phrase_reasons || "")}">${escapeHtml(result.phrase_quality || "")}</span></td>
+      <td><span class="signal-pill signal-${signalClass(result.pattern_quality)}" title="${escapeAttr(result.pattern_reasons || "")}">${escapeHtml(result.pattern_quality || "")}</span></td>
+      <td><span class="signal-pill signal-${signalClass(result.memorability)}" title="${escapeAttr(result.memorability_reasons || "")}">${escapeHtml(result.memorability || "")}</span></td>
+      <td><span class="signal-pill signal-${signalClass(result.preference_fit)}" title="${escapeAttr(result.preference_reasons || "")}">${escapeHtml(result.preference_fit || "")}</span></td>
       <td>${groupDisplay(result, groupInfo)}</td>
       <td>${escapeHtml(result.availability_status)}</td>
       <td>${availableText}</td>
@@ -1364,6 +1674,14 @@ function phraseClass(label) {
   if (value.includes("natural") || value.includes("clean")) return "good";
   if (value.includes("tradeoff")) return "warn";
   if (value.includes("awkward")) return "bad";
+  return "neutral";
+}
+
+function signalClass(label) {
+  const value = String(label || "").toLowerCase();
+  if (value.includes("strong") || value.includes("good") || value.includes("sticky") || value.includes("memorable") || value.includes("liked")) return "good";
+  if (value.includes("tradeoff") || value.includes("slight")) return "warn";
+  if (value.includes("weak") || value.includes("forgettable") || value.includes("disliked")) return "bad";
   return "neutral";
 }
 
@@ -1499,7 +1817,7 @@ function exportCsv(scope = "all") {
   }
   const columns = [
     "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label",
-    "score_explanation", "phrase_quality", "phrase_reasons", "scoring_style", "score_components", "score_notes", "similarity_key",
+    "score_explanation", "phrase_quality", "phrase_reasons", "pattern_quality", "pattern_reasons", "memorability", "memorability_reasons", "preference_fit", "preference_reasons", "scoring_style", "score_components", "score_notes", "similarity_key",
     "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
   ];
   const csv = [
@@ -1571,6 +1889,8 @@ function currentSettings() {
     scoringStyle: el.scoringStyleInput?.value || "general",
     positiveWords: el.positiveWordsInput?.value || "",
     negativeWords: el.negativeWordsInput?.value || "",
+    likedExamples: el.likedExamplesInput?.value || "",
+    dislikedExamples: el.dislikedExamplesInput?.value || "",
     topPickCount: el.topPickCountInput?.value || "25",
     useRdap: el.useRdapInput.checked,
     useDns: el.useDnsInput.checked,
@@ -1593,6 +1913,8 @@ function applySettings(settings = {}) {
   if (settings.scoringStyle !== undefined && el.scoringStyleInput) el.scoringStyleInput.value = settings.scoringStyle;
   if (settings.positiveWords !== undefined && el.positiveWordsInput) el.positiveWordsInput.value = settings.positiveWords;
   if (settings.negativeWords !== undefined && el.negativeWordsInput) el.negativeWordsInput.value = settings.negativeWords;
+  if (settings.likedExamples !== undefined && el.likedExamplesInput) el.likedExamplesInput.value = settings.likedExamples;
+  if (settings.dislikedExamples !== undefined && el.dislikedExamplesInput) el.dislikedExamplesInput.value = settings.dislikedExamples;
   if (settings.topPickCount !== undefined && el.topPickCountInput) el.topPickCountInput.value = settings.topPickCount;
   if (settings.useRdap !== undefined) el.useRdapInput.checked = Boolean(settings.useRdap);
   if (settings.useDns !== undefined) el.useDnsInput.checked = Boolean(settings.useDns);
@@ -1703,7 +2025,7 @@ function clearSession() {
   el.inputBox.value = "";
   applySettings({
     workers: "2", delay: "250", timeout: "12000", keywords: "", scoringStyle: "general",
-    positiveWords: "", negativeWords: "", topPickCount: "25", useRdap: true, useDns: true, dedupe: true,
+    positiveWords: "", negativeWords: "", likedExamples: "", dislikedExamples: "", topPickCount: "25", useRdap: true, useDns: true, dedupe: true,
     filterStatus: "all", filterSearch: "", filterTld: "", filterMaxLen: "", filterNoHyphen: false, filterNoNumbers: false, sort: "score_desc"
   });
   updateInputCount();
@@ -1772,7 +2094,7 @@ function bindEvents() {
     control.addEventListener("input", saveState);
   }
 
-  const scoringControls = [el.keywordsInput, el.scoringStyleInput, el.positiveWordsInput, el.negativeWordsInput];
+  const scoringControls = [el.keywordsInput, el.scoringStyleInput, el.positiveWordsInput, el.negativeWordsInput, el.likedExamplesInput, el.dislikedExamplesInput];
   for (const control of scoringControls.filter(Boolean)) {
     control.addEventListener("input", rescoreResults);
     control.addEventListener("change", rescoreResults);
