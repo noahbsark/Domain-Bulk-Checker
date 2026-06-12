@@ -36,3 +36,16 @@ Upload these files to the repository root:
 - `README.md`
 
 Then enable GitHub Pages from **Settings → Pages → Deploy from a branch → main → /(root)**.
+
+## Scoring v8 update
+
+This build makes high scores more selective. It adds:
+
+- Elite-score gates so 95+ is reserved for compact, natural, high-intent names
+- Phrase-quality caps so awkward or merely okay names cannot score like excellent names
+- Stacked-word penalties for domains that pile up good words but feel crowded, such as `keywordhelpguide.com`
+- Similar-group caps so only the best variant in a cluster can stay at the very top
+- Better handling for action/verb names like `simplifyexample.com` or `settleanestate.com`
+- CSV export fields for `cluster_rank` and `cluster_cap`
+
+The score is still a decision aid, not a guarantee. Use it to prioritize names, then manually confirm purchase price, legal risk, and brand fit.

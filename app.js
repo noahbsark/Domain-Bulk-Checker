@@ -203,6 +203,7 @@ const QUALITY_WORDS = [
   "probate", "estate", "will", "wills", "trust", "trusts", "executor", "executors", "inheritance", "heir", "heirs",
   "court", "filing", "file", "forms", "form", "law", "legal", "attorney", "lawyer", "claim", "assets",
   // Useful domain / product words
+  "simplify", "settle", "manage", "prepare", "create", "build", "launch", "start", "file", "find", "get", "make",
   "help", "guide", "guides", "kit", "tool", "tools", "program", "planner", "plan", "plans", "course",
   "service", "services", "support", "assistant", "assist", "coach", "coaching", "academy", "hub", "works",
   "focus", "portal", "online", "pathway", "path", "route", "wizard", "central", "option", "options",
@@ -347,6 +348,20 @@ const VAGUE_OR_WEAK_ENDINGS = new Set([
 const SOFT_MODIFIERS = new Set([
   "my", "your", "own", "easy", "simple", "self", "diy", "the", "a", "an", "best", "top", "get", "go",
   "try", "use", "join", "now", "today", "online", "hq", "direct", "smart", "clear", "quick", "fast"
+]);
+
+const VERB_STYLE_TERMS = new Set([
+  "simplify", "settle", "manage", "prepare", "create", "build", "launch", "start", "file", "find", "get", "make"
+]);
+
+const STACKABLE_PURPOSE_TERMS = new Set([
+  "help", "guide", "guides", "kit", "tool", "tools", "app", "apps", "forms", "form", "course", "planner",
+  "checklist", "template", "templates", "manual", "book", "guidebook", "service", "services", "support", "assistant", "assist"
+]);
+
+const GENERIC_FILLER_TERMS = new Set([
+  "program", "path", "route", "focus", "option", "options", "hub", "portal", "central", "works", "solution",
+  "solutions", "pathway", "online", "pro", "plus", "express", "buddy", "genius", "wizard", "quick", "fast"
 ]);
 
 // Human-feel checks: these help catch names that score well mathematically but sound awkward.
@@ -502,7 +517,7 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
   score += preference.adjust;
   components.preference = preference.adjust;
 
-  const capInfo = scoreCaps({ sldRaw, sld, len, coverage, targetKeywords, components, profile, phrase, pattern, memorability });
+  const capInfo = scoreCaps({ sldRaw, sld, len, coverage, targetKeywords, knownTokens, tokenSet, components, profile, phrase, pattern, memorability, strengths, issues });
   if (capInfo.reasons.length) issues.push(...capInfo.reasons);
 
   const calibrated = calibrateScore(score, { len, knownTokens, coverage, tokenSet, targetKeywords, suffix, profile });
@@ -680,6 +695,10 @@ function phraseQualityAnalysis(ctx) {
   if (coverage >= 0.92 && tokenCount >= 2 && tokenCount <= 3) add(4, "natural phrase");
   if (coverage >= 0.86 && keywordHit && hasPurpose && tokenCount <= 3) add(4, "clear keyword phrase");
   if (suffix === "com" && len <= 12 && coverage >= 0.86 && tokenCount <= 3) add(2, "crisp .com");
+  if (VERB_STYLE_TERMS.has(first) && keywordHit && tokenCount <= 3 && coverage >= 0.8) {
+    add(5, `action phrase: ${first}+keyword`);
+    cap = Math.max(cap, 93);
+  }
 
   for (const [prefix, purpose] of NATURAL_PAIR_BONUSES) {
     if ((tokenSet.has(prefix) || sld.startsWith(prefix)) && (tokenSet.has(purpose) || sld.endsWith(purpose))) {
@@ -731,6 +750,12 @@ function phraseQualityAnalysis(ctx) {
   else if (negativeCount === 1 || cap <= 86) label = "Tradeoff";
   else if (positiveCount >= 2) label = "Natural";
 
+  // Phrase quality is now a hard gate for elite scores. Good ingredients are not enough
+  // unless the name also reads like a natural domain.
+  if (label === "Clean") cap = Math.min(cap, 94);
+  if (label === "Tradeoff") cap = Math.min(cap, 86);
+  if (label === "Awkward") cap = Math.min(cap, 76);
+
   return { adjust, cap, label, reasons };
 }
 
@@ -760,6 +785,7 @@ function marketabilityAdjustment(ctx) {
   if (tokenCount === 2) add(5, "clean two-word structure");
   else if (tokenCount === 3) add(2, "clear three-word structure");
   else if (tokenCount >= 4) add(-4, "too many words", false);
+  if (VERB_STYLE_TERMS.has(firstToken) && keywordHit && tokenCount <= 3) add(4, "clear action-oriented phrase");
   if (tokenCount >= 5) add(-5, "crowded phrase", false);
 
   if (STRONG_PURPOSE_TERMS.has(lastToken)) add(5, `purpose word: ${lastToken}`);
@@ -820,6 +846,7 @@ function patternQualityAnalysis(ctx) {
   }
 
   if (tokenCount === 2 && keywordHit && hasPurposeEnd) add(8, "strong keyword+purpose pattern");
+  else if (tokenCount === 2 && VERB_STYLE_TERMS.has(first) && keywordHit) add(7, "verb+keyword pattern");
   else if (tokenCount === 2 && hasPurposeEnd) add(5, "clear two-word pattern");
   else if (tokenCount === 3 && PATTERN_MODIFIERS.has(first) && keywordHit && hasPurposeEnd) add(6, "modifier+keyword+purpose pattern");
   else if (tokenCount === 3 && keywordHit && hasPurposeEnd) add(4, "clear three-word pattern");
@@ -828,9 +855,15 @@ function patternQualityAnalysis(ctx) {
     cap = Math.min(cap, 88);
   }
 
+  const stackedPurposeCount = knownTokens.filter(t => STACKABLE_PURPOSE_TERMS.has(t)).length;
+  if (stackedPurposeCount >= 3 || (stackedPurposeCount >= 2 && tokenCount >= 3 && keywordHit)) {
+    add(-8, "stacked good words");
+    cap = Math.min(cap, tokenCount >= 4 ? 82 : 88);
+  }
+
   if (weakEnd) {
-    add(-7, `weak pattern ending: ${last}`);
-    cap = Math.min(cap, profile.strictTrust ? 78 : 86);
+    add(-9, `weak pattern ending: ${last}`);
+    cap = Math.min(cap, profile.strictTrust ? 76 : 84);
   }
   if (keywordHit && weakEnd) {
     add(-3, "keyword with vague suffix");
@@ -976,15 +1009,16 @@ function calibrateScore(rawScore, ctx) {
   const { len, knownTokens, coverage, tokenSet, targetKeywords, suffix } = ctx;
   let value = rawScore;
 
-  // Stretch the middle: avoid batches where every decent available .com lands at 79–80.
-  if (value >= 72) value = 72 + (value - 72) * 1.18;
-  else if (value < 60) value = 60 - (60 - value) * 1.08;
+  // Stretch the middle slightly, but avoid pushing many "pretty good" names into the 95+ ceiling.
+  if (value >= 78) value = 78 + (value - 78) * 1.06;
+  else if (value >= 65) value = 65 + (value - 65) * 1.10;
+  else if (value < 55) value = 55 - (55 - value) * 1.05;
 
   const tokenCount = knownTokens.length;
   const lastToken = knownTokens[tokenCount - 1] || "";
   const keywordHit = targetKeywords.some(k => k && tokenSet.has(k));
-  if (suffix === "com" && keywordHit && STRONG_PURPOSE_TERMS.has(lastToken) && len <= 13 && tokenCount <= 3 && coverage >= 0.85) {
-    value += 3;
+  if (suffix === "com" && keywordHit && STRONG_PURPOSE_TERMS.has(lastToken) && len <= 12 && tokenCount <= 2 && coverage >= 0.9) {
+    value += 1;
   }
   if (VAGUE_OR_WEAK_ENDINGS.has(lastToken) && len >= 14) value -= 4;
   if (tokenCount >= 4) value -= 3;
@@ -1007,6 +1041,9 @@ function scorePenaltyDetails(ctx) {
   if (knownTokens.length > 4) add(4, "many words");
   if (knownTokens.length > 5) add(5, "wordy");
   if (coverage < 0.5) add(7, "hard to parse");
+  const stackedPurposeCount = knownTokens.filter(t => STACKABLE_PURPOSE_TERMS.has(t)).length;
+  if (stackedPurposeCount >= 3) add(8, "stacked purpose words");
+  else if (stackedPurposeCount >= 2 && knownTokens.length >= 3) add(5, "crowded purpose words");
 
   const tokenSet = new Set(knownTokens);
   for (const [term, points] of DEFAULT_NEGATIVE_TERMS.entries()) {
@@ -1034,8 +1071,8 @@ function matchesTerm(term, tokenSet, sld) {
 }
 
 function scoreCaps(ctx) {
-  const { sldRaw, sld, len, coverage, targetKeywords, components, profile, phrase, pattern, memorability } = ctx;
-  let cap = 97;
+  const { sldRaw, sld, len, coverage, targetKeywords, knownTokens = [], tokenSet = new Set(), components, profile, phrase, pattern, memorability } = ctx;
+  let cap = 98;
   const reasons = [];
   function apply(value, reason) {
     if (value < cap) {
@@ -1043,13 +1080,37 @@ function scoreCaps(ctx) {
       reasons.push(reason);
     }
   }
+
+  const tokenCount = knownTokens.length;
+  const last = knownTokens[tokenCount - 1] || "";
+  const first = knownTokens[0] || "";
+  const keywordHit = targetKeywords.some(k => k && (tokenSet.has(k) || sld.includes(k)));
+  const hasPurposeEnd = STACKABLE_PURPOSE_TERMS.has(last) || PATTERN_PURPOSE_WORDS.has(last);
+  const stackedPurposeCount = knownTokens.filter(t => STACKABLE_PURPOSE_TERMS.has(t)).length;
+  const weakEnd = VAGUE_OR_WEAK_ENDINGS.has(last) || GENERIC_FILLER_TERMS.has(last);
+  const strongElitePattern = (tokenCount === 2 && keywordHit && hasPurposeEnd)
+    || (tokenCount === 2 && VERB_STYLE_TERMS.has(first) && keywordHit)
+    || (tokenCount === 3 && PATTERN_MODIFIERS.has(first) && keywordHit && hasPurposeEnd);
+
+  // Elite-score gates: 95+ should be rare and reserved for compact, natural, high-intent names.
   if (targetKeywords.length && components.keyword === 0 && !profile.keywordOptional) apply(76, "no target keyword");
-  if (coverage < 0.65) apply(76, "harder to read");
-  if (len > 22) apply(72, "very long");
-  else if (len > 18) apply(84, "long name");
-  if (sldRaw.includes("-")) apply(75, "hyphen");
-  if (/\d/.test(sld)) apply(70, "number");
-  if (/(wizard|genius|guru|ninja|hack|247|cheap)/.test(sld)) apply(profile.strictTrust ? 70 : 84, "gimmicky word");
+  if (coverage < 0.65) apply(74, "harder to read");
+  if (coverage < 0.85 && len >= 12) apply(88, "not cleanly parsed");
+  if (len > 22) apply(70, "very long");
+  else if (len > 18) apply(82, "long name");
+  else if (len > 16) apply(88, "longer than ideal");
+  else if (len > 14) apply(92, "not compact enough for elite tier");
+  if (tokenCount >= 5) apply(78, "too many words");
+  else if (tokenCount === 4) apply(86, "four-word name");
+  else if (tokenCount === 3 && !strongElitePattern) apply(92, "three-word tradeoff");
+  if (!strongElitePattern && targetKeywords.length && keywordHit) apply(94, "good but not an elite pattern");
+  if (!hasPurposeEnd && targetKeywords.length && keywordHit && !VERB_STYLE_TERMS.has(first)) apply(92, "no clear purpose word");
+  if (weakEnd) apply(84, "weak or vague ending");
+  if (stackedPurposeCount >= 3 || (stackedPurposeCount >= 2 && tokenCount >= 3 && keywordHit)) apply(tokenCount >= 4 ? 80 : 87, "stacked good words");
+
+  if (sldRaw.includes("-")) apply(74, "hyphen");
+  if (/\d/.test(sld)) apply(68, "number");
+  if (/(wizard|genius|guru|ninja|hack|247|cheap)/.test(sld)) apply(profile.strictTrust ? 68 : 82, "gimmicky word");
   if (phrase && Number.isFinite(phrase.cap)) apply(phrase.cap, `phrase quality: ${phrase.label}`);
   if (pattern && Number.isFinite(pattern.cap)) apply(pattern.cap, `pattern quality: ${pattern.label}`);
   if (memorability && Number.isFinite(memorability.cap)) apply(memorability.cap, `memorability: ${memorability.label}`);
@@ -1113,7 +1174,7 @@ function buildScoreExplanation(score, label, strengths, issues) {
 }
 
 function scoreLabel(score) {
-  if (score >= 95) return "Excellent";
+  if (score >= 96) return "Excellent";
   if (score >= 88) return "Strong";
   if (score >= 76) return "Good";
   if (score >= 62) return "Okay";
@@ -1164,7 +1225,7 @@ function tokenizeChunk(chunk, dictionary) {
 }
 
 function scoreBand(score) {
-  if (score >= 95) return "excellent domain quality";
+  if (score >= 96) return "excellent domain quality";
   if (score >= 88) return "strong domain quality";
   if (score >= 76) return "good but has tradeoffs";
   if (score >= 62) return "usable but weaker";
@@ -1561,6 +1622,43 @@ function availabilitySortValue(row) {
   return 3;
 }
 
+function clusterAdjustedRows(inputRows) {
+  const rows = inputRows.filter(Boolean).map(enhanceResult);
+  const groups = new Map();
+  for (const row of rows) {
+    const key = row.similarity_key || similarityKey(row.normalized_domain);
+    if (!key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+
+  for (const groupRows of groups.values()) {
+    if (groupRows.length <= 1) continue;
+    const ranked = [...groupRows].sort((a, b) => availabilitySortValue(a) - availabilitySortValue(b)
+      || Number(b.domain_score || 0) - Number(a.domain_score || 0)
+      || Number(a.name_length || 999) - Number(b.name_length || 999)
+      || String(a.normalized_domain).localeCompare(String(b.normalized_domain)));
+
+    ranked.forEach((row, index) => {
+      if (index === 0) {
+        row.cluster_rank = 1;
+        row.cluster_cap = "";
+        return;
+      }
+      const cap = index === 1 ? 92 : index === 2 ? 88 : index <= 5 ? 84 : 80;
+      row.cluster_rank = index + 1;
+      row.cluster_cap = cap;
+      if (Number(row.domain_score || 0) > cap) {
+        row.domain_score = cap;
+        row.score_label = scoreLabel(cap);
+        row.score_explanation = buildScoreExplanation(cap, row.score_label, ["similar variant"], [`cluster variant cap; best is ${ranked[0].normalized_domain}`]);
+        row.score_notes = `${row.score_notes || ""}; cluster cap ${cap}: variant ${index + 1}/${ranked.length}; best in group is ${ranked[0].normalized_domain}`;
+      }
+    });
+  }
+  return rows;
+}
+
 function displayedResults() {
   const status = el.filterStatus.value;
   const search = String(el.filterSearch.value || "").toLowerCase().trim();
@@ -1570,7 +1668,7 @@ function displayedResults() {
   const noNumbers = el.filterNoNumbers.checked;
   const sort = el.sortSelect.value;
 
-  let rows = results.filter(Boolean).map(enhanceResult).filter(row => {
+  let rows = clusterAdjustedRows(results.filter(Boolean)).filter(row => {
     const domain = row.normalized_domain || "";
     const sld = secondLevelName(domain).replace(/\./g, "");
 
@@ -1627,7 +1725,7 @@ function renderResults() {
     return;
   }
 
-  const groupInfo = buildGroupInfo(results.filter(Boolean));
+  const groupInfo = buildGroupInfo(clusterAdjustedRows(results.filter(Boolean)));
   const rowsHtml = visibleRows.map(result => {
     const cls = classForStatus(result.availability_status);
     const availableText = result.available === true ? "True" : result.available === false ? "False" : "";
@@ -1810,20 +1908,21 @@ function openTopPicks() {
 }
 
 function exportCsv(scope = "all") {
-  const rows = scope === "favorites" ? results.filter(r => r && favorites.has(r.normalized_domain)) : results.filter(Boolean);
+  const sourceRows = scope === "favorites" ? results.filter(r => r && favorites.has(r.normalized_domain)) : results.filter(Boolean);
+  const rows = clusterAdjustedRows(sourceRows);
   if (!rows.length) {
     setStatus(scope === "favorites" ? "No favorites to export." : "No results to export.");
     return;
   }
   const columns = [
     "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label",
-    "score_explanation", "phrase_quality", "phrase_reasons", "pattern_quality", "pattern_reasons", "memorability", "memorability_reasons", "preference_fit", "preference_reasons", "scoring_style", "score_components", "score_notes", "similarity_key",
+    "score_explanation", "phrase_quality", "phrase_reasons", "pattern_quality", "pattern_reasons", "memorability", "memorability_reasons", "preference_fit", "preference_reasons", "scoring_style", "score_components", "score_notes", "similarity_key", "cluster_rank", "cluster_cap",
     "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
   ];
   const csv = [
     columns.join(","),
     ...rows.map(row => {
-      const enhanced = enhanceResult(row);
+      const enhanced = row;
       return columns.map(col => {
         if (col === "favorite") return csvCell(favorites.has(enhanced.normalized_domain) ? "yes" : "");
         return csvCell(enhanced[col]);
