@@ -74,6 +74,13 @@ const el = {
   summaryUnknown: document.getElementById("summaryUnknown"),
   summaryInvalid: document.getElementById("summaryInvalid"),
   summaryFavorites: document.getElementById("summaryFavorites"),
+  auditVerdict: document.getElementById("auditVerdict"),
+  auditMedian: document.getElementById("auditMedian"),
+  auditTopScore: document.getElementById("auditTopScore"),
+  auditEliteCount: document.getElementById("auditEliteCount"),
+  auditStrongCount: document.getElementById("auditStrongCount"),
+  scoreDistribution: document.getElementById("scoreDistribution"),
+  auditAdvice: document.getElementById("auditAdvice"),
   filterStatus: document.getElementById("filterStatus"),
   filterSearch: document.getElementById("filterSearch"),
   filterTld: document.getElementById("filterTld"),
@@ -1659,6 +1666,110 @@ function clusterAdjustedRows(inputRows) {
   return rows;
 }
 
+
+function applyBatchRanks(inputRows) {
+  const rows = inputRows.filter(Boolean);
+  const availableRows = rows.filter(row => row.available === true);
+  const rankSource = availableRows.length ? availableRows : rows;
+  const sorted = [...rankSource].sort((a, b) => Number(b.domain_score || 0) - Number(a.domain_score || 0)
+    || Number(a.name_length || 999) - Number(b.name_length || 999)
+    || String(a.normalized_domain).localeCompare(String(b.normalized_domain)));
+  const total = sorted.length;
+  sorted.forEach((row, index) => {
+    const rank = index + 1;
+    const percentile = total ? Math.max(1, Math.ceil((rank / total) * 100)) : "";
+    row.batch_rank = rank;
+    row.batch_percentile = percentile;
+    row.batch_rank_label = total ? `#${rank}/${total}` : "";
+    row.batch_percentile_label = total ? `Top ${percentile}%` : "";
+  });
+  if (availableRows.length) {
+    for (const row of rows) {
+      if (row.available !== true) {
+        row.batch_rank = "";
+        row.batch_percentile = "";
+        row.batch_rank_label = "";
+        row.batch_percentile_label = "";
+      }
+    }
+  }
+  return rows;
+}
+
+function scoreDistributionStats() {
+  const rows = applyBatchRanks(clusterAdjustedRows(results.filter(Boolean)));
+  const available = rows.filter(row => row.available === true);
+  const scored = available.length ? available : rows.filter(row => row.availability_status !== "invalid_input");
+  const scores = scored.map(row => Number(row.domain_score || 0)).filter(Number.isFinite).sort((a, b) => a - b);
+  const total = scores.length;
+  const bands = [
+    { key: "elite", label: "95–100", min: 95, max: 100, count: 0 },
+    { key: "strong", label: "90–94", min: 90, max: 94, count: 0 },
+    { key: "good", label: "80–89", min: 80, max: 89, count: 0 },
+    { key: "okay", label: "65–79", min: 65, max: 79, count: 0 },
+    { key: "weak", label: "0–64", min: 0, max: 64, count: 0 }
+  ];
+  for (const score of scores) {
+    const band = bands.find(item => score >= item.min && score <= item.max);
+    if (band) band.count += 1;
+  }
+  const median = total ? (total % 2 ? scores[Math.floor(total / 2)] : Math.round((scores[total / 2 - 1] + scores[total / 2]) / 2)) : null;
+  const topScore = total ? scores[scores.length - 1] : null;
+  const eliteCount = bands[0].count;
+  const strongCount = bands[0].count + bands[1].count;
+  const eliteRate = total ? eliteCount / total : 0;
+  const strongRate = total ? strongCount / total : 0;
+  return { rows, scored, total, bands, median, topScore, eliteCount, strongCount, eliteRate, strongRate };
+}
+
+function updateRatingAudit() {
+  if (!el.auditVerdict) return;
+  const stats = scoreDistributionStats();
+  if (!stats.total) {
+    el.auditMedian.textContent = "—";
+    el.auditTopScore.textContent = "—";
+    el.auditEliteCount.textContent = "—";
+    el.auditStrongCount.textContent = "—";
+    el.auditVerdict.textContent = "Run a check to audit scores";
+    el.auditVerdict.className = "audit-verdict neutral";
+    el.scoreDistribution.innerHTML = "";
+    el.auditAdvice.textContent = "This audits the score distribution among possibly available domains. A healthy batch usually has a small 95+ tier and a wider middle.";
+    return;
+  }
+
+  el.auditMedian.textContent = stats.median;
+  el.auditTopScore.textContent = stats.topScore;
+  el.auditEliteCount.textContent = `${stats.eliteCount} (${Math.round(stats.eliteRate * 100)}%)`;
+  el.auditStrongCount.textContent = `${stats.strongCount} (${Math.round(stats.strongRate * 100)}%)`;
+
+  let verdict = "Healthy spread";
+  let cls = "good";
+  let advice = "The top tier looks selective. Use batch rank, similar groups, and top picks to make a shortlist.";
+  if (stats.eliteRate > 0.08 || stats.strongRate > 0.28) {
+    verdict = "Scores may be generous";
+    cls = "warn";
+    advice = "Many names are scoring near the top. Add disliked examples, add negative words, or use Top Picks / best-from-group view to avoid overrating close variants.";
+  } else if (stats.eliteCount === 0 && stats.strongRate < 0.05 && stats.total >= 30) {
+    verdict = "Scores may be strict";
+    cls = "warn";
+    advice = "Very few names are reaching the strong tier. Add liked examples or positive words if the batch contains names you would realistically buy.";
+  } else if (stats.eliteRate > 0.15 || stats.strongRate > 0.40) {
+    verdict = "Too many high scores";
+    cls = "bad";
+    advice = "The model is likely overrating this batch. Add negative examples and custom negative words, then re-check the score distribution.";
+  }
+  el.auditVerdict.textContent = verdict;
+  el.auditVerdict.className = `audit-verdict ${cls}`;
+  el.auditAdvice.textContent = advice;
+
+  const maxCount = Math.max(1, ...stats.bands.map(b => b.count));
+  el.scoreDistribution.innerHTML = stats.bands.map(band => {
+    const width = Math.round((band.count / maxCount) * 100);
+    const pct = stats.total ? Math.round((band.count / stats.total) * 100) : 0;
+    return `<div class="dist-row"><span class="dist-label">${band.label}</span><div class="dist-track"><div class="dist-fill ${band.key}" style="width:${width}%"></div></div><span>${band.count} · ${pct}%</span></div>`;
+  }).join("");
+}
+
 function displayedResults() {
   const status = el.filterStatus.value;
   const search = String(el.filterSearch.value || "").toLowerCase().trim();
@@ -1668,7 +1779,7 @@ function displayedResults() {
   const noNumbers = el.filterNoNumbers.checked;
   const sort = el.sortSelect.value;
 
-  let rows = clusterAdjustedRows(results.filter(Boolean)).filter(row => {
+  let rows = applyBatchRanks(clusterAdjustedRows(results.filter(Boolean))).filter(row => {
     const domain = row.normalized_domain || "";
     const sld = secondLevelName(domain).replace(/\./g, "");
 
@@ -1712,14 +1823,14 @@ function displayedResults() {
 function renderResults() {
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="17">No results yet.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="18">No results yet.</td></tr>';
     el.visibleCount.textContent = "0 visible";
     updateSummary();
     return;
   }
 
   if (!visibleRows.length) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="17">No rows match the current filters.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="18">No rows match the current filters.</td></tr>';
     el.visibleCount.textContent = `0 visible of ${results.filter(Boolean).length}`;
     updateSummary();
     return;
@@ -1735,9 +1846,10 @@ function renderResults() {
       ? `<a class="link-pill" href="${escapeAttr(result.namecheap_url)}" target="_blank" rel="noopener noreferrer">Open</a>`
       : "";
     return `<tr class="${cls}" data-domain="${escapeAttr(result.normalized_domain)}">
-      <td><button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(result.normalized_domain)}" title="${starTitle}">${favorite ? "★" : "☆"}</button></td>
+      <td><div class="pick-cell"><button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(result.normalized_domain)}" title="${starTitle}">${favorite ? "★" : "☆"}</button><div class="preference-buttons"><button type="button" class="preference-button" data-calibrate="like" data-domain="${escapeAttr(result.normalized_domain)}" title="Add to liked examples and rescore">👍</button><button type="button" class="preference-button" data-calibrate="dislike" data-domain="${escapeAttr(result.normalized_domain)}" title="Add to disliked examples and rescore">👎</button></div></div></td>
       <td><strong>${escapeHtml(result.normalized_domain)}</strong><div class="subtle">${escapeHtml(result.input || "")}</div></td>
       <td><span class="score-badge score-${scoreClass(result.domain_score)}" title="${escapeAttr(result.score_notes || "")}">${escapeHtml(result.domain_score ?? "")}</span></td>
+      <td><span class="rank-pill" title="${escapeAttr(result.batch_rank_label || "")}">${escapeHtml(result.batch_percentile_label || "")}</span></td>
       <td><span class="rating-pill rating-${scoreClass(result.domain_score)}">${escapeHtml(result.score_label || "")}</span></td>
       <td><details class="score-details"><summary>${escapeHtml(result.score_explanation || "")}</summary><div>${escapeHtml(result.score_notes || "")}</div></details></td>
       <td><span class="phrase-pill phrase-${phraseClass(result.phrase_quality)}" title="${escapeAttr(result.phrase_reasons || "")}">${escapeHtml(result.phrase_quality || "")}</span></td>
@@ -1791,6 +1903,7 @@ function updateSummary() {
   el.summaryInvalid.textContent = cleaned.filter(r => r.availability_status === "invalid_input").length;
   el.summaryUnknown.textContent = cleaned.filter(r => r.available === null && r.availability_status !== "invalid_input").length;
   el.summaryFavorites.textContent = cleaned.filter(r => favorites.has(r.normalized_domain)).length;
+  updateRatingAudit();
 }
 
 function removeTaken() {
@@ -1878,9 +1991,8 @@ function topPickLimit() {
 }
 
 function topPickRows() {
-  const available = results
+  const available = applyBatchRanks(clusterAdjustedRows(results.filter(Boolean)))
     .filter(r => r && r.available === true)
-    .map(enhanceResult)
     .sort((a, b) => Number(b.domain_score || 0) - Number(a.domain_score || 0)
       || Number(a.name_length || 999) - Number(b.name_length || 999)
       || String(a.normalized_domain).localeCompare(String(b.normalized_domain)));
@@ -1916,7 +2028,7 @@ function exportCsv(scope = "all") {
   }
   const columns = [
     "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label",
-    "score_explanation", "phrase_quality", "phrase_reasons", "pattern_quality", "pattern_reasons", "memorability", "memorability_reasons", "preference_fit", "preference_reasons", "scoring_style", "score_components", "score_notes", "similarity_key", "cluster_rank", "cluster_cap",
+    "score_explanation", "batch_rank", "batch_percentile", "batch_rank_label", "batch_percentile_label", "phrase_quality", "phrase_reasons", "pattern_quality", "pattern_reasons", "memorability", "memorability_reasons", "preference_fit", "preference_reasons", "scoring_style", "score_components", "score_notes", "similarity_key", "cluster_rank", "cluster_cap",
     "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
   ];
   const csv = [
@@ -2102,6 +2214,27 @@ function splitCsvLine(line) {
   return cells.map(cleanToken);
 }
 
+
+function addCalibrationExample(kind, domain) {
+  const normalized = normalizeDomain(domain).domain || domain;
+  if (!normalized) return;
+  const target = kind === "like" ? el.likedExamplesInput : el.dislikedExamplesInput;
+  const opposite = kind === "like" ? el.dislikedExamplesInput : el.likedExamplesInput;
+  if (!target) return;
+
+  const current = target.value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const oppositeLines = opposite ? opposite.value.split(/\r?\n/).map(line => line.trim()).filter(Boolean) : [];
+  const currentSet = new Set(current.map(line => normalizeDomain(line).domain || line));
+  if (!currentSet.has(normalized)) current.push(normalized);
+  if (opposite) {
+    opposite.value = oppositeLines.filter(line => (normalizeDomain(line).domain || line) !== normalized).join("\n");
+  }
+  target.value = current.join("\n");
+  rescoreResults();
+  setStatus(`${normalized} added to ${kind === "like" ? "liked" : "disliked"} examples. Scores recalibrated locally.`);
+  saveState();
+}
+
 function toggleFavorite(domain) {
   if (!domain) return;
   if (favorites.has(domain)) {
@@ -2200,8 +2333,15 @@ function bindEvents() {
   }
 
   el.resultsBody.addEventListener("click", event => {
-    const button = event.target.closest("button[data-favorite]");
-    if (button) toggleFavorite(button.getAttribute("data-favorite"));
+    const favoriteButton = event.target.closest("button[data-favorite]");
+    if (favoriteButton) {
+      toggleFavorite(favoriteButton.getAttribute("data-favorite"));
+      return;
+    }
+    const calibrationButton = event.target.closest("button[data-calibrate]");
+    if (calibrationButton) {
+      addCalibrationExample(calibrationButton.getAttribute("data-calibrate"), calibrationButton.getAttribute("data-domain"));
+    }
   });
 }
 

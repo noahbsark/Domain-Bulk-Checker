@@ -17,6 +17,9 @@ Static GitHub Pages web app for checking domain lists and ranking the results wi
 - Score domain pattern quality, such as keyword + purpose word, modifier + keyword + purpose word, weak suffixes, and crowded patterns
 - Score memorability using length, word count, word boundaries, typing friction, and letter balance
 - Optionally calibrate scoring from examples of domains you like and dislike, fully local in the browser
+- Quickly add liked/disliked examples from each row with 👍 / 👎 buttons
+- Audit the score distribution so you can see whether ratings are too generous or too strict
+- Show available-domain batch rank and percentile, such as `Top 4%`
 - Use stricter Excellent/Strong labels so only the clearest names land at the top
 - Show diverse top picks by grouping similar variants
 - Group similar names so near-duplicates are easier to compare
@@ -37,9 +40,9 @@ Upload these files to the repository root:
 
 Then enable GitHub Pages from **Settings → Pages → Deploy from a branch → main → /(root)**.
 
-## Scoring v8 update
+## Scoring v9 update
 
-This build makes high scores more selective. It adds:
+This build keeps the v8 selectivity changes and adds score-audit/calibration tools:
 
 - Elite-score gates so 95+ is reserved for compact, natural, high-intent names
 - Phrase-quality caps so awkward or merely okay names cannot score like excellent names
@@ -47,5 +50,9 @@ This build makes high scores more selective. It adds:
 - Similar-group caps so only the best variant in a cluster can stay at the very top
 - Better handling for action/verb names like `simplifyexample.com` or `settleanestate.com`
 - CSV export fields for `cluster_rank` and `cluster_cap`
+- Rating audit dashboard with score distribution, median score, top score, 95+ count, and 90+ count
+- Batch rank / percentile labels among available domains
+- CSV export fields for `batch_rank`, `batch_percentile`, `batch_rank_label`, and `batch_percentile_label`
+- One-click 👍 / 👎 calibration buttons that update the liked/disliked example lists and rescore locally
 
 The score is still a decision aid, not a guarantee. Use it to prioritize names, then manually confirm purchase price, legal risk, and brand fit.
