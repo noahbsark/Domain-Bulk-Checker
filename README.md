@@ -106,3 +106,21 @@ This version applies the external scoring-logic patch that:
 - adds TLD-based caps so strong alternative TLDs can score well but usually not above comparable `.com` names
 
 This is a rating-system-only change. Availability checking and the rest of the workflow are unchanged.
+
+
+## Rating system v4 calibration
+
+This version only changes the rating/scoring logic. It keeps the existing UI and workflow intact.
+
+Changes:
+
+- Makes 90+ scores harder to earn.
+- Adds natural phrase order checks so stacked words like `estateformskit.com` or `probateguidetool.com` do not score as near-perfect.
+- Treats soft positioning words like `easy`, `simple`, `guided`, `start`, `my`, and `your` as minor modifiers rather than strong buyer-intent signals.
+- Penalizes soft modifiers in awkward positions, such as suffixes like `estatecloseeasy.com` or middle modifiers like `estateeasytool.com`.
+- Penalizes stacked utility nouns when a domain describes several things at once, such as form + kit or guide + tool.
+- Adds stricter premium-grade caps so `.com + keyword + intent` is not enough by itself to reach the very top.
+- Adds extra caution for sensitive/professional terms combined with `tool`, `app`, `ai`, `easy`, or `done`.
+- Keeps availability separate from quality score.
+
+The intended result is not score inflation. It should reduce top-score pileups and make `90+` mean rare, clean, natural, premium-grade candidates.

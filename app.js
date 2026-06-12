@@ -423,8 +423,9 @@ const DEFAULT_POSITIVE_TERMS = new Map([
   ["help", 9], ["guide", 9], ["kit", 8], ["tool", 8], ["tools", 8], ["app", 8], ["forms", 8], ["form", 7],
   ["planner", 7], ["checklist", 7], ["template", 7], ["templates", 7], ["course", 6], ["academy", 5],
   ["service", 6], ["services", 6], ["shop", 6], ["store", 6], ["supply", 5], ["finder", 6], ["compare", 5],
-  ["reviews", 5], ["direct", 4], ["quote", 6], ["quotes", 6], ["estimate", 6], ["estimates", 6],
-  ["simple", 4], ["easy", 3], ["clear", 4], ["smart", 3]
+  ["reviews", 5], ["direct", 2], ["quote", 7], ["quotes", 7], ["estimate", 7], ["estimates", 7],
+  // Soft modifiers can help positioning, but they are not true buyer-intent by themselves.
+  ["simple", 2], ["easy", 1], ["clear", 2], ["smart", 1]
 ]);
 
 const DEFAULT_NEGATIVE_TERMS = new Map([
@@ -449,7 +450,8 @@ const LOW_VALUE_FILLER_WORDS = new Set([
 ]);
 
 const SOFT_MODIFIER_WORDS = new Set([
-  "easy", "simple", "smart", "clear", "quick", "fast", "my", "your", "self", "diy", "local", "direct"
+  "easy", "simple", "smart", "clear", "quick", "fast", "my", "your", "self", "diy", "local", "direct",
+  "guided", "start", "starter", "done", "own", "do"
 ]);
 
 
@@ -475,6 +477,27 @@ const TRUST_RISK_WORDS = new Set([
 
 const CTA_PREFIXES = new Set(["get", "go", "try", "use", "join", "my", "your", "the", "we"]);
 const WEAK_SUFFIXES = new Set(["online", "hub", "portal", "hq", "pro", "plus", "world", "zone", "spot", "central"]);
+
+// Rating v4 naturalness calibration. These constants keep 90+ scores rare by checking
+// whether the words form a natural, single-purpose phrase instead of just a pile of good tokens.
+const CORE_INTENT_WORDS = new Set([
+  "help", "guide", "guides", "kit", "tool", "tools", "app", "forms", "form", "planner", "checklist",
+  "template", "templates", "course", "courses", "academy", "service", "services", "shop", "store",
+  "supply", "supplies", "finder", "compare", "reviews", "review", "repair", "quote", "quotes",
+  "estimate", "estimates", "calculator", "builder", "generator", "tracker", "manager", "software",
+  "booking", "scheduler", "directory", "marketplace"
+]);
+
+const STACKABLE_INTENT_PAIRS = new Set([
+  "repair+quote", "quote+repair", "repair+estimate", "estimate+repair",
+  "service+quote", "quote+service", "service+estimate", "estimate+service",
+  "booking+scheduler", "scheduler+booking"
+]);
+
+const AWKWARD_ACTION_PREFIXES = new Set(["close", "start", "done", "guided", "guide", "file"]);
+const WEAK_POSITIONING_WORDS = new Set(["easy", "simple", "quick", "fast", "smart", "clear", "guided", "start", "starter", "done", "my", "your", "own", "do"]);
+const PROFESSIONAL_RISK_WORDS = new Set(["law", "legal", "lawyer", "attorney", "doctor", "medical", "tax", "loan", "insurance"]);
+const SENSITIVE_CATEGORY_WORDS = new Set(["probate", "estate", "will", "wills", "trust", "trusts", "legal", "law", "lawyer", "attorney", "tax", "loan", "insurance", "medical", "doctor", "health"]);
 
 const BRANDABLE_SIGNAL_WORDS = new Set([
   "app", "apps", "ai", "data", "cloud", "sync", "flow", "desk", "crm", "sales", "lead", "leads", "client", "clients",
@@ -787,7 +810,9 @@ function rawBrandScore(sldRaw, sld, len, brandableCandidate) {
 function rawIntentScore(tokenSet, sld, positiveWords, profile) {
   const hits = [];
   for (const [term, points] of DEFAULT_POSITIVE_TERMS.entries()) {
-    if (isTermMatch(term, tokenSet, sld)) hits.push(Math.min(100, points * 10));
+    if (!isTermMatch(term, tokenSet, sld)) continue;
+    const softMultiplier = SOFT_MODIFIER_WORDS.has(term) ? 6 : 10;
+    hits.push(Math.min(100, points * softMultiplier));
   }
   for (const [term, points] of Object.entries(profile.positives || {})) {
     if (isTermMatch(term, tokenSet, sld)) hits.push(Math.min(100, 55 + points * 9));
@@ -838,7 +863,10 @@ function analyzeRatingFit(ctx) {
   const targetHits = dedupeTermHits(targetKeywords.filter(k => k && isTermMatch(k, tokenSet, sld)));
   const customPositiveHits = dedupeTermHits(positiveWords.filter(w => w && isTermMatch(w, tokenSet, sld)));
   const customNegativeHits = dedupeTermHits(negativeWords.filter(w => w && isTermMatch(w, tokenSet, sld)));
-  const intentHits = dedupeTermHits(uniqueTokens.filter(t => STRONG_INTENT_WORDS.has(t) || HIGH_INTENT_WORDS.has(t) || DEFAULT_POSITIVE_TERMS.has(t) || Object.prototype.hasOwnProperty.call(profile.positives || {}, t)));
+  const intentHits = dedupeTermHits(uniqueTokens.filter(t => {
+    if (SOFT_MODIFIER_WORDS.has(t)) return false;
+    return CORE_INTENT_WORDS.has(t) || STRONG_INTENT_WORDS.has(t) || HIGH_INTENT_WORDS.has(t) || Object.prototype.hasOwnProperty.call(profile.positives || {}, t);
+  }));
   const fillerHits = dedupeTermHits(uniqueTokens.filter(t => GENERIC_LOW_SIGNAL_WORDS.has(t) || LOW_VALUE_FILLER_WORDS.has(t) || DEFAULT_NEGATIVE_TERMS.has(t) || Object.prototype.hasOwnProperty.call(profile.negatives || {}, t)));
   const modifierHits = uniqueTokens.filter(t => SOFT_MODIFIER_WORDS.has(t));
   const trustRiskHits = tokenListHits(TRUST_RISK_WORDS, tokenSet, sld);
@@ -849,6 +877,14 @@ function analyzeRatingFit(ctx) {
   const exactTargetName = targetKeywords.some(k => k && cleanKeyword(k) === sld);
   const strongIntentPresent = intentHits.length > 0 || customPositiveHits.length > 0;
   const hasOnlySoftModifiers = tokenCount > 1 && !strongIntentPresent && modifierHits.length >= 1 && fillerHits.length === 0;
+  const firstToken = tokens[0] || "";
+  const lastToken = tokens[tokens.length - 1] || "";
+  const firstIsIntent = intentHits.includes(firstToken);
+  const lastIsSoftModifier = SOFT_MODIFIER_WORDS.has(lastToken);
+  const keywordIndex = tokens.findIndex(t => targetHits.includes(t));
+  const firstIntentBeforeKeyword = firstIsIntent && keywordIndex > 0;
+  const unclearIntentStack = hasUnclearIntentStack(intentHits);
+  const naturalIntentPhrase = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack;
 
   if (exactTargetName) {
     adjustment += 8;
@@ -856,12 +892,15 @@ function analyzeRatingFit(ctx) {
   }
 
   // Reward domains that form a clean, useful phrase instead of only containing a keyword.
-  if (keywordPresent && strongIntentPresent && tokenCount >= 2 && tokenCount <= 3 && coverage >= 0.75) {
-    adjustment += 7;
+  if (keywordPresent && strongIntentPresent && naturalIntentPhrase && tokenCount >= 2 && tokenCount <= 3 && coverage >= 0.75) {
+    adjustment += 5;
     strengths.push("clean keyword + intent phrase");
-  } else if (keywordPresent && strongIntentPresent && tokenCount <= 4 && coverage >= 0.65) {
-    adjustment += 4;
+  } else if (keywordPresent && strongIntentPresent && naturalIntentPhrase && tokenCount <= 4 && coverage >= 0.65) {
+    adjustment += 3;
     strengths.push("useful keyword phrase");
+  } else if (keywordPresent && strongIntentPresent && !naturalIntentPhrase) {
+    adjustment -= 3;
+    issues.push("useful words but weaker phrase order");
   }
 
   if (!targetKeywords.length && brandableCandidate && components.brand >= Math.round(profile.weights.brand * 0.78)) {
@@ -888,6 +927,21 @@ function analyzeRatingFit(ctx) {
   if (hasOnlySoftModifiers && targetKeywords.length) {
     adjustment -= 3;
     issues.push("modifier word without clear buyer intent");
+  }
+
+  if (lastIsSoftModifier && tokenCount >= 2 && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("soft modifier at the end reads less natural");
+  }
+
+  if (firstIntentBeforeKeyword && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("intent word before keyword reads backward");
+  }
+
+  if (unclearIntentStack && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("stacked utility words reduce clarity");
   }
 
   if (fillerHits.length >= 2) {
@@ -954,6 +1008,21 @@ function analyzeRatingFit(ctx) {
   };
 }
 
+function hasUnclearIntentStack(intentHits = []) {
+  const hits = dedupeTermHits(intentHits).filter(Boolean);
+  if (hits.length < 2) return false;
+  for (let i = 0; i < hits.length; i++) {
+    for (let j = i + 1; j < hits.length; j++) {
+      if (STACKABLE_INTENT_PAIRS.has(`${hits[i]}+${hits[j]}`)) return false;
+    }
+  }
+  return true;
+}
+
+function tokenIndex(tokens, hits) {
+  return tokens.findIndex(t => hits.includes(t));
+}
+
 function analyzePhraseArchitecture(ctx) {
   const {
     sld, tokens, uniqueTokens, targetKeywords, targetHits, intentHits,
@@ -968,19 +1037,29 @@ function analyzePhraseArchitecture(ctx) {
   const hasKeyword = targetKeywords.length ? targetHits.length > 0 : false;
   const hasIntent = intentHits.length > 0 || customPositiveHits.length > 0;
   const hasFiller = fillerHits.length > 0;
-  const first = uniqueTokens[0] || "";
-  const last = uniqueTokens[uniqueTokens.length - 1] || "";
+  const first = tokens[0] || uniqueTokens[0] || "";
+  const last = tokens[tokens.length - 1] || uniqueTokens[uniqueTokens.length - 1] || "";
   const firstIsCTA = CTA_PREFIXES.has(first);
   const lastIsWeak = WEAK_SUFFIXES.has(last);
+  const lastIsSoftModifier = SOFT_MODIFIER_WORDS.has(last);
+  const firstIsAwkwardAction = AWKWARD_ACTION_PREFIXES.has(first);
+  const coreIntentHits = dedupeTermHits(uniqueTokens.filter(t => CORE_INTENT_WORDS.has(t)));
+  const keywordIndex = tokenIndex(tokens, targetHits);
+  const intentIndex = tokenIndex(tokens, coreIntentHits.length ? coreIntentHits : intentHits);
+  const firstIntentBeforeKeyword = intentIndex === 0 && keywordIndex > 0;
+  const unclearIntentStack = hasUnclearIntentStack(coreIntentHits);
+  const middleTokens = tokens.slice(1, -1);
+  const middleIsSoftOnly = middleTokens.length && middleTokens.every(t => SOFT_MODIFIER_WORDS.has(t));
+  const naturalOrder = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction;
 
   // Strong domains usually have one of these shapes:
   //   keyword + intent        (roofrepair, probateforms)
   //   modifier + keyword + intent (easymealplanner, diyestatekit)
   //   short brandable         (clean, pronounceable, low friction)
-  if (tokenCount === 2 && hasKeyword && hasIntent && !hasFiller) {
+  if (tokenCount === 2 && hasKeyword && hasIntent && !hasFiller && naturalOrder) {
     adjustment += 5;
     strengths.push("strong two-word commercial phrase");
-  } else if (tokenCount === 3 && hasKeyword && hasIntent && modifierHits.length <= 1 && fillerHits.length <= 1) {
+  } else if (tokenCount === 3 && hasKeyword && hasIntent && modifierHits.length <= 1 && fillerHits.length <= 1 && naturalOrder && !middleIsSoftOnly) {
     adjustment += 3;
     strengths.push("clear three-part phrase");
   } else if (brandableCandidate && tokenCount <= 2) {
@@ -994,6 +1073,31 @@ function analyzePhraseArchitecture(ctx) {
   } else if (tokenCount === 4 && !hasIntent) {
     adjustment -= 3;
     issues.push("longer phrase without clear action word");
+  }
+
+  if (lastIsSoftModifier && tokenCount >= 2 && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("awkward soft-modifier suffix");
+  }
+
+  if (firstIntentBeforeKeyword && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("backward word order");
+  }
+
+  if (unclearIntentStack && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("multiple utility nouns compete");
+  }
+
+  if (firstIsAwkwardAction && tokenCount >= 3 && !brandableCandidate) {
+    adjustment -= 4;
+    issues.push("awkward action prefix");
+  }
+
+  if (middleIsSoftOnly && hasKeyword && hasIntent && !brandableCandidate) {
+    adjustment -= 3;
+    issues.push("soft modifier interrupts phrase");
   }
 
   if (firstIsCTA && !hasIntent && !brandableCandidate) {
@@ -1011,7 +1115,7 @@ function analyzePhraseArchitecture(ctx) {
     issues.push("off-target for entered keywords");
   }
 
-  if (hasKeyword && hasIntent && coverage >= 0.8 && sld.length <= 15) {
+  if (hasKeyword && hasIntent && naturalOrder && coverage >= 0.8 && sld.length <= 15) {
     adjustment += 2;
     strengths.push("relevant and compact");
   }
@@ -1099,7 +1203,9 @@ function calibrateRatingScore(ctx) {
   const cleanHighEvidence = cleanStructure && compact && (brandableCandidate || (hasTarget && hasIntent));
 
   // Help very good but not perfect names break out of the high-70s without inflating weak names.
-  if (rawScore >= 74 && rawScore <= 84 && cleanHighEvidence && lowValueCount === 0 && penalty.total <= 3) {
+  const weakPhraseIssue = (phraseFit.issues || []).some(issue => /backward|stacked|soft modifier|awkward|multiple utility|weak phrase|less natural/i.test(issue));
+
+  if (rawScore >= 74 && rawScore <= 84 && cleanHighEvidence && lowValueCount === 0 && penalty.total <= 3 && !weakPhraseIssue) {
     adjustment += 3;
     strengths.push("calibrated upward for clean high-evidence name");
   }
@@ -1126,13 +1232,18 @@ function calibrateRatingScore(ctx) {
     issues.push("calibrated down for uncertain word split");
   }
 
+  if (weakPhraseIssue && rawScore >= 76 && !brandableCandidate) {
+    adjustment -= 3;
+    issues.push("calibrated down for weaker phrase naturalness");
+  }
+
   notes.push(`calibration ${adjustment >= 0 ? "+" : ""}${adjustment}`);
   return { adjustment, strengths, issues, notes };
 }
 
 function scoreCaps(ctx) {
   const { suffix, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, knownTokens = [] } = ctx;
-  let cap = 98;
+  let cap = 96;
   const reasons = [];
   function apply(value, reason) {
     if (value < cap) {
@@ -1149,6 +1260,20 @@ function scoreCaps(ctx) {
   const trustRiskHits = tokenListHits(TRUST_RISK_WORDS, tokenSet, sld);
   const ctaHits = phraseFit.fillerHits.filter(t => CTA_PREFIXES.has(t));
   const pronounce = pronounceabilityScore(sld);
+  const coreIntentHits = tokenListHits(CORE_INTENT_WORDS, tokenSet, sld);
+  const firstToken = knownTokens[0] || "";
+  const lastToken = knownTokens[knownTokens.length - 1] || "";
+  const keywordIndex = tokenIndex(knownTokens, phraseFit.targetHits || []);
+  const intentIndex = tokenIndex(knownTokens, coreIntentHits);
+  const lastIsSoftModifier = SOFT_MODIFIER_WORDS.has(lastToken);
+  const firstIntentBeforeKeyword = intentIndex === 0 && keywordIndex > 0;
+  const unclearIntentStack = hasUnclearIntentStack(coreIntentHits);
+  const firstIsAwkwardAction = AWKWARD_ACTION_PREFIXES.has(firstToken);
+  const firstIsWeakPositioning = WEAK_POSITIONING_WORDS.has(firstToken);
+  const middleHasWeakPositioning = knownTokens.slice(1, -1).some(t => WEAK_POSITIONING_WORDS.has(t));
+  const cleanPremiumShape = !sldRaw.includes("-") && !/\d/.test(sld) && coverage >= 0.8 && len >= 6 && len <= 15 && knownTokens.length >= 2 && knownTokens.length <= 3;
+  const canonicalKeywordIntent = targetEvidence && intentEvidence && cleanPremiumShape && !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction && phraseFit.fillerHits.length === 0;
+  const exactOrPremiumBrandable = exactTargetName || (brandableCandidate && len <= 12 && pronounce >= 78);
 
   if (targetKeywords.length && components.keyword === 0 && !profile.keywordOptional) apply(78, "no target keyword");
   if (coverage < 0.45 && !brandableCandidate) apply(76, "harder to read");
@@ -1164,9 +1289,25 @@ function scoreCaps(ctx) {
   if (pronounce < 45 && coverage < 0.5 && !brandableCandidate) apply(55, "hard to say and hard to parse");
   if (pronounce < 25 && !brandableCandidate) apply(48, "unpronounceable name");
   if (knownTokens.length >= 4 && !intentEvidence) apply(76, "too many words without intent");
-  const lastToken = knownTokens[knownTokens.length - 1] || "";
   if (WEAK_SUFFIXES.has(lastToken) && !brandableCandidate) apply(intentEvidence ? 84 : 78, "weak generic suffix");
   if (knownTokens.length >= 3 && phraseFit.fillerHits.length && targetEvidence && !brandableCandidate) apply(86, "extra generic word");
+
+  // Naturalness gates: a keyword + intent match can be good, but 90+ should require
+  // a clean, natural phrase rather than reversed words, stacked utilities, or soft suffixes.
+  if (lastIsSoftModifier && !brandableCandidate) apply(84, "soft modifier suffix");
+  if (firstIntentBeforeKeyword && !brandableCandidate) apply(84, "backward word order");
+  if (unclearIntentStack && !brandableCandidate) apply(86, "stacked utility words");
+  if (firstIsAwkwardAction && knownTokens.length >= 3 && !brandableCandidate) apply(84, "awkward action prefix");
+  if (firstIsWeakPositioning && intentEvidence && targetEvidence && !brandableCandidate) apply(89, "soft positioning prefix");
+  if (middleHasWeakPositioning && intentEvidence && targetEvidence && !brandableCandidate) apply(86, "soft modifier interrupts phrase");
+  if (intentEvidence && targetEvidence && !canonicalKeywordIntent && !exactOrPremiumBrandable && !brandableCandidate) apply(89, "not a natural premium-grade phrase");
+
+  const professionalRiskHits = tokenListHits(PROFESSIONAL_RISK_WORDS, tokenSet, sld);
+  const sensitiveHits = tokenListHits(SENSITIVE_CATEGORY_WORDS, tokenSet, sld);
+  if (professionalRiskHits.length && (isTermMatch("tool", tokenSet, sld) || isTermMatch("app", tokenSet, sld) || isTermMatch("ai", tokenSet, sld) || isTermMatch("easy", tokenSet, sld) || isTermMatch("done", tokenSet, sld))) {
+    apply(profile.strictTrust ? 78 : 86, "professional/trust wording needs review");
+  }
+  if (sensitiveHits.length && isTermMatch("ai", tokenSet, sld) && !brandableCandidate) apply(88, "AI with sensitive category");
 
   // TLDs are part of the rating, not just a component. Strong alternatives can still score well,
   // but only .com should be able to reach the very top of a general-purpose shortlist.
@@ -1196,7 +1337,7 @@ function scoreCaps(ctx) {
 
   // Top-tier scores should require positive evidence, not merely the absence of problems.
   if (phraseFit) {
-    const hasCleanTopEvidence = brandableCandidate || exactTargetName || (targetEvidence && intentEvidence && phraseFit.fillerHits.length === 0);
+    const hasCleanTopEvidence = exactOrPremiumBrandable || canonicalKeywordIntent;
     if (phraseFit.adjustment <= -5 && !brandableCandidate) apply(82, "weak phrase quality");
     if (targetKeywords.length && phraseFit.targetHits.length && !intentEvidence && !brandableCandidate && !exactTargetName) {
       apply(84, "keyword lacks clear intent support");
