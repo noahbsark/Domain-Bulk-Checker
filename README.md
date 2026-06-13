@@ -113,3 +113,8 @@ This is a rating-system-only change. Availability checking and the rest of the w
 This version is a scoring-focused update. It adds a visible/exported scoring version, cache-busts the app script for GitHub Pages, and tightens top-end scoring so 90+ scores are harder to earn. It is especially more cautious with sensitive-category domains combined with AI/app/tool/platform words, awkward plural-owner phrases like `executorsapp.com`, and generic platform suffixes like `base`, `stack`, `desk`, `pilot`, and `flow` outside Brandable/SaaS mode.
 
 CSV export now includes `scoring_version` and the richer audit fields already present in the app: batch rank, percentile, component scores, penalties, caps, token coverage, and detected tokens.
+
+
+## Scoring v7 notes
+
+This version tightens top-end scoring only. It adds stricter premium gates for 90+ scores, stronger caution for sensitive-category domains using AI/app/tool/platform language, penalties for awkward plural-owner product phrases, penalties for weak pronoun phrases such as `settleithelp`, and more conservative handling of keyword + soft modifier + intent order such as `probatediykit`. CSV exports include the scoring version and audit columns so future score reviews can confirm which model generated the results.
