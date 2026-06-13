@@ -1,17 +1,32 @@
-# Domain Bulk Checker — performance v10
+# Domain Shortlist
 
-Static GitHub Pages app for checking domain availability and scoring domains.
+A static GitHub Pages app for bulk domain triage.
 
-## Performance-focused changes
+## What it does
 
-This version keeps the scoring logic from v9, but makes large result batches smoother in the browser:
+- Paste domains, URLs, or upload TXT/CSV files
+- Normalize URLs to registrable domains
+- Check public RDAP first and DNS fallback second
+- Rank domain quality with explainable scores
+- Show batch rank / top picks
+- Favorite shortlisted names
+- Export all results, favorites, or top picks
+- Open registrar lookup links in bulk
+- Render large batches in chunks for better performance
 
-- Renders only the first 250 filtered rows by default.
-- Adds **Show more rows** and **Show all rows** controls.
-- Keeps copy/export/open actions working on the full filtered result set, not just the rendered rows.
-- Throttles result-table redraws while checks are running so the browser is not rebuilding hundreds/thousands of rows after every single domain.
-- Adds cache busting in `index.html` so GitHub Pages is less likely to serve an older `app.js`.
+## Public beta notes
 
-## Notes
+This app is a browser-only static site. It has no backend server, no database, and no registrar API key.
 
-If a batch has thousands of rows, keep the table rendered to the first few hundred while reviewing/filtering. Export CSV, copy visible domains, open visible links, and top-pick actions still operate on the full underlying results.
+Availability is an estimate from public RDAP/DNS checks. A domain marked `possibly_available` still needs to be confirmed at a registrar before purchase. Pricing is not live in this app.
+
+## Privacy
+
+Pasted lists and saved sessions stay in the browser's local storage. Availability checks may contact public RDAP/DNS services, and registrar links open external websites.
+
+## Scoring
+
+The quality score is a heuristic ranking based on TLD, length, target keyword fit, clarity, brandability, buyer intent, word order, comparison-phrase quality, and penalties. It is not a market valuation or trademark check.
+
+Current scoring model: `v9-word-order-category-calibration-2026-06-13`.
+Public polish/performance version: `public-beta-v11-polish-performance-2026-06-13`.

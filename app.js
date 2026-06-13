@@ -1,4 +1,4 @@
-/* No-Key Domain Bulk Checker - static GitHub Pages app */
+/* Domain Shortlist - public beta static GitHub Pages app */
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -28,7 +28,7 @@ const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
 const SCORING_VERSION = "v9-word-order-category-calibration-2026-06-13";
-const APP_PERFORMANCE_VERSION = "perf-v10-render-throttle-2026-06-13";
+const APP_PERFORMANCE_VERSION = "public-beta-v11-polish-performance-2026-06-13";
 const INITIAL_RENDER_LIMIT = 250;
 const RENDER_LIMIT_STEP = 250;
 const CHECK_RENDER_INTERVAL_MS = 350;
@@ -45,6 +45,7 @@ const el = {
   delayInput: document.getElementById("delayInput"),
   timeoutInput: document.getElementById("timeoutInput"),
   keywordsInput: document.getElementById("keywordsInput"),
+  registrarInput: document.getElementById("registrarInput"),
   useRdapInput: document.getElementById("useRdapInput"),
   useDnsInput: document.getElementById("useDnsInput"),
   dedupeInput: document.getElementById("dedupeInput"),
@@ -64,6 +65,7 @@ const el = {
   openFavoritesBtn: document.getElementById("openFavoritesBtn"),
   exportBtn: document.getElementById("exportBtn"),
   exportFavoritesBtn: document.getElementById("exportFavoritesBtn"),
+  exportTopPicksBtn: document.getElementById("exportTopPicksBtn"),
   copyAvailableBtn: document.getElementById("copyAvailableBtn"),
   copyFavoritesBtn: document.getElementById("copyFavoritesBtn"),
   copyVisibleBtn: document.getElementById("copyVisibleBtn"),
@@ -182,6 +184,47 @@ function secondLevelName(domain) {
 
 function namecheapUrl(domain) {
   return `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`;
+}
+
+const REGISTRARS = {
+  namecheap: {
+    label: "Namecheap",
+    url: domain => `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`
+  },
+  porkbun: {
+    label: "Porkbun",
+    url: domain => `https://porkbun.com/checkout/search?q=${encodeURIComponent(domain)}`
+  },
+  godaddy: {
+    label: "GoDaddy",
+    url: domain => `https://www.godaddy.com/domainsearch/find?domainToCheck=${encodeURIComponent(domain)}`
+  },
+  dynadot: {
+    label: "Dynadot",
+    url: domain => `https://www.dynadot.com/domain/search?domain=${encodeURIComponent(domain)}`
+  },
+  namesilo: {
+    label: "NameSilo",
+    url: domain => `https://www.namesilo.com/domain/search-domains?query=${encodeURIComponent(domain)}`
+  }
+};
+
+function selectedRegistrarKey() {
+  const key = el.registrarInput?.value || "namecheap";
+  return REGISTRARS[key] ? key : "namecheap";
+}
+
+function selectedRegistrarLabel() {
+  return REGISTRARS[selectedRegistrarKey()].label;
+}
+
+function registrarUrl(domain) {
+  if (!domain) return "";
+  return REGISTRARS[selectedRegistrarKey()].url(domain);
+}
+
+function resultRegistrarUrl(row) {
+  return row?.normalized_domain ? registrarUrl(row.normalized_domain) : (row?.registrar_url || row?.namecheap_url || "");
 }
 
 function classForStatus(status) {
@@ -2225,6 +2268,9 @@ function enhanceResult(result) {
     token_coverage: score.token_coverage ?? "",
     detected_tokens: score.detected_tokens ?? "",
     scoring_style: score.style || getScoringProfile().label,
+    namecheap_url: result.normalized_domain ? namecheapUrl(result.normalized_domain) : (result.namecheap_url || ""),
+    registrar_url: result.normalized_domain ? registrarUrl(result.normalized_domain) : (result.registrar_url || result.namecheap_url || ""),
+    registrar_name: selectedRegistrarLabel(),
     scoring_version: SCORING_VERSION,
     scoring_settings_key: scoringSettingsKey()
   };
@@ -2407,6 +2453,8 @@ async function checkDomain(row, options) {
       input: row.input,
       normalized_domain: row.domain || "",
       namecheap_url: row.domain ? namecheapUrl(row.domain) : "",
+      registrar_url: row.domain ? registrarUrl(row.domain) : "",
+      registrar_name: selectedRegistrarLabel(),
       availability_status: "invalid_input",
       available: null,
       check_source: "normalizer",
@@ -2453,6 +2501,8 @@ function toResult(row, check, checkedAt) {
     input: row.input,
     normalized_domain: row.domain,
     namecheap_url: namecheapUrl(row.domain),
+    registrar_url: registrarUrl(row.domain),
+    registrar_name: selectedRegistrarLabel(),
     availability_status: check.status,
     available: check.available,
     check_source: check.source || "",
@@ -2536,7 +2586,7 @@ async function runChecks() {
     updateSummary();
     setChecking(false);
     const endText = stopRequested ? `Stopped. Checked ${results.length}/${rows.length} rows.` : `Done. Checked ${results.length} rows.`;
-    setStatus(`${endText} Favorite, filter, remove taken rows, open links, copy, or export CSV.`);
+    setStatus(`${endText} Favorite, filter, remove taken rows, open registrar links, copy, or export CSV.`);
     saveState();
   }
 }
@@ -2670,8 +2720,9 @@ function renderResults() {
     const availableText = result.available === true ? "True" : result.available === false ? "False" : "";
     const favorite = favorites.has(result.normalized_domain);
     const starTitle = favorite ? "Remove from favorites" : "Add to favorites";
-    const linkHtml = result.namecheap_url
-      ? `<a class="link-pill" href="${escapeAttr(result.namecheap_url)}" target="_blank" rel="noopener noreferrer">Open</a>`
+    const lookupUrl = resultRegistrarUrl(result);
+    const linkHtml = lookupUrl
+      ? `<a class="link-pill" href="${escapeAttr(lookupUrl)}" target="_blank" rel="noopener noreferrer">Open</a>`
       : "";
     return `<tr class="${cls}" data-domain="${escapeAttr(result.normalized_domain)}">
       <td><button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(result.normalized_domain)}" title="${starTitle}">${favorite ? "★" : "☆"}</button></td>
@@ -2755,9 +2806,9 @@ function showAllRows() {
 }
 
 function openLinks(rows, label) {
-  const links = [...new Set(rows.filter(Boolean).map(r => r.namecheap_url).filter(Boolean))];
+  const links = [...new Set(rows.filter(Boolean).map(resultRegistrarUrl).filter(Boolean))];
   if (!links.length) {
-    setStatus(`No ${label} Namecheap links to open.`);
+    setStatus(`No ${label} ${selectedRegistrarLabel()} links to open.`);
     return;
   }
   if (links.length > 10 && !confirm(`Open ${links.length} browser tabs? Your browser may block popups or slow down.`)) {
@@ -2769,7 +2820,7 @@ function openLinks(rows, label) {
     const win = window.open(link, "_blank", "noopener,noreferrer");
     if (win) opened += 1;
   }
-  setStatus(`Opened ${opened}/${links.length} ${label} Namecheap links. If some did not open, allow popups for this site.`);
+  setStatus(`Opened ${opened}/${links.length} ${label} ${selectedRegistrarLabel()} links. If some did not open, allow popups for this site.`);
 }
 
 async function copyText(text, label) {
@@ -2804,8 +2855,8 @@ function copyVisible() {
 }
 
 function copyVisibleLinks() {
-  const links = [...new Set(displayedResults().map(r => r.namecheap_url).filter(Boolean))];
-  copyText(links.join("\n"), "visible Namecheap links");
+  const links = [...new Set(displayedResults().map(resultRegistrarUrl).filter(Boolean))];
+  copyText(links.join("\n"), `visible ${selectedRegistrarLabel()} links`);
 }
 
 function topPickLimit() {
@@ -2839,7 +2890,12 @@ function openTopPicks() {
 }
 
 function exportCsv(scope = "all") {
-  const rows = applyBatchMetrics(scope === "favorites" ? results.filter(r => r && favorites.has(r.normalized_domain)) : results.filter(Boolean));
+  const rows = applyBatchMetrics(
+    scope === "favorites" ? results.filter(r => r && favorites.has(r.normalized_domain)) :
+    scope === "top_picks" ? topPickRows() :
+    scope === "visible" ? displayedResults() :
+    results.filter(Boolean)
+  );
   if (!rows.length) {
     setStatus(scope === "favorites" ? "No favorites to export." : "No results to export.");
     return;
@@ -2851,7 +2907,7 @@ function exportCsv(scope = "all") {
     "tld_score", "length_score", "keyword_score", "clarity_score", "brand_score", "intent_score", "fit_score",
     "phrase_adjustment", "calibration_adjustment", "penalty_total", "penalty_reasons", "score_cap", "cap_reasons",
     "token_count", "token_coverage", "detected_tokens", "score_components", "score_notes",
-    "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
+    "registrar_name", "registrar_url", "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
   ];
   const csv = [
     columns.join(","),
@@ -2859,6 +2915,8 @@ function exportCsv(scope = "all") {
       const enhanced = row;
       return columns.map(col => {
         if (col === "favorite") return csvCell(favorites.has(enhanced.normalized_domain) ? "yes" : "");
+        if (col === "registrar_name") return csvCell(selectedRegistrarLabel());
+        if (col === "registrar_url") return csvCell(resultRegistrarUrl(enhanced));
         return csvCell(enhanced[col]);
       }).join(",");
     })
@@ -2868,7 +2926,7 @@ function exportCsv(scope = "all") {
   const a = document.createElement("a");
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   a.href = url;
-  a.download = scope === "favorites" ? `domain-favorites-${stamp}.csv` : `domain-results-${stamp}.csv`;
+  a.download = scope === "favorites" ? `domain-favorites-${stamp}.csv` : scope === "top_picks" ? `domain-top-picks-${stamp}.csv` : `domain-results-${stamp}.csv`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -2919,6 +2977,7 @@ function currentSettings() {
     delay: el.delayInput.value,
     timeout: el.timeoutInput.value,
     keywords: el.keywordsInput.value,
+    registrar: el.registrarInput?.value || "namecheap",
     scoringStyle: el.scoringStyleInput?.value || "general",
     positiveWords: el.positiveWordsInput?.value || "",
     negativeWords: el.negativeWordsInput?.value || "",
@@ -2941,6 +3000,7 @@ function applySettings(settings = {}) {
   if (settings.delay !== undefined) el.delayInput.value = settings.delay;
   if (settings.timeout !== undefined) el.timeoutInput.value = settings.timeout;
   if (settings.keywords !== undefined) el.keywordsInput.value = settings.keywords;
+  if (settings.registrar !== undefined && el.registrarInput) el.registrarInput.value = REGISTRARS[settings.registrar] ? settings.registrar : "namecheap";
   if (settings.scoringStyle !== undefined && el.scoringStyleInput) el.scoringStyleInput.value = settings.scoringStyle;
   if (settings.positiveWords !== undefined && el.positiveWordsInput) el.positiveWordsInput.value = settings.positiveWords;
   if (settings.negativeWords !== undefined && el.negativeWordsInput) el.negativeWordsInput.value = settings.negativeWords;
@@ -3076,16 +3136,17 @@ function bindEvents() {
   });
   el.pasteDemoBtn.addEventListener("click", () => {
     el.inputBox.value = [
-      "doyourownprobate.com",
-      "probateprogram.com",
-      "probatetool.com",
-      "probateforless.com",
-      "probate-helper-247.com",
-      "easyestatefiling.com"
+      "rentorbuyguide.com",
+      "buyvsrentcalculator.com",
+      "diyprobatekit.com",
+      "example.com",
+      "google.com",
+      "probate-helper-247.com"
     ].join("\n");
-    el.keywordsInput.value = "probate, estate";
+    el.keywordsInput.value = "rent, buy, probate";
     rescoreResults();
     updateInputCount();
+    setStatus("Loaded sample domains. Click Check pasted links to try the workflow.");
   });
 
   el.checkBtn.addEventListener("click", runChecks);
@@ -3100,6 +3161,7 @@ function bindEvents() {
   el.openFavoritesBtn.addEventListener("click", () => openLinks(results.filter(r => r && favorites.has(r.normalized_domain)), "favorite"));
   el.exportBtn.addEventListener("click", () => exportCsv("all"));
   el.exportFavoritesBtn.addEventListener("click", () => exportCsv("favorites"));
+  if (el.exportTopPicksBtn) el.exportTopPicksBtn.addEventListener("click", () => exportCsv("top_picks"));
   el.copyAvailableBtn.addEventListener("click", copyAvailable);
   el.copyFavoritesBtn.addEventListener("click", copyFavorites);
   el.copyVisibleBtn.addEventListener("click", copyVisible);
@@ -3123,6 +3185,14 @@ function bindEvents() {
   for (const control of optionControls.filter(Boolean)) {
     control.addEventListener("change", saveState);
     control.addEventListener("input", saveState);
+  }
+
+  if (el.registrarInput) {
+    el.registrarInput.addEventListener("change", () => {
+      renderResults();
+      saveState();
+      setStatus(`Registrar links changed to ${selectedRegistrarLabel()}.`);
+    });
   }
 
   const scoringControls = [el.keywordsInput, el.scoringStyleInput, el.positiveWordsInput, el.negativeWordsInput];

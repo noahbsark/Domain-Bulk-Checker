@@ -383,3 +383,95 @@ tr.empty { background: #fff; color: var(--muted); text-align: center; }
 .results-actions button {
   padding: 7px 10px;
 }
+
+/* Public beta polish */
+.badge-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.subtle-badge {
+  color: #374151;
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+.hero-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.hero-steps span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 750;
+}
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.trust-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.trust-card strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 15px;
+}
+.trust-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.intro-panel {
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+.steps-list {
+  margin: 10px 0 0 20px;
+  padding: 0;
+  line-height: 1.55;
+  color: #374151;
+}
+.workflow-callout {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 12px;
+  padding: 10px 12px;
+  line-height: 1.4;
+}
+.public-note {
+  border-left: 6px solid var(--warning);
+}
+.faq-panel details {
+  border-top: 1px solid #e5e7eb;
+  padding: 12px 0;
+}
+.faq-panel details:first-of-type {
+  margin-top: 8px;
+}
+.faq-panel summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.faq-panel p {
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  .trust-grid { grid-template-columns: 1fr; }
+  .badge-group { justify-content: flex-start; }
+}

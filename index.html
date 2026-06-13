@@ -3,20 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>No-Key Domain Bulk Checker</title>
+  <title>Domain Shortlist — Bulk Domain Checker</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="shell">
     <header class="hero">
       <div>
-        <h1>No-Key Domain Bulk Checker</h1>
+        <h1>Domain Shortlist</h1>
         <p>
-          Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with explanations, shortlist favorites, and open Namecheap lookup links in bulk.
+          Paste domains or URLs, find names that appear unregistered, rank the best candidates, and open registrar lookup links in bulk.
         </p>
+        <div class="hero-steps" aria-label="Workflow">
+          <span>1. Paste names</span>
+          <span>2. Check availability</span>
+          <span>3. Shortlist top picks</span>
+        </div>
       </div>
-      <div class="badge">Scoring v7</div>
+      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v9 · Performance v10</div></div>
     </header>
+
+    <section class="trust-grid" aria-label="Privacy and accuracy notes">
+      <div class="trust-card">
+        <strong>Private by design</strong>
+        <span>Your list is processed in your browser. There is no backend database in this static GitHub Pages app.</span>
+      </div>
+      <div class="trust-card">
+        <strong>Use as a filter</strong>
+        <span>Availability is estimated from public RDAP/DNS checks. Always confirm at a registrar before buying.</span>
+      </div>
+      <div class="trust-card">
+        <strong>Built for big batches</strong>
+        <span>Large lists render in chunks so 1,000+ domain batches stay usable.</span>
+      </div>
+    </section>
+
+    <section class="panel intro-panel">
+      <h2>How to use it</h2>
+      <ol class="steps-list">
+        <li><strong>Paste</strong> generated names, domains, or full URLs.</li>
+        <li><strong>Add target keywords</strong> to tune the quality score for your niche.</li>
+        <li><strong>Check</strong>, then use <strong>Show top picks</strong>, favorites, exports, or registrar links.</li>
+      </ol>
+    </section>
 
     <section class="panel">
       <div class="panel-title-row">
@@ -28,7 +57,7 @@
         <button id="loadTxtBtn" type="button">Load TXT/CSV</button>
         <input id="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" hidden />
         <button id="clearInputBtn" type="button">Clear input</button>
-        <button id="pasteDemoBtn" type="button" class="ghost">Paste demo</button>
+        <button id="pasteDemoBtn" type="button" class="ghost">Load sample domains</button>
       </div>
     </section>
 
@@ -45,7 +74,16 @@
           <input id="timeoutInput" type="number" min="1000" max="60000" value="12000" />
         </label>
         <label class="wide">Target keywords / phrases
-          <input id="keywordsInput" type="text" placeholder="probate, estate, will" />
+          <input id="keywordsInput" type="text" placeholder="rent, buy, calculator" />
+        </label>
+        <label>Registrar links
+          <select id="registrarInput">
+            <option value="namecheap">Namecheap</option>
+            <option value="porkbun">Porkbun</option>
+            <option value="godaddy">GoDaddy</option>
+            <option value="dynadot">Dynadot</option>
+            <option value="namesilo">NameSilo</option>
+          </select>
         </label>
         <label class="check"><input id="useRdapInput" type="checkbox" checked /> Try RDAP first</label>
         <label class="check"><input id="useDnsInput" type="checkbox" checked /> Use DNS fallback</label>
@@ -87,12 +125,16 @@
     </section>
 
     <section class="panel actions-panel">
+      <div class="workflow-callout">
+        <strong>Recommended public workflow:</strong>
+        Check the batch → click <strong>Show top picks</strong> → star your shortlist → export or open registrar links.
+      </div>
       <div class="button-row wrap">
         <button id="checkBtn" type="button" class="primary">Check pasted links</button>
         <button id="stopBtn" type="button" class="ghost" disabled>Stop</button>
         <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
         <button id="keepAvailableBtn" type="button" class="success ghost">Keep available only</button>
-        <button id="openAllBtn" type="button" class="success">Open ALL visible Namecheap links</button>
+        <button id="openAllBtn" type="button" class="success">Open ALL visible registrar links</button>
         <button id="openAvailableBtn" type="button" class="success ghost">Open available only</button>
         <button id="openFavoritesBtn" type="button" class="success ghost">Open favorites</button>
       </div>
@@ -100,12 +142,13 @@
         <button id="copyAvailableBtn" type="button">Copy available domains</button>
         <button id="copyFavoritesBtn" type="button">Copy favorites</button>
         <button id="copyVisibleBtn" type="button">Copy visible domains</button>
-        <button id="copyLinksBtn" type="button">Copy visible Namecheap links</button>
+        <button id="copyLinksBtn" type="button">Copy visible registrar links</button>
         <button id="showTopPicksBtn" type="button">Show top picks</button>
         <button id="copyTopPicksBtn" type="button">Copy top picks</button>
         <button id="openTopPicksBtn" type="button">Open top picks</button>
         <button id="exportBtn" type="button">Export CSV</button>
         <button id="exportFavoritesBtn" type="button">Export favorites</button>
+        <button id="exportTopPicksBtn" type="button">Export top picks</button>
         <button id="clearSessionBtn" type="button" class="ghost">Clear saved session</button>
       </div>
       <div class="status-row">
@@ -168,7 +211,7 @@
       <div class="panel-title-row results-title-row">
         <h2>Results</h2>
         <div class="results-actions">
-          <span class="muted">Scores are explainable. Star favorites, filter top picks, then open or export your shortlist.</span>
+          <span class="muted">Scores are for triage, not guarantees. Star favorites, filter top picks, then open or export your shortlist.</span>
           <span id="renderedCount" class="muted">0 rendered</span>
           <button id="showMoreBtn" type="button" class="ghost" disabled>Show more rows</button>
           <button id="showAllRowsBtn" type="button" class="ghost" disabled>Show all rows</button>
@@ -186,7 +229,7 @@
               <th>Why score?</th>
               <th>Status</th>
               <th>Available?</th>
-              <th>Namecheap</th>
+              <th>Registrar</th>
               <th>TLD</th>
               <th>Name length</th>
               <th>Check source</th>
@@ -200,15 +243,38 @@
       </div>
     </section>
 
-    <section class="panel note">
-      <h2>Important limitation</h2>
+    <section class="panel note public-note">
+      <h2>Important limitations</h2>
       <p>
-        This is a static browser app. It has no API key and no backend. RDAP or DNS results are only a filter.
-        Anything marked <strong>possibly available</strong> still needs confirmation on Namecheap before purchase.
+        This is a static browser app with no registrar API key and no backend. RDAP/DNS results are useful for filtering, but
+        <strong>possibly available</strong> means “worth checking,” not “guaranteed purchasable.” Confirm availability and price at a registrar before buying.
       </p>
+      <p>
+        Privacy: pasted lists and saved sessions stay in this browser's local storage. Availability checks still contact public RDAP/DNS services, and registrar buttons open external sites.
+      </p>
+    </section>
+
+    <section class="panel faq-panel">
+      <h2>FAQ</h2>
+      <details>
+        <summary>Are the results guaranteed?</summary>
+        <p>No. Treat this as a fast triage tool. A registrar can still mark a domain premium, reserved, blocked, or unavailable.</p>
+      </details>
+      <details>
+        <summary>Why does it say “possibly available”?</summary>
+        <p>Public RDAP/DNS checks suggest the name may not be registered. The app cannot complete a live checkout or reserve the domain.</p>
+      </details>
+      <details>
+        <summary>What does the quality score mean?</summary>
+        <p>It is a heuristic ranking based on length, TLD, keywords, clarity, brandability, buyer intent, word order, and penalties. It is not a market valuation.</p>
+      </details>
+      <details>
+        <summary>Can I check thousands of domains?</summary>
+        <p>Yes, but go slowly. Public RDAP/DNS services may rate-limit requests. The table renders in chunks to reduce browser lag.</p>
+      </details>
     </section>
   </main>
 
-  <script src="app.js?v=7-premium-gates-word-order"></script>
+  <script src="app.js?v=11-public-beta-polish"></script>
 </body>
 </html>
