@@ -27,7 +27,7 @@ const SPECIAL_SUFFIXES = new Set([
 const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
-const STATE_KEY = "domainCheckerStateV3";
+const STATE_KEY = "domainCheckerStateV5";
 
 const el = {
   inputBox: document.getElementById("inputBox"),
@@ -420,7 +420,7 @@ const GENERIC_DOMAIN_WORDS = [
 ];
 
 const DEFAULT_POSITIVE_TERMS = new Map([
-  ["help", 9], ["guide", 9], ["kit", 8], ["tool", 8], ["tools", 8], ["app", 8], ["forms", 8], ["form", 7],
+  ["help", 9], ["guide", 9], ["kit", 8], ["tool", 7], ["tools", 7], ["app", 5], ["apps", 5], ["forms", 8], ["form", 7],
   ["planner", 7], ["checklist", 7], ["template", 7], ["templates", 7], ["course", 6], ["academy", 5],
   ["service", 6], ["services", 6], ["shop", 6], ["store", 6], ["supply", 5], ["finder", 6], ["compare", 5],
   ["reviews", 5], ["direct", 2], ["quote", 7], ["quotes", 7], ["estimate", 7], ["estimates", 7],
@@ -437,7 +437,7 @@ const DEFAULT_NEGATIVE_TERMS = new Map([
 // Rating calibration helpers. These are intentionally general-purpose, not niche-specific.
 // They make the quality score care more about phrase usefulness and less about one lucky keyword match.
 const HIGH_INTENT_WORDS = new Set([
-  "help", "guide", "guides", "kit", "tool", "tools", "app", "forms", "form", "planner", "checklist",
+  "help", "guide", "guides", "kit", "tool", "tools", "app", "forms", "form", "planner", "plan", "plans", "checklist",
   "template", "templates", "course", "courses", "academy", "service", "services", "shop", "store",
   "supply", "supplies", "finder", "compare", "reviews", "review", "repair", "quote", "estimate",
   "calculator", "builder", "generator", "tracker", "manager", "software", "quote", "quotes", "estimate", "estimates"
@@ -481,7 +481,7 @@ const WEAK_SUFFIXES = new Set(["online", "hub", "portal", "hq", "pro", "plus", "
 // Rating v4 naturalness calibration. These constants keep 90+ scores rare by checking
 // whether the words form a natural, single-purpose phrase instead of just a pile of good tokens.
 const CORE_INTENT_WORDS = new Set([
-  "help", "guide", "guides", "kit", "tool", "tools", "app", "forms", "form", "planner", "checklist",
+  "help", "guide", "guides", "kit", "tool", "tools", "app", "forms", "form", "planner", "plan", "plans", "checklist",
   "template", "templates", "course", "courses", "academy", "service", "services", "shop", "store",
   "supply", "supplies", "finder", "compare", "reviews", "review", "repair", "quote", "quotes",
   "estimate", "estimates", "calculator", "builder", "generator", "tracker", "manager", "software",
@@ -497,7 +497,39 @@ const STACKABLE_INTENT_PAIRS = new Set([
 const AWKWARD_ACTION_PREFIXES = new Set(["close", "start", "done", "guided", "guide", "file"]);
 const WEAK_POSITIONING_WORDS = new Set(["easy", "simple", "quick", "fast", "smart", "clear", "guided", "start", "starter", "done", "my", "your", "own", "do"]);
 const PROFESSIONAL_RISK_WORDS = new Set(["law", "legal", "lawyer", "attorney", "doctor", "medical", "tax", "loan", "insurance"]);
-const SENSITIVE_CATEGORY_WORDS = new Set(["probate", "estate", "will", "wills", "trust", "trusts", "legal", "law", "lawyer", "attorney", "tax", "loan", "insurance", "medical", "doctor", "health"]);
+const SENSITIVE_CATEGORY_WORDS = new Set([
+  "probate", "estate", "will", "wills", "trust", "trusts", "executor", "executors", "heir", "heirs", "heirship",
+  "inheritance", "affidavit", "court", "legal", "law", "lawyer", "attorney", "tax", "irs", "1099", "401k",
+  "loan", "credit", "mortgage", "insurance", "medical", "doctor", "health", "therapy"
+]);
+
+// Rating v5 top-end calibration. Platform/software nouns can be strong in SaaS mode,
+// but they should not automatically make sensitive or service domains look premium.
+const PLATFORM_SOFTWARE_WORDS = new Set([
+  "ai", "app", "apps", "tool", "tools", "software", "platform", "dashboard", "desk", "base", "stack", "pilot", "flow", "cloud", "data", "sync", "crm"
+]);
+
+const PLATFORM_GENERIC_WORDS = new Set(["desk", "base", "stack", "pilot", "flow", "hub", "portal", "platform"]);
+
+const DIRECT_USEFULNESS_WORDS = new Set([
+  "help", "guide", "guides", "kit", "forms", "form", "checklist", "planner", "template", "templates",
+  "course", "courses", "quote", "quotes", "estimate", "estimates", "calculator", "repair", "service", "services",
+  "shop", "store", "finder", "compare", "booking", "scheduler", "directory", "marketplace"
+]);
+
+const PRODUCT_NOUN_WORDS = new Set([
+  "app", "apps", "tool", "tools", "kit", "forms", "form", "guide", "guides", "help", "plan", "plans", "course", "courses",
+  "checklist", "planner", "template", "templates", "software", "platform", "desk", "base", "stack", "dashboard"
+]);
+
+const PLURAL_OWNER_WORDS = new Set([
+  "executors", "heirs", "clients", "patients", "customers", "owners", "parents", "seniors", "buyers", "sellers",
+  "renters", "tenants", "contractors", "lawyers", "attorneys", "doctors", "agents"
+]);
+
+const SAFE_PLURAL_PRODUCT_WORDS = new Set([
+  "forms", "guides", "tools", "templates", "courses", "services", "supplies", "reviews", "quotes", "estimates", "apps"
+]);
 
 const BRANDABLE_SIGNAL_WORDS = new Set([
   "app", "apps", "ai", "data", "cloud", "sync", "flow", "desk", "crm", "sales", "lead", "leads", "client", "clients",
@@ -696,12 +728,21 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
     components,
     strengths,
     issues,
-    style: profile.label
+    style: profile.label,
+    phrase_adjustment: phraseFit.adjustment,
+    calibration_adjustment: calibration.adjustment,
+    penalty_total: penalty.total,
+    penalty_reasons: penalty.reasons.join("; "),
+    score_cap: capInfo.cap,
+    cap_reasons: capInfo.reasons.join("; "),
+    token_count: knownTokens.length,
+    token_coverage: coverage.toFixed(2),
+    detected_tokens: knownTokens.join("+")
   };
 }
 
 function scoreResult(score, label, explanation, components, notes) {
-  return { score, label, explanation, components, notes, strengths: [], issues: [], style: getScoringProfile().label };
+  return { score, label, explanation, components, notes, strengths: [], issues: [], style: getScoringProfile().label, phrase_adjustment: 0, calibration_adjustment: 0, penalty_total: 0, penalty_reasons: "", score_cap: score, cap_reasons: "", token_count: 0, token_coverage: "", detected_tokens: "" };
 }
 
 function weightedScore(raw0to100, weight) {
@@ -870,6 +911,11 @@ function analyzeRatingFit(ctx) {
   const fillerHits = dedupeTermHits(uniqueTokens.filter(t => GENERIC_LOW_SIGNAL_WORDS.has(t) || LOW_VALUE_FILLER_WORDS.has(t) || DEFAULT_NEGATIVE_TERMS.has(t) || Object.prototype.hasOwnProperty.call(profile.negatives || {}, t)));
   const modifierHits = uniqueTokens.filter(t => SOFT_MODIFIER_WORDS.has(t));
   const trustRiskHits = tokenListHits(TRUST_RISK_WORDS, tokenSet, sld);
+  const platformHits = hasPlatformSoftwareSignal(tokenSet, sld);
+  const directUsefulnessHits = hasDirectUsefulnessSignal(tokenSet, sld);
+  const pluralOwnerProduct = hasPluralOwnerProductPattern(tokens);
+  const sensitivePlatformMismatch = isSensitivePlatformMismatch(profile, tokenSet, sld);
+  const platformContextIssue = platformWordContextIssue(profile, tokenSet, sld);
 
   const tokenCount = tokens.length;
   const duplicateCount = tokenCount - uniqueTokens.length;
@@ -957,6 +1003,24 @@ function analyzeRatingFit(ctx) {
     issues.push(`trust-risk word: ${trustRiskHits.slice(0, 2).join(", ")}`);
   }
 
+  if (sensitivePlatformMismatch) {
+    adjustment -= 5;
+    issues.push(`platform/AI wording in sensitive category: ${platformHits.slice(0, 2).join(", ")}`);
+  } else if (platformContextIssue) {
+    adjustment -= 3;
+    issues.push(platformContextIssue);
+  }
+
+  if (pluralOwnerProduct) {
+    adjustment -= 4;
+    issues.push("awkward plural owner + product pattern");
+  }
+
+  if (platformHits.length && !directUsefulnessHits.length && profile.label !== "Brandable / SaaS") {
+    adjustment -= 2;
+    issues.push("platform-style word without direct usefulness signal");
+  }
+
   if (customNegativeHits.length) {
     adjustment -= Math.min(9, customNegativeHits.length * 4);
     issues.push(`matches custom negative word${customNegativeHits.length > 1 ? "s" : ""}`);
@@ -1004,6 +1068,10 @@ function analyzeRatingFit(ctx) {
     fillerHits,
     customPositiveHits,
     customNegativeHits,
+    platformHits,
+    directUsefulnessHits,
+    pluralOwnerProduct,
+    sensitivePlatformMismatch,
     architecture
   };
 }
@@ -1044,13 +1112,18 @@ function analyzePhraseArchitecture(ctx) {
   const lastIsSoftModifier = SOFT_MODIFIER_WORDS.has(last);
   const firstIsAwkwardAction = AWKWARD_ACTION_PREFIXES.has(first);
   const coreIntentHits = dedupeTermHits(uniqueTokens.filter(t => CORE_INTENT_WORDS.has(t)));
+  const platformHits = hasPlatformSoftwareSignal(tokenSet, sld);
+  const directUsefulnessHits = hasDirectUsefulnessSignal(tokenSet, sld);
+  const pluralOwnerProduct = hasPluralOwnerProductPattern(tokens);
+  const sensitivePlatformMismatch = isSensitivePlatformMismatch(profile, tokenSet, sld);
   const keywordIndex = tokenIndex(tokens, targetHits);
   const intentIndex = tokenIndex(tokens, coreIntentHits.length ? coreIntentHits : intentHits);
   const firstIntentBeforeKeyword = intentIndex === 0 && keywordIndex > 0;
   const unclearIntentStack = hasUnclearIntentStack(coreIntentHits);
   const middleTokens = tokens.slice(1, -1);
   const middleIsSoftOnly = middleTokens.length && middleTokens.every(t => SOFT_MODIFIER_WORDS.has(t));
-  const naturalOrder = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction;
+  const middleHasAwkwardAction = middleTokens.some(t => AWKWARD_ACTION_PREFIXES.has(t));
+  const naturalOrder = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction && !middleHasAwkwardAction;
 
   // Strong domains usually have one of these shapes:
   //   keyword + intent        (roofrepair, probateforms)
@@ -1090,9 +1163,27 @@ function analyzePhraseArchitecture(ctx) {
     issues.push("multiple utility nouns compete");
   }
 
+  if (pluralOwnerProduct && !brandableCandidate) {
+    adjustment -= 4;
+    issues.push("plural-owner phrase sounds less clean");
+  }
+
+  if (sensitivePlatformMismatch && !brandableCandidate) {
+    adjustment -= 4;
+    issues.push("software/platform word is risky in sensitive category");
+  } else if (platformHits.length && !directUsefulnessHits.length && profile.label !== "Brandable / SaaS" && !brandableCandidate) {
+    adjustment -= 2;
+    issues.push("generic platform noun needs clearer purpose");
+  }
+
   if (firstIsAwkwardAction && tokenCount >= 3 && !brandableCandidate) {
     adjustment -= 4;
     issues.push("awkward action prefix");
+  }
+
+  if (middleHasAwkwardAction && tokenCount >= 3 && !brandableCandidate) {
+    adjustment -= 3;
+    issues.push("awkward action word in middle");
   }
 
   if (middleIsSoftOnly && hasKeyword && hasIntent && !brandableCandidate) {
@@ -1187,6 +1278,47 @@ function matchesTerm(term, tokenSet, sld) {
 }
 
 
+function hasSensitiveCategory(tokenSet, sld) {
+  return tokenListHits(SENSITIVE_CATEGORY_WORDS, tokenSet, sld).length > 0;
+}
+
+function hasPlatformSoftwareSignal(tokenSet, sld) {
+  return tokenListHits(PLATFORM_SOFTWARE_WORDS, tokenSet, sld);
+}
+
+function hasDirectUsefulnessSignal(tokenSet, sld) {
+  return tokenListHits(DIRECT_USEFULNESS_WORDS, tokenSet, sld);
+}
+
+function hasPluralOwnerProductPattern(tokens = []) {
+  for (let i = 0; i < tokens.length - 1; i += 1) {
+    const first = tokens[i];
+    const second = tokens[i + 1];
+    if (!first || !second || !PRODUCT_NOUN_WORDS.has(second)) continue;
+    if (PLURAL_OWNER_WORDS.has(first)) return true;
+    if (first.endsWith("s") && first.length > 4 && !SAFE_PLURAL_PRODUCT_WORDS.has(first) && !DIRECT_USEFULNESS_WORDS.has(first)) return true;
+  }
+  return false;
+}
+
+function isSensitivePlatformMismatch(profile, tokenSet, sld) {
+  if (profile.label === "Brandable / SaaS") return false;
+  const sensitiveHits = tokenListHits(SENSITIVE_CATEGORY_WORDS, tokenSet, sld);
+  if (!sensitiveHits.length) return false;
+  const platformHits = tokenListHits(PLATFORM_SOFTWARE_WORDS, tokenSet, sld);
+  if (!platformHits.length) return false;
+  return true;
+}
+
+function platformWordContextIssue(profile, tokenSet, sld) {
+  const platformHits = tokenListHits(PLATFORM_GENERIC_WORDS, tokenSet, sld);
+  if (!platformHits.length) return "";
+  if (profile.label === "Brandable / SaaS") return "";
+  const directHits = hasDirectUsefulnessSignal(tokenSet, sld).filter(t => !PLATFORM_GENERIC_WORDS.has(t));
+  if (!directHits.length) return `generic platform word: ${platformHits.slice(0, 2).join(", ")}`;
+  return "";
+}
+
 function calibrateRatingScore(ctx) {
   const { rawScore, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, penalty } = ctx;
   const strengths = [];
@@ -1271,6 +1403,7 @@ function scoreCaps(ctx) {
   const firstIsAwkwardAction = AWKWARD_ACTION_PREFIXES.has(firstToken);
   const firstIsWeakPositioning = WEAK_POSITIONING_WORDS.has(firstToken);
   const middleHasWeakPositioning = knownTokens.slice(1, -1).some(t => WEAK_POSITIONING_WORDS.has(t));
+  const middleHasAwkwardAction = knownTokens.slice(1, -1).some(t => AWKWARD_ACTION_PREFIXES.has(t));
   const cleanPremiumShape = !sldRaw.includes("-") && !/\d/.test(sld) && coverage >= 0.8 && len >= 6 && len <= 15 && knownTokens.length >= 2 && knownTokens.length <= 3;
   const canonicalKeywordIntent = targetEvidence && intentEvidence && cleanPremiumShape && !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction && phraseFit.fillerHits.length === 0;
   const exactOrPremiumBrandable = exactTargetName || (brandableCandidate && len <= 12 && pronounce >= 78);
@@ -1300,14 +1433,24 @@ function scoreCaps(ctx) {
   if (firstIsAwkwardAction && knownTokens.length >= 3 && !brandableCandidate) apply(84, "awkward action prefix");
   if (firstIsWeakPositioning && intentEvidence && targetEvidence && !brandableCandidate) apply(89, "soft positioning prefix");
   if (middleHasWeakPositioning && intentEvidence && targetEvidence && !brandableCandidate) apply(86, "soft modifier interrupts phrase");
+  if (middleHasAwkwardAction && intentEvidence && targetEvidence && !brandableCandidate) apply(88, "awkward action word in middle");
   if (intentEvidence && targetEvidence && !canonicalKeywordIntent && !exactOrPremiumBrandable && !brandableCandidate) apply(89, "not a natural premium-grade phrase");
 
   const professionalRiskHits = tokenListHits(PROFESSIONAL_RISK_WORDS, tokenSet, sld);
   const sensitiveHits = tokenListHits(SENSITIVE_CATEGORY_WORDS, tokenSet, sld);
+  const platformHits = hasPlatformSoftwareSignal(tokenSet, sld);
+  const genericPlatformHits = tokenListHits(PLATFORM_GENERIC_WORDS, tokenSet, sld);
+  const directUsefulnessHits = hasDirectUsefulnessSignal(tokenSet, sld);
+  const pluralOwnerProduct = hasPluralOwnerProductPattern(knownTokens);
+  const sensitivePlatformMismatch = sensitiveHits.length && platformHits.length && profile.label !== "Brandable / SaaS";
   if (professionalRiskHits.length && (isTermMatch("tool", tokenSet, sld) || isTermMatch("app", tokenSet, sld) || isTermMatch("ai", tokenSet, sld) || isTermMatch("easy", tokenSet, sld) || isTermMatch("done", tokenSet, sld))) {
-    apply(profile.strictTrust ? 78 : 86, "professional/trust wording needs review");
+    apply(profile.strictTrust ? 76 : 84, "professional/trust wording needs review");
   }
-  if (sensitiveHits.length && isTermMatch("ai", tokenSet, sld) && !brandableCandidate) apply(88, "AI with sensitive category");
+  if (sensitiveHits.length && isTermMatch("ai", tokenSet, sld) && !brandableCandidate) apply(profile.label === "Brandable / SaaS" ? 90 : 82, "AI with sensitive category");
+  if (sensitivePlatformMismatch && !brandableCandidate) apply(profile.strictTrust ? 78 : 84, "platform wording in sensitive category");
+  if (pluralOwnerProduct && !brandableCandidate) apply(86, "plural owner + product phrase");
+  if (genericPlatformHits.length && profile.label !== "Brandable / SaaS" && !directUsefulnessHits.length && !brandableCandidate) apply(86, "generic platform word outside SaaS mode");
+  if (genericPlatformHits.length && targetEvidence && profile.label !== "Brandable / SaaS" && !brandableCandidate) apply(88, "platform word is context-dependent");
 
   // TLDs are part of the rating, not just a component. Strong alternatives can still score well,
   // but only .com should be able to reach the very top of a general-purpose shortlist.
@@ -1337,7 +1480,17 @@ function scoreCaps(ctx) {
 
   // Top-tier scores should require positive evidence, not merely the absence of problems.
   if (phraseFit) {
-    const hasCleanTopEvidence = exactOrPremiumBrandable || canonicalKeywordIntent;
+    const premiumBlockers = Boolean(
+      phraseFit.pluralOwnerProduct ||
+      phraseFit.sensitivePlatformMismatch ||
+      (phraseFit.platformHits || []).some(t => PLATFORM_GENERIC_WORDS.has(t)) ||
+      phraseFit.fillerHits.length ||
+      lastIsSoftModifier ||
+      firstIntentBeforeKeyword ||
+      unclearIntentStack
+    );
+    const hasCleanTopEvidence = (exactOrPremiumBrandable || canonicalKeywordIntent) && !premiumBlockers;
+    if (premiumBlockers && !brandableCandidate) apply(89, "top-tier premium blockers");
     if (phraseFit.adjustment <= -5 && !brandableCandidate) apply(82, "weak phrase quality");
     if (targetKeywords.length && phraseFit.targetHits.length && !intentEvidence && !brandableCandidate && !exactTargetName) {
       apply(84, "keyword lacks clear intent support");
@@ -1375,6 +1528,12 @@ function addStrengthsAndIssues(ctx) {
   const profileHits = Object.keys(profile.positives || {}).filter(t => isTermMatch(t, tokenSet, sld));
   if (profileHits.length) strengths.push(`${profile.label} fit: ${profileHits.slice(0, 2).join(", ")}`);
   if (components.intent >= Math.max(6, Math.round(profile.weights.intent * 0.7))) strengths.push("clear user intent word");
+
+  const platformHits = hasPlatformSoftwareSignal(tokenSet, sld);
+  if (platformHits.length && profile.label !== "Brandable / SaaS" && hasSensitiveCategory(tokenSet, sld)) {
+    issues.push("platform/AI wording needs context in sensitive categories");
+  }
+  if (hasPluralOwnerProductPattern(knownTokens)) issues.push("plural-owner product phrase is less clean");
 }
 
 function buildScoreExplanation(score, label, strengths, issues) {
@@ -1508,12 +1667,58 @@ function enhanceResult(result) {
     score_explanation: score.explanation,
     score_notes: score.notes,
     score_components: score.components ? JSON.stringify(score.components) : "",
+    tld_score: score.components?.tld ?? "",
+    length_score: score.components?.length ?? "",
+    keyword_score: score.components?.keyword ?? "",
+    clarity_score: score.components?.clarity ?? "",
+    brand_score: score.components?.brand ?? "",
+    intent_score: score.components?.intent ?? "",
+    fit_score: score.components?.fit ?? "",
+    phrase_adjustment: score.phrase_adjustment ?? "",
+    calibration_adjustment: score.calibration_adjustment ?? "",
+    penalty_total: score.penalty_total ?? "",
+    penalty_reasons: score.penalty_reasons ?? "",
+    score_cap: score.score_cap ?? "",
+    cap_reasons: score.cap_reasons ?? "",
+    token_count: score.token_count ?? "",
+    token_coverage: score.token_coverage ?? "",
+    detected_tokens: score.detected_tokens ?? "",
     scoring_style: score.style || getScoringProfile().label
   };
 }
 
+function applyBatchMetrics(rows) {
+  const enhancedRows = rows.filter(Boolean).map(enhanceResult);
+  const rankable = enhancedRows
+    .filter(row => row && row.availability_status !== "invalid_input" && Number.isFinite(Number(row.domain_score)))
+    .sort((a, b) => Number(b.domain_score || 0) - Number(a.domain_score || 0) || Number(a.name_length || 999) - Number(b.name_length || 999));
+  const total = rankable.length;
+  rankable.forEach((row, index) => {
+    const rank = index + 1;
+    const percentile = total ? (rank / total) * 100 : 0;
+    row.batch_rank = rank;
+    row.batch_percentile = total ? percentile.toFixed(1) : "";
+    row.batch_label = batchRankLabel(percentile, rank, total);
+  });
+  return enhancedRows;
+}
+
+function batchRankLabel(percentile, rank, total) {
+  if (!total) return "";
+  if (rank === 1) return "Best in batch";
+  if (percentile <= 1) return "Top 1%";
+  if (percentile <= 5) return "Top 5%";
+  if (percentile <= 10) return "Top 10%";
+  if (percentile <= 25) return "Top 25%";
+  return "";
+}
+
+function refreshResultsScoring() {
+  results = applyBatchMetrics(results);
+}
+
 function rescoreResults() {
-  results = results.filter(Boolean).map(enhanceResult);
+  refreshResultsScoring();
   renderResults();
   saveState();
 }
@@ -1776,7 +1981,7 @@ async function runChecks() {
   } catch (err) {
     setStatus(`Stopped with error: ${err.message}`);
   } finally {
-    results = results.filter(Boolean).map(enhanceResult);
+    refreshResultsScoring();
     renderResults();
     updateSummary();
     setChecking(false);
@@ -1809,7 +2014,7 @@ function displayedResults() {
   const noNumbers = el.filterNoNumbers.checked;
   const sort = el.sortSelect.value;
 
-  let rows = results.filter(Boolean).map(enhanceResult).filter(row => {
+  let rows = applyBatchMetrics(results.filter(Boolean)).filter(row => {
     const domain = row.normalized_domain || "";
     const sld = secondLevelName(domain).replace(/\./g, "");
 
@@ -1853,14 +2058,14 @@ function displayedResults() {
 function renderResults() {
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="12">No results yet.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No results yet.</td></tr>';
     el.visibleCount.textContent = "0 visible";
     updateSummary();
     return;
   }
 
   if (!visibleRows.length) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="12">No rows match the current filters.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No rows match the current filters.</td></tr>';
     el.visibleCount.textContent = `0 visible of ${results.filter(Boolean).length}`;
     updateSummary();
     return;
@@ -1879,6 +2084,7 @@ function renderResults() {
       <td><strong>${escapeHtml(result.normalized_domain)}</strong><div class="subtle">${escapeHtml(result.input || "")}</div></td>
       <td><span class="score-badge score-${scoreClass(result.domain_score)}" title="${escapeAttr(result.score_notes || "")}">${escapeHtml(result.domain_score ?? "")}</span></td>
       <td><span class="rating-pill rating-${scoreClass(result.domain_score)}">${escapeHtml(result.score_label || "")}</span></td>
+      <td>${escapeHtml(result.batch_label || (result.batch_rank ? `#${result.batch_rank}` : ""))}<div class="subtle">${result.batch_percentile ? `top ${escapeHtml(result.batch_percentile)}%` : ""}</div></td>
       <td><details class="score-details"><summary>${escapeHtml(result.score_explanation || "")}</summary><div>${escapeHtml(result.score_notes || "")}</div></details></td>
       <td>${escapeHtml(result.availability_status)}</td>
       <td>${availableText}</td>
@@ -1914,7 +2120,7 @@ function updateSummary() {
 
 function removeTaken() {
   const before = results.length;
-  results = results.filter(r => r && r.available !== false).map(enhanceResult);
+  results = applyBatchMetrics(results.filter(r => r && r.available !== false));
   const removed = before - results.length;
   replaceInputWithDomains(results.map(r => r.normalized_domain).filter(Boolean));
   renderResults();
@@ -1924,7 +2130,7 @@ function removeTaken() {
 
 function keepAvailableOnly() {
   const before = results.length;
-  results = results.filter(r => r && r.available === true).map(enhanceResult);
+  results = applyBatchMetrics(results.filter(r => r && r.available === true));
   const removed = before - results.length;
   replaceInputWithDomains(results.map(r => r.normalized_domain).filter(Boolean));
   renderResults();
@@ -1997,9 +2203,7 @@ function topPickLimit() {
 }
 
 function topPickRows() {
-  return results
-    .filter(r => r && r.available === true)
-    .map(enhanceResult)
+  return applyBatchMetrics(results.filter(r => r && r.available === true))
     .sort((a, b) => Number(b.domain_score || 0) - Number(a.domain_score || 0) || Number(a.name_length || 999) - Number(b.name_length || 999))
     .slice(0, topPickLimit());
 }
@@ -2025,20 +2229,24 @@ function openTopPicks() {
 }
 
 function exportCsv(scope = "all") {
-  const rows = scope === "favorites" ? results.filter(r => r && favorites.has(r.normalized_domain)) : results.filter(Boolean);
+  const rows = applyBatchMetrics(scope === "favorites" ? results.filter(r => r && favorites.has(r.normalized_domain)) : results.filter(Boolean));
   if (!rows.length) {
     setStatus(scope === "favorites" ? "No favorites to export." : "No results to export.");
     return;
   }
   const columns = [
     "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label",
-    "score_explanation", "scoring_style", "score_components", "score_notes",
+    "batch_rank", "batch_percentile", "batch_label",
+    "score_explanation", "scoring_style",
+    "tld_score", "length_score", "keyword_score", "clarity_score", "brand_score", "intent_score", "fit_score",
+    "phrase_adjustment", "calibration_adjustment", "penalty_total", "penalty_reasons", "score_cap", "cap_reasons",
+    "token_count", "token_coverage", "detected_tokens", "score_components", "score_notes",
     "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
   ];
   const csv = [
     columns.join(","),
     ...rows.map(row => {
-      const enhanced = enhanceResult(row);
+      const enhanced = row;
       return columns.map(col => {
         if (col === "favorite") return csvCell(favorites.has(enhanced.normalized_domain) ? "yes" : "");
         return csvCell(enhanced[col]);
@@ -2162,7 +2370,7 @@ function loadState() {
     if (state.input) el.inputBox.value = state.input;
     applySettings(state.settings || {});
     favorites = new Set(Array.isArray(state.favorites) ? state.favorites : []);
-    results = Array.isArray(state.results) ? state.results.map(enhanceResult) : [];
+    results = Array.isArray(state.results) ? applyBatchMetrics(state.results) : [];
   } catch {
     results = [];
     favorites = new Set();
@@ -2223,7 +2431,7 @@ function toggleFavorite(domain) {
     favorites.add(domain);
     setStatus(`Added ${domain} to favorites.`);
   }
-  results = results.map(enhanceResult);
+  refreshResultsScoring();
   renderResults();
   saveState();
 }

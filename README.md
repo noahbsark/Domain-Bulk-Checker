@@ -107,20 +107,13 @@ This version applies the external scoring-logic patch that:
 
 This is a rating-system-only change. Availability checking and the rest of the workflow are unchanged.
 
+## Rating algorithm v5 update
 
-## Rating system v4 calibration
+This version keeps the same workflow but tightens the scoring algorithm:
 
-This version only changes the rating/scoring logic. It keeps the existing UI and workflow intact.
-
-Changes:
-
-- Makes 90+ scores harder to earn.
-- Adds natural phrase order checks so stacked words like `estateformskit.com` or `probateguidetool.com` do not score as near-perfect.
-- Treats soft positioning words like `easy`, `simple`, `guided`, `start`, `my`, and `your` as minor modifiers rather than strong buyer-intent signals.
-- Penalizes soft modifiers in awkward positions, such as suffixes like `estatecloseeasy.com` or middle modifiers like `estateeasytool.com`.
-- Penalizes stacked utility nouns when a domain describes several things at once, such as form + kit or guide + tool.
-- Adds stricter premium-grade caps so `.com + keyword + intent` is not enough by itself to reach the very top.
-- Adds extra caution for sensitive/professional terms combined with `tool`, `app`, `ai`, `easy`, or `done`.
-- Keeps availability separate from quality score.
-
-The intended result is not score inflation. It should reduce top-score pileups and make `90+` mean rare, clean, natural, premium-grade candidates.
+- stricter 90+ premium gates so only truly clean names reach Excellent
+- contextual penalties for AI/app/tool/base/stack/desk/platform wording in sensitive categories
+- penalties for awkward plural-owner phrases like `executorsapp.com` or `heirstools.com`
+- platform/software words score best in Brandable / SaaS mode instead of every mode
+- separate batch rank / percentile labels so you can see the best names in a weak or large batch
+- richer CSV audit columns: component scores, phrase adjustment, penalties, caps, token coverage, detected tokens, and batch rank
