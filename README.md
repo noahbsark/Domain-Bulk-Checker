@@ -1,127 +1,17 @@
-# No-Key Domain Bulk Checker
+# Domain Bulk Checker — performance v10
 
-Static GitHub Pages app for checking a pasted list of domains/URLs, filtering likely taken names, scoring domain quality, and opening registrar lookup links.
+Static GitHub Pages app for checking domain availability and scoring domains.
 
-## What it does
+## Performance-focused changes
 
-- Paste a big list of URLs or domains.
-- Normalize them to registrable domains.
-- Check availability using public RDAP first, with DNS-over-HTTPS fallback.
-- Generate direct Namecheap lookup links.
-- Favorite/shortlist domains.
-- Remove taken/registered rows.
-- Open visible links, available links, favorite links, or top-pick links in bulk.
-- Export all results or favorites to CSV.
-- Save the current browser session with localStorage.
+This version keeps the scoring logic from v9, but makes large result batches smoother in the browser:
 
-## Latest upgrade
+- Renders only the first 250 filtered rows by default.
+- Adds **Show more rows** and **Show all rows** controls.
+- Keeps copy/export/open actions working on the full filtered result set, not just the rendered rows.
+- Throttles result-table redraws while checks are running so the browser is not rebuilding hundreds/thousands of rows after every single domain.
+- Adds cache busting in `index.html` so GitHub Pages is less likely to serve an older `app.js`.
 
-This release only tweaks the rating system. The workflow and UI stay the same.
+## Notes
 
-The scoring system now includes:
-
-- Explainable quality scores.
-- A rating label: Excellent, Strong, Good, Okay, Weak, or Avoid.
-- A visible “Why score?” explanation for every row.
-- Expandable score details with component breakdown.
-- Dynamic batch vocabulary, so repeated niche terms in your pasted list are recognized instead of treated as random unknown text.
-- More token-based matching, reducing false positives like `pro` inside `probate` or `app` inside unrelated words.
-- Brandable-name tolerance, so short, pronounceable invented names are not buried only because they do not split perfectly into dictionary words.
-- Cleaner penalties, so one bad pattern such as a number, hyphen, or weak word does not get over-counted across multiple parts of the formula.
-- Collapsible Advanced scoring controls.
-- Optional scoring styles:
-  - General
-  - Trust-heavy
-  - Brandable / SaaS
-  - Local service
-  - Ecommerce / product
-  - Course / content
-- Custom positive words and negative words.
-- Top-picks workflow:
-  - Show top picks
-  - Copy top picks
-  - Open top picks
-
-## Important limitation
-
-This app has no backend and no registrar API key. It cannot guarantee a domain is purchasable or show live registrar pricing. Treat `possibly_available` as a filter and always confirm at the registrar before buying.
-
-## Deploy to GitHub Pages
-
-Upload these files to the root of your GitHub repo:
-
-- `index.html`
-- `app.js`
-- `style.css`
-- `README.md`
-
-Then enable Pages from your repo settings:
-
-**Settings → Pages → Deploy from a branch → main → / root**
-
-## Push update from Windows Command Prompt
-
-```bat
-cd C:\Users\noahb\Downloads\Domain-Bulk-Checker-live
-
-robocopy C:\Users\noahb\Downloads\domain_github_pages_app_rating_tweaks . index.html app.js style.css README.md
-
-git add index.html app.js style.css README.md
-git commit -m "Tune domain rating algorithm"
-git push origin main
-```
-
-Then hard-refresh the GitHub Pages site with **Ctrl + F5**.
-
-## Rating-system-only tweak update
-
-This version keeps the app workflow the same and only tunes the scoring logic.
-
-Scoring changes:
-
-- Adds phrase-quality calibration so domains are judged by whether the words form a useful phrase, not just whether they contain a keyword.
-- Makes keyword scoring more proportional: a keyword buried inside a long name gets less credit than a clean token/edge match.
-- Adds high-intent word recognition for clear use-case terms such as help, guide, tool, app, forms, kit, shop, quote, estimate, calculator, builder, tracker, and manager.
-- Adds low-value filler detection for words that often make names feel generic, including solution, pathway, route, portal, central, pro, plus, express, buddy, genius, wizard, 247, best, and top.
-- Improves custom positive and negative word handling. Positive words can now give a controlled phrase boost, while negative words affect both penalties and phrase-quality explanation.
-- Reduces false-positive scoring from short substrings by continuing to prefer token-aware matches.
-- Adds phrase-adjustment details into the existing score notes so the current “Why score?” details explain the extra rating movement.
-- Adds stronger top-tier requirements: a domain should not reach strong/excellent just because it has a .com and one keyword; it needs phrase usefulness, intent support, or a strong brandable pattern.
-
-
-## Rating system tweaks v3
-
-This version only changes scoring logic. It adds phrase-architecture analysis, calibrated top-tier requirements, stronger separation between useful intent words and generic filler words, improved trust-risk penalties, and a small calibration layer that helps clean high-evidence names escape the high-70s without inflating weak names.
-
-The score remains absolute: weak batches can still have few 80+ names. The difference is that the reasons should be clearer and domains should be judged more fairly across niches, including keyword-heavy, local-service, ecommerce, content, and short brandable names.
-
-## Rating logic patch from external review
-
-This version applies the external scoring-logic patch that:
-
-- makes brandable tolerance stricter when target keywords are required
-- allows brandable tolerance in Brandable / SaaS keyword-optional mode
-- deduplicates overlapping hits such as `24` when `247` is already matched
-- deduplicates singular/plural penalty hits
-- adds TLD-based caps so strong alternative TLDs can score well but usually not above comparable `.com` names
-
-This is a rating-system-only change. Availability checking and the rest of the workflow are unchanged.
-
-
-## v6 scoring update
-
-This version is a scoring-focused update. It adds a visible/exported scoring version, cache-busts the app script for GitHub Pages, and tightens top-end scoring so 90+ scores are harder to earn. It is especially more cautious with sensitive-category domains combined with AI/app/tool/platform words, awkward plural-owner phrases like `executorsapp.com`, and generic platform suffixes like `base`, `stack`, `desk`, `pilot`, and `flow` outside Brandable/SaaS mode.
-
-CSV export now includes `scoring_version` and the richer audit fields already present in the app: batch rank, percentile, component scores, penalties, caps, token coverage, and detected tokens.
-
-
-## Scoring v9 notes
-
-This version tightens top-end scoring only. It adds stricter premium gates for 90+ scores, stronger caution for sensitive-category domains using AI/app/tool/platform language, penalties for awkward plural-owner product phrases, penalties for weak pronoun phrases such as `settleithelp`, and more conservative handling of keyword + soft modifier + intent order such as `probatediykit`. CSV exports include the scoring version and audit columns so future score reviews can confirm which model generated the results.
-
-
-## Scoring v9 update
-
-This version adds word-order and category-phrase calibration for batches where target keywords are not entered. It penalizes category + soft modifier + intent ordering such as `probatediykit`, intent-before-category ordering such as `guidesmallestate`, weak ownership modifiers like `ownprobateguide`, awkward plural category phrases, and vague `program` stacks outside Course / content mode.
-
-Scoring version: `v9-word-order-category-calibration-2026-06-13`.
+If a batch has thousands of rows, keep the table rendered to the first few hundred while reviewing/filtering. Export CSV, copy visible domains, open visible links, and top-pick actions still operate on the full underlying results.

@@ -28,6 +28,10 @@ const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
 const SCORING_VERSION = "v9-word-order-category-calibration-2026-06-13";
+const APP_PERFORMANCE_VERSION = "perf-v10-render-throttle-2026-06-13";
+const INITIAL_RENDER_LIMIT = 250;
+const RENDER_LIMIT_STEP = 250;
+const CHECK_RENDER_INTERVAL_MS = 350;
 const STATE_KEY = "domainCheckerStateV6"; // keep old key so saved batches rescore after upgrades
 
 const el = {
@@ -81,6 +85,9 @@ const el = {
   filterNoNumbers: document.getElementById("filterNoNumbers"),
   sortSelect: document.getElementById("sortSelect"),
   visibleCount: document.getElementById("visibleCount"),
+  renderedCount: document.getElementById("renderedCount"),
+  showMoreBtn: document.getElementById("showMoreBtn"),
+  showAllRowsBtn: document.getElementById("showAllRowsBtn"),
   resultsBody: document.getElementById("resultsBody")
 };
 
@@ -89,6 +96,9 @@ let favorites = new Set();
 let rdapBootstrap = null;
 let stopRequested = false;
 let isChecking = false;
+let renderRowLimit = INITIAL_RENDER_LIMIT;
+let pendingRenderTimer = null;
+let lastRenderAt = 0;
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -685,6 +695,16 @@ const SCORING_PROFILES = {
 function getScoringProfile() {
   const key = el.scoringStyleInput?.value || "general";
   return SCORING_PROFILES[key] || SCORING_PROFILES.general;
+}
+
+function scoringSettingsKey() {
+  return JSON.stringify({
+    version: SCORING_VERSION,
+    style: el.scoringStyleInput?.value || "general",
+    keywords: String(el.keywordsInput?.value || "").trim().toLowerCase(),
+    positive: String(el.positiveWordsInput?.value || "").trim().toLowerCase(),
+    negative: String(el.negativeWordsInput?.value || "").trim().toLowerCase()
+  });
 }
 
 function scoreDomain(resultOrDomain, availableValue, statusValue) {
@@ -2205,12 +2225,19 @@ function enhanceResult(result) {
     token_coverage: score.token_coverage ?? "",
     detected_tokens: score.detected_tokens ?? "",
     scoring_style: score.style || getScoringProfile().label,
-    scoring_version: SCORING_VERSION
+    scoring_version: SCORING_VERSION,
+    scoring_settings_key: scoringSettingsKey()
   };
 }
 
 function applyBatchMetrics(rows) {
-  const enhancedRows = rows.filter(Boolean).map(enhanceResult);
+  const key = scoringSettingsKey();
+  const enhancedRows = rows.filter(Boolean).map(row => {
+    if (row && row.scoring_version === SCORING_VERSION && row.scoring_settings_key === key && row.domain_score !== undefined && row.domain_score !== null) {
+      return row;
+    }
+    return enhanceResult(row);
+  });
   const rankable = enhancedRows
     .filter(row => row && row.availability_status !== "invalid_input" && Number.isFinite(Number(row.domain_score)))
     .sort((a, b) => Number(b.domain_score || 0) - Number(a.domain_score || 0) || Number(a.name_length || 999) - Number(b.name_length || 999));
@@ -2474,6 +2501,7 @@ async function runChecks() {
   }
 
   results = new Array(rows.length);
+  resetRenderLimit();
   renderResults();
   setChecking(true);
   const options = {
@@ -2498,13 +2526,13 @@ async function runChecks() {
       done += 1;
       el.progress.value = done;
       setStatus(`Checked ${done}/${rows.length}: ${result.normalized_domain || result.input}`);
-      renderResults();
+      scheduleRenderResults();
     });
   } catch (err) {
     setStatus(`Stopped with error: ${err.message}`);
   } finally {
     refreshResultsScoring();
-    renderResults();
+    scheduleRenderResults({ force: true });
     updateSummary();
     setChecking(false);
     const endText = stopRequested ? `Stopped. Checked ${results.length}/${rows.length} rows.` : `Done. Checked ${results.length} rows.`;
@@ -2525,6 +2553,41 @@ function availabilitySortValue(row) {
   if (row.available === null || row.available === undefined) return 1;
   if (row.available === false) return 2;
   return 3;
+}
+
+
+function resetRenderLimit() {
+  renderRowLimit = INITIAL_RENDER_LIMIT;
+}
+
+function scheduleRenderResults(options = {}) {
+  const force = Boolean(options.force);
+  if (force) {
+    if (pendingRenderTimer) {
+      clearTimeout(pendingRenderTimer);
+      pendingRenderTimer = null;
+    }
+    renderResults();
+    return;
+  }
+
+  const now = Date.now();
+  const elapsed = now - lastRenderAt;
+  if (elapsed >= CHECK_RENDER_INTERVAL_MS) {
+    if (pendingRenderTimer) {
+      clearTimeout(pendingRenderTimer);
+      pendingRenderTimer = null;
+    }
+    renderResults();
+    return;
+  }
+
+  if (!pendingRenderTimer) {
+    pendingRenderTimer = setTimeout(() => {
+      pendingRenderTimer = null;
+      renderResults();
+    }, Math.max(40, CHECK_RENDER_INTERVAL_MS - elapsed));
+  }
 }
 
 function displayedResults() {
@@ -2578,10 +2641,14 @@ function displayedResults() {
 }
 
 function renderResults() {
+  lastRenderAt = Date.now();
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
     el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No results yet.</td></tr>';
     el.visibleCount.textContent = "0 visible";
+    if (el.renderedCount) el.renderedCount.textContent = "0 rendered";
+    if (el.showMoreBtn) el.showMoreBtn.disabled = true;
+    if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = true;
     updateSummary();
     return;
   }
@@ -2589,11 +2656,16 @@ function renderResults() {
   if (!visibleRows.length) {
     el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No rows match the current filters.</td></tr>';
     el.visibleCount.textContent = `0 visible of ${results.filter(Boolean).length}`;
+    if (el.renderedCount) el.renderedCount.textContent = "0 rendered";
+    if (el.showMoreBtn) el.showMoreBtn.disabled = true;
+    if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = true;
     updateSummary();
     return;
   }
 
-  const rowsHtml = visibleRows.map(result => {
+  const totalVisibleRows = visibleRows.length;
+  const renderedRows = visibleRows.slice(0, renderRowLimit);
+  const rowsHtml = renderedRows.map(result => {
     const cls = classForStatus(result.availability_status);
     const availableText = result.available === true ? "True" : result.available === false ? "False" : "";
     const favorite = favorites.has(result.normalized_domain);
@@ -2619,7 +2691,11 @@ function renderResults() {
   }).join("");
 
   el.resultsBody.innerHTML = rowsHtml;
-  el.visibleCount.textContent = `${visibleRows.length} visible of ${results.filter(Boolean).length}`;
+  const totalResults = results.filter(Boolean).length;
+  el.visibleCount.textContent = `${totalVisibleRows} visible of ${totalResults}`;
+  if (el.renderedCount) el.renderedCount.textContent = `${renderedRows.length} rendered`;
+  if (el.showMoreBtn) el.showMoreBtn.disabled = renderedRows.length >= totalVisibleRows;
+  if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = renderedRows.length >= totalVisibleRows;
   updateSummary();
 }
 
@@ -2664,6 +2740,18 @@ function replaceInputWithDomains(domains) {
   const unique = [...new Set(domains)];
   el.inputBox.value = unique.join("\n");
   updateInputCount();
+}
+
+
+function showMoreRows() {
+  renderRowLimit += RENDER_LIMIT_STEP;
+  renderResults();
+}
+
+function showAllRows() {
+  const visibleRows = displayedResults();
+  renderRowLimit = Math.max(renderRowLimit, visibleRows.length);
+  renderResults();
 }
 
 function openLinks(rows, label) {
@@ -3020,13 +3108,15 @@ function bindEvents() {
   el.copyTopPicksBtn.addEventListener("click", copyTopPicks);
   el.openTopPicksBtn.addEventListener("click", openTopPicks);
   el.clearSessionBtn.addEventListener("click", clearSession);
+  if (el.showMoreBtn) el.showMoreBtn.addEventListener("click", showMoreRows);
+  if (el.showAllRowsBtn) el.showAllRowsBtn.addEventListener("click", showAllRows);
 
   const filterControls = [
     el.filterStatus, el.filterSearch, el.filterTld, el.filterMaxLen, el.filterNoHyphen, el.filterNoNumbers, el.sortSelect
   ];
   for (const control of filterControls) {
-    control.addEventListener("input", () => { renderResults(); saveState(); });
-    control.addEventListener("change", () => { renderResults(); saveState(); });
+    control.addEventListener("input", () => { resetRenderLimit(); renderResults(); saveState(); });
+    control.addEventListener("change", () => { resetRenderLimit(); renderResults(); saveState(); });
   }
 
   const optionControls = [el.workersInput, el.delayInput, el.timeoutInput, el.useRdapInput, el.useDnsInput, el.dedupeInput, el.topPickCountInput];

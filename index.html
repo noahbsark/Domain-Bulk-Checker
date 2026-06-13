@@ -15,7 +15,7 @@
           Paste URLs or domains, filter out taken names, favorite your shortlist, rank clearer quality scores with explanations, shortlist favorites, and open Namecheap lookup links in bulk.
         </p>
       </div>
-      <div class="badge">Scoring v9</div>
+      <div class="badge">Scoring v7</div>
     </header>
 
     <section class="panel">
@@ -165,9 +165,14 @@
     </section>
 
     <section class="panel results-panel">
-      <div class="panel-title-row">
+      <div class="panel-title-row results-title-row">
         <h2>Results</h2>
-        <span class="muted">Scores are explainable. Star favorites, filter top picks, then open or export your shortlist.</span>
+        <div class="results-actions">
+          <span class="muted">Scores are explainable. Star favorites, filter top picks, then open or export your shortlist.</span>
+          <span id="renderedCount" class="muted">0 rendered</span>
+          <button id="showMoreBtn" type="button" class="ghost" disabled>Show more rows</button>
+          <button id="showAllRowsBtn" type="button" class="ghost" disabled>Show all rows</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table id="resultsTable">
@@ -204,6 +209,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=9-word-order-category-calibration"></script>
+  <script src="app.js?v=7-premium-gates-word-order"></script>
 </body>
 </html>

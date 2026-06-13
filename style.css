@@ -366,3 +366,20 @@ tr.empty { background: #fff; color: var(--muted); text-align: center; }
   font-size: 12px;
   line-height: 1.4;
 }
+
+.results-title-row {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.results-actions button {
+  padding: 7px 10px;
+}
