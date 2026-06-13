@@ -27,7 +27,7 @@ const SPECIAL_SUFFIXES = new Set([
 const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
-const SCORING_VERSION = "v7-premium-gates-word-order-2026-06-13";
+const SCORING_VERSION = "v8-comparison-decision-2026-06-13";
 const STATE_KEY = "domainCheckerStateV6"; // keep old key so saved batches rescore after upgrades
 
 const el = {
@@ -417,13 +417,14 @@ const GENERIC_DOMAIN_WORDS = [
   "learn", "school", "class", "classes", "course", "courses", "academy", "training", "lesson", "lessons", "blueprint", "playbook",
   "quote", "quotes", "estimate", "estimates", "calculator", "builder", "generator", "tracker", "manager", "software", "booking",
   "scheduler", "directory", "marketplace", "newsletter", "community", "forum", "tips", "ideas", "recipes", "meal", "meals", "travel",
-  "trip", "trips", "budget", "money", "tax", "taxes", "loan", "loans", "insurance", "realty", "rent", "rental", "rentals"
+  "trip", "trips", "budget", "money", "tax", "taxes", "loan", "loans", "insurance", "realty", "rent", "rental", "rentals", "buy", "own", "wait", "lease", "mortgage", "versus", "decision", "breakeven", "worksheet", "comparison"
 ];
 
 const DEFAULT_POSITIVE_TERMS = new Map([
   ["help", 9], ["guide", 9], ["kit", 8], ["tool", 7], ["tools", 7], ["app", 5], ["apps", 5], ["forms", 8], ["form", 7],
   ["planner", 7], ["checklist", 7], ["template", 7], ["templates", 7], ["course", 6], ["academy", 5],
-  ["service", 6], ["services", 6], ["shop", 6], ["store", 6], ["supply", 5], ["finder", 6], ["compare", 5],
+  ["service", 6], ["services", 6], ["shop", 6], ["store", 6], ["supply", 5], ["finder", 6], ["compare", 8], ["comparison", 8],
+  ["calculator", 9], ["decision", 7], ["breakeven", 8], ["worksheet", 7],
   ["reviews", 5], ["direct", 2], ["quote", 7], ["quotes", 7], ["estimate", 7], ["estimates", 7],
   // Soft modifiers can help positioning, but they are not true buyer-intent by themselves.
   ["simple", 2], ["easy", 1], ["clear", 2], ["smart", 1]
@@ -441,7 +442,7 @@ const HIGH_INTENT_WORDS = new Set([
   "help", "guide", "guides", "kit", "tool", "tools", "app", "forms", "form", "planner", "plan", "plans", "checklist",
   "template", "templates", "course", "courses", "academy", "service", "services", "shop", "store",
   "supply", "supplies", "finder", "compare", "reviews", "review", "repair", "quote", "estimate",
-  "calculator", "builder", "generator", "tracker", "manager", "software", "quote", "quotes", "estimate", "estimates"
+  "calculator", "comparison", "decision", "breakeven", "worksheet", "builder", "generator", "tracker", "manager", "software", "quote", "quotes", "estimate", "estimates"
 ]);
 
 const LOW_VALUE_FILLER_WORDS = new Set([
@@ -486,7 +487,7 @@ const CORE_INTENT_WORDS = new Set([
   "template", "templates", "course", "courses", "academy", "service", "services", "shop", "store",
   "supply", "supplies", "finder", "compare", "reviews", "review", "repair", "quote", "quotes",
   "estimate", "estimates", "calculator", "builder", "generator", "tracker", "manager", "software",
-  "booking", "scheduler", "directory", "marketplace"
+  "booking", "scheduler", "directory", "marketplace", "comparison", "decision", "breakeven", "worksheet"
 ]);
 
 const STACKABLE_INTENT_PAIRS = new Set([
@@ -543,6 +544,31 @@ const PLURAL_OWNER_WORDS = new Set([
 const SAFE_PLURAL_PRODUCT_WORDS = new Set([
   "forms", "guides", "tools", "templates", "courses", "services", "supplies", "reviews", "quotes", "estimates", "apps"
 ]);
+
+
+// Rating v8: comparison and decision-domain calibration. These terms keep comparison domains
+// like rent-or-buy from being over-scored just because they are short and end in "app".
+const COMPARISON_OPTIONS = new Set([
+  "rent", "buy", "own", "wait", "lease", "mortgage", "sell", "refinance", "borrow", "save", "hold"
+]);
+
+const STRONG_COMPARISON_PAIRS = new Set([
+  "rent+buy", "buy+rent", "rent+own", "buy+wait", "wait+buy", "lease+buy", "buy+lease", "rent+lease", "lease+rent"
+]);
+
+const MEDIUM_COMPARISON_PAIRS = new Set([
+  "rent+mortgage", "mortgage+rent", "buy+mortgage", "mortgage+buy", "own+rent", "rent+wait", "wait+rent", "buy+own", "own+buy"
+]);
+
+const WEAK_COMPARISON_PAIRS = new Set([
+  "wait+own", "own+wait", "own+rent", "mortgage+lease", "lease+mortgage"
+]);
+
+const DECISION_TOOL_WORDS = new Set([
+  "calculator", "compare", "comparison", "estimate", "estimates", "planner", "guide", "worksheet", "checklist", "decision", "breakeven", "quote", "quotes"
+]);
+
+const GENERIC_APP_WRAPPER_WORDS = new Set(["app", "apps", "tool", "tools", "score", "wise", "help"]);
 
 const BRANDABLE_SIGNAL_WORDS = new Set([
   "app", "apps", "ai", "data", "cloud", "sync", "flow", "desk", "crm", "sales", "lead", "leads", "client", "clients",
@@ -936,6 +962,7 @@ function analyzeRatingFit(ctx) {
   const sensitivePlatformMismatch = isSensitivePlatformMismatch(profile, tokenSet, sld);
   const platformContextIssue = platformWordContextIssue(profile, tokenSet, sld);
   const weakPronounStructure = hasWeakPronounStructure(tokens, sld);
+  const comparisonPhrase = analyzeComparisonPhrase(sld, tokens, tokenSet, profile);
 
   const tokenCount = tokens.length;
   const duplicateCount = tokenCount - uniqueTokens.length;
@@ -1049,6 +1076,12 @@ function analyzeRatingFit(ctx) {
     issues.push("weak pronoun makes the phrase less brandable");
   }
 
+  if (comparisonPhrase.hasComparison) {
+    adjustment += comparisonPhrase.adjustment;
+    strengths.push(...comparisonPhrase.strengths);
+    issues.push(...comparisonPhrase.issues);
+  }
+
   if (supportOnlyIntentHits.length && !premiumDirectIntentHits.length && targetKeywords.length && !brandableCandidate) {
     adjustment -= 3;
     issues.push("support/platform intent is less premium than direct-purpose wording");
@@ -1112,6 +1145,7 @@ function analyzeRatingFit(ctx) {
     sensitivePlatformMismatch,
     weakPronounStructure,
     keywordSoftIntentOrder,
+    comparisonPhrase,
     premiumDirectIntentHits,
     supportOnlyIntentHits,
     architecture
@@ -1167,7 +1201,8 @@ function analyzePhraseArchitecture(ctx) {
   const middleHasAwkwardAction = middleTokens.some(t => AWKWARD_ACTION_PREFIXES.has(t));
   const keywordSoftIntentOrder = hasKeywordSoftIntentOrder(tokens, targetHits, intentHits);
   const weakPronounStructure = hasWeakPronounStructure(tokens, sld);
-  const naturalOrder = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction && !middleHasAwkwardAction && !keywordSoftIntentOrder && !weakPronounStructure;
+  const comparisonPhrase = analyzeComparisonPhrase(sld, tokens, tokenSet, profile);
+  const naturalOrder = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction && !middleHasAwkwardAction && !keywordSoftIntentOrder && !weakPronounStructure && (!comparisonPhrase.hasComparison || comparisonPhrase.natural);
 
   // Strong domains usually have one of these shapes:
   //   keyword + intent        (roofrepair, probateforms)
@@ -1244,6 +1279,7 @@ function analyzePhraseArchitecture(ctx) {
     adjustment -= 7;
     issues.push("weak pronoun phrase");
   }
+
 
   if (firstIsCTA && !hasIntent && !brandableCandidate) {
     adjustment -= 4;
@@ -1346,6 +1382,14 @@ function scorePenaltyDetails(ctx) {
     add(5, "less natural keyword-modifier-intent order");
   }
 
+  const comparisonPhrase = analyzeComparisonPhrase(sld, knownTokens, tokenSet, profile);
+  if (comparisonPhrase.hasComparison && !brandableCandidate) {
+    if (comparisonPhrase.pairQuality === "weak") add(6, `weak comparison pair (${comparisonPhrase.optionPair})`);
+    if (comparisonPhrase.appOnly && comparisonPhrase.pairQuality !== "strong" && profile.label !== "Brandable / SaaS") add(4, "generic app/tool wrapper for comparison phrase");
+    if (comparisonPhrase.smashed) add(3, "smashed comparison pair");
+    if (!comparisonPhrase.decisionHits.length && !comparisonPhrase.appOnly && profile.label !== "Brandable / SaaS") add(3, "comparison lacks decision-tool word");
+  }
+
   const nonKeywordLength = lenWithoutTarget(sld, targetKeywords);
   if (targetKeywords.length && nonKeywordLength > 20) add(4, "long extra wording");
   if (sld.length > 19) add(Math.min(9, Math.ceil((sld.length - 19) * 1.15)), "extra length");
@@ -1435,6 +1479,140 @@ function platformWordContextIssue(profile, tokenSet, sld) {
   const directHits = hasDirectUsefulnessSignal(tokenSet, sld).filter(t => !PLATFORM_GENERIC_WORDS.has(t));
   if (!directHits.length) return `generic platform word: ${platformHits.slice(0, 2).join(", ")}`;
   return "";
+}
+
+
+function analyzeComparisonPhrase(sld, tokens = [], tokenSet = new Set(), profile = getScoringProfile()) {
+  const cleanSld = cleanKeyword(sld);
+  const tokenList = (tokens || []).map(cleanKeyword).filter(Boolean);
+  const optionList = [...COMPARISON_OPTIONS].sort((a, b) => b.length - a.length);
+  const suffixWords = [...DECISION_TOOL_WORDS, ...GENERIC_APP_WRAPPER_WORDS]
+    .sort((a, b) => b.length - a.length);
+  let best = null;
+
+  function register(first, second, connector, startIndex, endIndex) {
+    if (!first || !second || first === second) return;
+    const rawPair = `${first}+${second}`;
+    let pairQuality = "medium";
+    if (STRONG_COMPARISON_PAIRS.has(rawPair)) pairQuality = "strong";
+    else if (WEAK_COMPARISON_PAIRS.has(rawPair)) pairQuality = "weak";
+    else if (MEDIUM_COMPARISON_PAIRS.has(rawPair)) pairQuality = "medium";
+    else pairQuality = "weak";
+
+    const remainder = cleanSld.slice(endIndex);
+    const suffixHits = suffixWords.filter(word => remainder === word || remainder.endsWith(word) || isTermMatch(word, tokenSet, cleanSld));
+    const decisionHits = suffixHits.filter(word => DECISION_TOOL_WORDS.has(word));
+    const wrapperHits = suffixHits.filter(word => GENERIC_APP_WRAPPER_WORDS.has(word));
+    const appOnly = wrapperHits.length > 0 && decisionHits.length === 0;
+    const smashed = !connector;
+    const optionPair = rawPair;
+    const natural = pairQuality !== "weak" && !(smashed && appOnly);
+
+    const candidate = {
+      hasComparison: true,
+      first,
+      second,
+      connector,
+      optionPair,
+      pairQuality,
+      remainder,
+      suffixHits,
+      decisionHits,
+      wrapperHits,
+      appOnly,
+      smashed,
+      natural,
+      startIndex,
+      endIndex
+    };
+    const score = (pairQuality === "strong" ? 30 : pairQuality === "medium" ? 20 : 5)
+      + (decisionHits.length ? 12 : 0)
+      - (appOnly ? 7 : 0)
+      - (smashed ? 4 : 0)
+      - (startIndex > 0 ? 2 : 0);
+    if (!best || score > best._score) best = { ...candidate, _score: score };
+  }
+
+  for (const first of optionList) {
+    for (const second of optionList) {
+      if (first === second) continue;
+      for (const connector of ["or", "vs", "versus"]) {
+        const pattern = `${first}${connector}${second}`;
+        const index = cleanSld.indexOf(pattern);
+        if (index >= 0) register(first, second, connector, index, index + pattern.length);
+      }
+      // Smashed option pairs, e.g. rentbuyapp.com. These are readable sometimes,
+      // but usually less natural than rent-or-buy or buy-vs-rent.
+      const smashed = `${first}${second}`;
+      const index = cleanSld.indexOf(smashed);
+      if (index >= 0) register(first, second, "", index, index + smashed.length);
+    }
+  }
+
+  if (!best) return {
+    hasComparison: false,
+    adjustment: 0,
+    strengths: [],
+    issues: [],
+    cap: 98,
+    capReason: ""
+  };
+
+  let adjustment = 0;
+  const strengths = [];
+  const issues = [];
+  let cap = 98;
+  let capReason = "";
+
+  if (best.pairQuality === "strong" && best.decisionHits.length && !best.smashed) {
+    adjustment += 7;
+    strengths.push(`strong comparison + decision phrase: ${best.first} ${best.connector} ${best.second}`);
+  } else if (best.pairQuality === "strong" && best.appOnly && !best.smashed) {
+    adjustment += 8;
+    strengths.push(`clear comparison-app concept: ${best.first} ${best.connector} ${best.second}`);
+  } else if (best.pairQuality === "strong") {
+    adjustment += 2;
+    strengths.push(`useful comparison pair: ${best.first}/${best.second}`);
+  } else if (best.pairQuality === "medium" && best.decisionHits.length) {
+    adjustment += 1;
+    issues.push(`less obvious comparison pair: ${best.first}/${best.second}`);
+  } else if (best.pairQuality === "medium") {
+    adjustment -= 2;
+    issues.push(`less obvious comparison pair: ${best.first}/${best.second}`);
+  } else {
+    adjustment -= 7;
+    issues.push(`awkward comparison pair: ${best.first}/${best.second}`);
+    cap = Math.min(cap, 72);
+    capReason = "weak comparison pair";
+  }
+
+  if (best.appOnly && profile.label !== "Brandable / SaaS") {
+    if (best.pairQuality === "strong") {
+      issues.push("app wrapper is useful but less direct than calculator/compare/guide wording");
+      cap = Math.min(cap, 88);
+    } else {
+      adjustment -= 3;
+      issues.push("generic app/tool wrapper is weaker than calculator/compare/guide wording");
+      cap = Math.min(cap, 80);
+    }
+    capReason = capReason || "comparison app wrapper outside SaaS mode";
+  }
+
+  if (best.smashed) {
+    adjustment -= best.pairQuality === "strong" ? 3 : 5;
+    issues.push("smashed comparison pair is less readable than or/vs wording");
+    cap = Math.min(cap, best.pairQuality === "strong" ? 84 : 76);
+    capReason = capReason || "smashed comparison pair";
+  }
+
+  if (!best.decisionHits.length && !best.appOnly && profile.label !== "Brandable / SaaS") {
+    adjustment -= 2;
+    issues.push("comparison phrase lacks a strong decision-tool word");
+    cap = Math.min(cap, best.pairQuality === "strong" ? 89 : 82);
+    capReason = capReason || "comparison lacks decision-tool word";
+  }
+
+  return { ...best, adjustment, strengths, issues, cap, capReason };
 }
 
 function calibrateRatingScore(ctx) {
@@ -1575,6 +1753,8 @@ function scoreCaps(ctx) {
   const sensitivePlatformMismatch = sensitiveHits.length && platformHits.length && profile.label !== "Brandable / SaaS";
   const weakPronounStructure = hasWeakPronounStructure(knownTokens, sld);
   const keywordSoftIntentOrder = hasKeywordSoftIntentOrder(knownTokens, phraseFit.targetHits || [], coreIntentHits);
+  const comparisonPhrase = analyzeComparisonPhrase(sld, knownTokens, tokenSet, profile);
+  const strongComparisonDecision = comparisonPhrase.hasComparison && comparisonPhrase.pairQuality === "strong" && comparisonPhrase.decisionHits.length > 0 && !comparisonPhrase.smashed && !comparisonPhrase.appOnly;
   const premiumDirectCount = premiumDirectIntentHitCount(phraseFit);
   const platformOnlyIntent = platformHits.length && !premiumDirectCount && profile.label !== "Brandable / SaaS";
   if (professionalRiskHits.length && (isTermMatch("tool", tokenSet, sld) || isTermMatch("app", tokenSet, sld) || isTermMatch("ai", tokenSet, sld) || isTermMatch("easy", tokenSet, sld) || isTermMatch("done", tokenSet, sld))) {
@@ -1594,6 +1774,13 @@ function scoreCaps(ctx) {
   if (platformOnlyIntent && !brandableCandidate) apply(80, "platform-only intent outside SaaS mode");
   if (weakPronounStructure && !brandableCandidate) apply(72, "weak pronoun phrase");
   if (keywordSoftIntentOrder && !brandableCandidate) apply(82, "keyword + soft modifier + intent order");
+  if (comparisonPhrase.hasComparison && !brandableCandidate) {
+    if (comparisonPhrase.pairQuality === "weak") apply(70, "weak comparison pair");
+    if (comparisonPhrase.appOnly && profile.label !== "Brandable / SaaS") apply(comparisonPhrase.pairQuality === "strong" ? 88 : 80, "comparison app wrapper outside SaaS mode");
+    if (comparisonPhrase.smashed) apply(comparisonPhrase.pairQuality === "strong" ? 84 : 76, "smashed comparison pair");
+    if (!comparisonPhrase.decisionHits.length && !comparisonPhrase.appOnly && profile.label !== "Brandable / SaaS") apply(comparisonPhrase.pairQuality === "strong" ? 88 : 80, "comparison lacks decision-tool word");
+    if (comparisonPhrase.capReason) apply(comparisonPhrase.cap, comparisonPhrase.capReason);
+  }
 
   // TLDs are part of the rating, not just a component. Strong alternatives can still score well,
   // but only .com should be able to reach the very top of a general-purpose shortlist.
@@ -1628,6 +1815,7 @@ function scoreCaps(ctx) {
       phraseFit.sensitivePlatformMismatch ||
       phraseFit.weakPronounStructure ||
       phraseFit.keywordSoftIntentOrder ||
+      (phraseFit.comparisonPhrase && phraseFit.comparisonPhrase.hasComparison && !phraseFit.comparisonPhrase.natural) ||
       (phraseFit.platformHits || []).some(t => PLATFORM_GENERIC_WORDS.has(t)) ||
       (phraseFit.supportOnlyIntentHits || []).length && !premiumDirectCount ||
       phraseFit.fillerHits.length ||
@@ -1635,7 +1823,7 @@ function scoreCaps(ctx) {
       firstIntentBeforeKeyword ||
       unclearIntentStack
     );
-    const hasCleanTopEvidence = (exactOrPremiumBrandable || canonicalKeywordIntent) && !premiumBlockers;
+    const hasCleanTopEvidence = (exactOrPremiumBrandable || canonicalKeywordIntent || strongComparisonDecision) && !premiumBlockers;
     if (premiumBlockers && !brandableCandidate) apply(86, "top-tier premium blockers");
     if (phraseFit.adjustment <= -5 && !brandableCandidate) apply(82, "weak phrase quality");
     if (targetKeywords.length && phraseFit.targetHits.length && !intentEvidence && !brandableCandidate && !exactTargetName) {
