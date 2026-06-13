@@ -27,7 +27,8 @@ const SPECIAL_SUFFIXES = new Set([
 const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
-const STATE_KEY = "domainCheckerStateV5";
+const SCORING_VERSION = "v6-topend-sensitive-platform-2026-06-13";
+const STATE_KEY = "domainCheckerStateV6";
 
 const el = {
   inputBox: document.getElementById("inputBox"),
@@ -852,8 +853,11 @@ function rawIntentScore(tokenSet, sld, positiveWords, profile) {
   const hits = [];
   for (const [term, points] of DEFAULT_POSITIVE_TERMS.entries()) {
     if (!isTermMatch(term, tokenSet, sld)) continue;
-    const softMultiplier = SOFT_MODIFIER_WORDS.has(term) ? 6 : 10;
-    hits.push(Math.min(100, points * softMultiplier));
+    // Platform/product words like app/tool/software are strong in SaaS mode, but only moderate
+    // in general/trust-heavy batches. This prevents keyword+app/tool from looking premium by default.
+    let multiplier = SOFT_MODIFIER_WORDS.has(term) ? 6 : 10;
+    if (PLATFORM_SOFTWARE_WORDS.has(cleanKeyword(term)) && profile.label !== "Brandable / SaaS") multiplier = Math.min(multiplier, 6);
+    hits.push(Math.min(100, points * multiplier));
   }
   for (const [term, points] of Object.entries(profile.positives || {})) {
     if (isTermMatch(term, tokenSet, sld)) hits.push(Math.min(100, 55 + points * 9));
@@ -1164,12 +1168,12 @@ function analyzePhraseArchitecture(ctx) {
   }
 
   if (pluralOwnerProduct && !brandableCandidate) {
-    adjustment -= 4;
-    issues.push("plural-owner phrase sounds less clean");
+    adjustment -= 7;
+    issues.push("plural-owner product phrase sounds awkward");
   }
 
   if (sensitivePlatformMismatch && !brandableCandidate) {
-    adjustment -= 4;
+    adjustment -= 7;
     issues.push("software/platform word is risky in sensitive category");
   } else if (platformHits.length && !directUsefulnessHits.length && profile.label !== "Brandable / SaaS" && !brandableCandidate) {
     adjustment -= 2;
@@ -1263,6 +1267,23 @@ function scorePenaltyDetails(ctx) {
   const keptPenaltyKeys = new Set(dedupeTermHits([...termPenalties.keys()]));
   for (const [key, item] of termPenalties.entries()) {
     if (keptPenaltyKeys.has(key)) add(item.points, item.reason);
+  }
+
+  const sensitiveHits = tokenListHits(SENSITIVE_CATEGORY_WORDS, tokenSet, sld);
+  const platformHits = tokenListHits(PLATFORM_SOFTWARE_WORDS, tokenSet, sld);
+  const genericPlatformHits = tokenListHits(PLATFORM_GENERIC_WORDS, tokenSet, sld);
+  const directHits = hasDirectUsefulnessSignal(tokenSet, sld).filter(t => !PLATFORM_GENERIC_WORDS.has(t));
+  if (sensitiveHits.length && platformHits.length && profile.label !== "Brandable / SaaS" && !brandableCandidate) {
+    add(profile.strictTrust ? 10 : 7, `sensitive category + platform word (${platformHits.slice(0, 2).join("+")})`);
+  }
+  if (sensitiveHits.length && isTermMatch("ai", tokenSet, sld) && profile.label !== "Brandable / SaaS" && !brandableCandidate) {
+    add(profile.strictTrust ? 10 : 8, "AI with sensitive category");
+  }
+  if (hasPluralOwnerProductPattern(knownTokens) && !brandableCandidate) {
+    add(8, "awkward plural-owner product phrase");
+  }
+  if (genericPlatformHits.length && !directHits.length && profile.label !== "Brandable / SaaS" && !brandableCandidate) {
+    add(5, `generic platform word (${genericPlatformHits.slice(0, 2).join("+")})`);
   }
 
   const nonKeywordLength = lenWithoutTarget(sld, targetKeywords);
@@ -1446,11 +1467,11 @@ function scoreCaps(ctx) {
   if (professionalRiskHits.length && (isTermMatch("tool", tokenSet, sld) || isTermMatch("app", tokenSet, sld) || isTermMatch("ai", tokenSet, sld) || isTermMatch("easy", tokenSet, sld) || isTermMatch("done", tokenSet, sld))) {
     apply(profile.strictTrust ? 76 : 84, "professional/trust wording needs review");
   }
-  if (sensitiveHits.length && isTermMatch("ai", tokenSet, sld) && !brandableCandidate) apply(profile.label === "Brandable / SaaS" ? 90 : 82, "AI with sensitive category");
-  if (sensitivePlatformMismatch && !brandableCandidate) apply(profile.strictTrust ? 78 : 84, "platform wording in sensitive category");
-  if (pluralOwnerProduct && !brandableCandidate) apply(86, "plural owner + product phrase");
-  if (genericPlatformHits.length && profile.label !== "Brandable / SaaS" && !directUsefulnessHits.length && !brandableCandidate) apply(86, "generic platform word outside SaaS mode");
-  if (genericPlatformHits.length && targetEvidence && profile.label !== "Brandable / SaaS" && !brandableCandidate) apply(88, "platform word is context-dependent");
+  if (sensitiveHits.length && isTermMatch("ai", tokenSet, sld) && !brandableCandidate) apply(profile.label === "Brandable / SaaS" ? 88 : (profile.strictTrust ? 74 : 80), "AI with sensitive category");
+  if (sensitivePlatformMismatch && !brandableCandidate) apply(profile.strictTrust ? 76 : 82, "platform wording in sensitive category");
+  if (pluralOwnerProduct && !brandableCandidate) apply(profile.strictTrust ? 78 : 82, "plural owner + product phrase");
+  if (genericPlatformHits.length && profile.label !== "Brandable / SaaS" && !directUsefulnessHits.length && !brandableCandidate) apply(82, "generic platform word outside SaaS mode");
+  if (genericPlatformHits.length && targetEvidence && profile.label !== "Brandable / SaaS" && !brandableCandidate) apply(84, "platform word is context-dependent");
 
   // TLDs are part of the rating, not just a component. Strong alternatives can still score well,
   // but only .com should be able to reach the very top of a general-purpose shortlist.
@@ -1490,7 +1511,7 @@ function scoreCaps(ctx) {
       unclearIntentStack
     );
     const hasCleanTopEvidence = (exactOrPremiumBrandable || canonicalKeywordIntent) && !premiumBlockers;
-    if (premiumBlockers && !brandableCandidate) apply(89, "top-tier premium blockers");
+    if (premiumBlockers && !brandableCandidate) apply(86, "top-tier premium blockers");
     if (phraseFit.adjustment <= -5 && !brandableCandidate) apply(82, "weak phrase quality");
     if (targetKeywords.length && phraseFit.targetHits.length && !intentEvidence && !brandableCandidate && !exactTargetName) {
       apply(84, "keyword lacks clear intent support");
@@ -1683,7 +1704,8 @@ function enhanceResult(result) {
     token_count: score.token_count ?? "",
     token_coverage: score.token_coverage ?? "",
     detected_tokens: score.detected_tokens ?? "",
-    scoring_style: score.style || getScoringProfile().label
+    scoring_style: score.style || getScoringProfile().label,
+    scoring_version: SCORING_VERSION
   };
 }
 
@@ -2235,7 +2257,7 @@ function exportCsv(scope = "all") {
     return;
   }
   const columns = [
-    "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label",
+    "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label", "scoring_version",
     "batch_rank", "batch_percentile", "batch_label",
     "score_explanation", "scoring_style",
     "tld_score", "length_score", "keyword_score", "clarity_score", "brand_score", "intent_score", "fit_score",

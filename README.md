@@ -107,13 +107,9 @@ This version applies the external scoring-logic patch that:
 
 This is a rating-system-only change. Availability checking and the rest of the workflow are unchanged.
 
-## Rating algorithm v5 update
 
-This version keeps the same workflow but tightens the scoring algorithm:
+## v6 scoring update
 
-- stricter 90+ premium gates so only truly clean names reach Excellent
-- contextual penalties for AI/app/tool/base/stack/desk/platform wording in sensitive categories
-- penalties for awkward plural-owner phrases like `executorsapp.com` or `heirstools.com`
-- platform/software words score best in Brandable / SaaS mode instead of every mode
-- separate batch rank / percentile labels so you can see the best names in a weak or large batch
-- richer CSV audit columns: component scores, phrase adjustment, penalties, caps, token coverage, detected tokens, and batch rank
+This version is a scoring-focused update. It adds a visible/exported scoring version, cache-busts the app script for GitHub Pages, and tightens top-end scoring so 90+ scores are harder to earn. It is especially more cautious with sensitive-category domains combined with AI/app/tool/platform words, awkward plural-owner phrases like `executorsapp.com`, and generic platform suffixes like `base`, `stack`, `desk`, `pilot`, and `flow` outside Brandable/SaaS mode.
+
+CSV export now includes `scoring_version` and the richer audit fields already present in the app: batch rank, percentile, component scores, penalties, caps, token coverage, and detected tokens.
