@@ -27,7 +27,7 @@ const SPECIAL_SUFFIXES = new Set([
 const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
-const SCORING_VERSION = "v8-comparison-decision-2026-06-13";
+const SCORING_VERSION = "v9-word-order-category-calibration-2026-06-13";
 const STATE_KEY = "domainCheckerStateV6"; // keep old key so saved batches rescore after upgrades
 
 const el = {
@@ -199,7 +199,7 @@ function cleanKeyword(value) {
 
 const QUALITY_WORDS = [
   // Legal / estate planning category words
-  "probate", "estate", "will", "wills", "trust", "trusts", "executor", "executors", "inheritance", "heir", "heirs",
+  "probate", "estate", "estates", "small", "will", "wills", "trust", "trusts", "executor", "executors", "inheritance", "heir", "heirs",
   "court", "filing", "file", "forms", "form", "law", "legal", "attorney", "lawyer", "claim", "assets",
   // Useful domain / product words
   "help", "guide", "guides", "kit", "tool", "tools", "program", "planner", "plan", "plans", "course",
@@ -433,7 +433,7 @@ const DEFAULT_POSITIVE_TERMS = new Map([
 const DEFAULT_NEGATIVE_TERMS = new Map([
   ["247", 13], ["24", 8], ["guru", 8], ["genius", 7], ["wizard", 7], ["ninja", 8], ["hack", 8],
   ["hacks", 8], ["buddy", 5], ["plus", 5], ["pro", 5], ["express", 5], ["solution", 5], ["solutions", 5],
-  ["pathway", 5], ["route", 3], ["portal", 3], ["online", 2], ["best", 4], ["top", 3], ["cheap", 9]
+  ["pathway", 5], ["program", 4], ["route", 3], ["portal", 3], ["online", 2], ["best", 4], ["top", 3], ["cheap", 9]
 ]);
 
 // Rating calibration helpers. These are intentionally general-purpose, not niche-specific.
@@ -469,7 +469,7 @@ const STRONG_INTENT_WORDS = new Set([
 
 const GENERIC_LOW_SIGNAL_WORDS = new Set([
   "hub", "portal", "central", "online", "works", "focus", "option", "options", "path", "route",
-  "pathway", "solution", "solutions", "plus", "pro", "express", "buddy", "genius", "wizard",
+  "pathway", "solution", "solutions", "program", "plus", "pro", "express", "buddy", "genius", "wizard",
   "best", "top", "now", "today", "go", "get", "try", "use", "hq", "world", "zone", "spot"
 ]);
 
@@ -501,7 +501,7 @@ const WEAK_POSITIONING_WORDS = new Set(["easy", "simple", "quick", "fast", "smar
 const PROFESSIONAL_RISK_WORDS = new Set(["law", "legal", "lawyer", "attorney", "doctor", "medical", "tax", "loan", "insurance"]);
 const LEGAL_PROFESSIONAL_WORDS = new Set(["law", "legal", "lawyer", "attorney"]);
 const SENSITIVE_CATEGORY_WORDS = new Set([
-  "probate", "estate", "will", "wills", "trust", "trusts", "executor", "executors", "heir", "heirs", "heirship",
+  "probate", "estate", "estates", "small", "will", "wills", "trust", "trusts", "executor", "executors", "heir", "heirs", "heirship",
   "inheritance", "affidavit", "court", "legal", "law", "lawyer", "attorney", "tax", "irs", "1099", "401k",
   "loan", "credit", "mortgage", "insurance", "medical", "doctor", "health", "therapy"
 ]);
@@ -570,6 +570,20 @@ const DECISION_TOOL_WORDS = new Set([
 
 const GENERIC_APP_WRAPPER_WORDS = new Set(["app", "apps", "tool", "tools", "score", "wise", "help"]);
 
+// Rating v9: word-order and category-phrase calibration. These rules help when users
+// do not enter target keywords, by using detected category terms and phrase shape.
+const CATEGORY_MODIFIER_WORDS = new Set(["diy", "self", "easy", "simple", "guided", "my", "your", "own", "do"]);
+const OWNERSHIP_MODIFIER_WORDS = new Set(["own", "my", "your"]);
+const NONPREMIUM_PROGRAM_WORDS = new Set(["program", "programs"]);
+const CATEGORY_PHRASE_WORDS = new Set(["small", "estate", "estates"]);
+const INTENT_PREFIX_WEAK_WORDS = new Set(["guide", "guides", "help", "forms", "form", "kit", "tool", "tools", "service", "services"]);
+const DIRECT_CLEAR_INTENT_WORDS = new Set([
+  "forms", "form", "guide", "guides", "kit", "checklist", "planner", "template", "templates",
+  "quote", "quotes", "estimate", "estimates", "calculator", "compare", "comparison", "worksheet",
+  "repair", "booking", "scheduler", "finder"
+]);
+
+
 const BRANDABLE_SIGNAL_WORDS = new Set([
   "app", "apps", "ai", "data", "cloud", "sync", "flow", "desk", "crm", "sales", "lead", "leads", "client", "clients",
   "marketing", "market", "seo", "ads", "media", "brand", "brands", "studio", "agency", "lab", "labs", "stack", "base",
@@ -578,7 +592,7 @@ const BRANDABLE_SIGNAL_WORDS = new Set([
 ]);
 
 const CATEGORY_LOCK_WORDS = new Set([
-  "probate", "estate", "will", "wills", "trust", "trusts", "executor", "executors", "inheritance", "heir", "heirs",
+  "probate", "estate", "estates", "small", "will", "wills", "trust", "trusts", "executor", "executors", "inheritance", "heir", "heirs",
   "court", "filing", "file", "forms", "form", "law", "legal", "attorney", "lawyer", "claim", "claims", "assets",
   "home", "house", "roof", "lawn", "cleaning", "repair", "plumbing", "electric", "hvac", "care", "health", "doctor",
   "dental", "tax", "taxes", "loan", "loans", "insurance", "realty", "rent", "rental", "rentals", "quote", "quotes",
@@ -962,6 +976,12 @@ function analyzeRatingFit(ctx) {
   const sensitivePlatformMismatch = isSensitivePlatformMismatch(profile, tokenSet, sld);
   const platformContextIssue = platformWordContextIssue(profile, tokenSet, sld);
   const weakPronounStructure = hasWeakPronounStructure(tokens, sld);
+  const categorySoftIntentOrder = hasCategorySoftIntentOrder(tokens, targetHits, intentHits);
+  const intentBeforeCategoryPattern = hasIntentBeforeCategoryPattern(tokens);
+  const weakOwnershipModifier = hasWeakOwnershipModifierPattern(tokens);
+  const redundantPluralCategory = hasRedundantPluralCategoryPattern(tokens);
+  const smallEstateReversal = hasSmallEstateReversalPattern(tokens);
+  const programStackPattern = hasProgramStackPattern(tokens);
   const comparisonPhrase = analyzeComparisonPhrase(sld, tokens, tokenSet, profile);
 
   const tokenCount = tokens.length;
@@ -980,7 +1000,7 @@ function analyzeRatingFit(ctx) {
   const keywordSoftIntentOrder = hasKeywordSoftIntentOrder(tokens, targetHits, intentHits);
   const premiumDirectIntentHits = dedupeTermHits(intentHits.filter(t => PREMIUM_DIRECT_INTENT_WORDS.has(t)));
   const supportOnlyIntentHits = dedupeTermHits(intentHits.filter(t => SUPPORT_ONLY_INTENT_WORDS.has(t)));
-  const naturalIntentPhrase = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !keywordSoftIntentOrder && !weakPronounStructure;
+  const naturalIntentPhrase = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !keywordSoftIntentOrder && !categorySoftIntentOrder && !intentBeforeCategoryPattern && !weakOwnershipModifier && !redundantPluralCategory && !smallEstateReversal && !programStackPattern && !weakPronounStructure;
 
   if (exactTargetName) {
     adjustment += 8;
@@ -1071,6 +1091,36 @@ function analyzeRatingFit(ctx) {
     issues.push("keyword + soft modifier + intent order is less natural");
   }
 
+  if (categorySoftIntentOrder && !brandableCandidate) {
+    adjustment -= 6;
+    issues.push("category + soft modifier + intent order is less natural");
+  }
+
+  if (intentBeforeCategoryPattern && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("intent word before category reads less natural");
+  }
+
+  if (weakOwnershipModifier && !brandableCandidate) {
+    adjustment -= 4;
+    issues.push("ownership modifier is weaker than a clear action phrase");
+  }
+
+  if (redundantPluralCategory && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("plural category phrase reads less clean");
+  }
+
+  if (smallEstateReversal && !brandableCandidate) {
+    adjustment -= 4;
+    issues.push("small-estate phrase order is less natural");
+  }
+
+  if (programStackPattern && profile.label !== "Course / content" && !brandableCandidate) {
+    adjustment -= 5;
+    issues.push("program word is vague outside course/content use");
+  }
+
   if (weakPronounStructure && !brandableCandidate) {
     adjustment -= 8;
     issues.push("weak pronoun makes the phrase less brandable");
@@ -1145,6 +1195,12 @@ function analyzeRatingFit(ctx) {
     sensitivePlatformMismatch,
     weakPronounStructure,
     keywordSoftIntentOrder,
+    categorySoftIntentOrder,
+    intentBeforeCategoryPattern,
+    weakOwnershipModifier,
+    redundantPluralCategory,
+    smallEstateReversal,
+    programStackPattern,
     comparisonPhrase,
     premiumDirectIntentHits,
     supportOnlyIntentHits,
@@ -1201,6 +1257,12 @@ function analyzePhraseArchitecture(ctx) {
   const middleHasAwkwardAction = middleTokens.some(t => AWKWARD_ACTION_PREFIXES.has(t));
   const keywordSoftIntentOrder = hasKeywordSoftIntentOrder(tokens, targetHits, intentHits);
   const weakPronounStructure = hasWeakPronounStructure(tokens, sld);
+  const categorySoftIntentOrder = hasCategorySoftIntentOrder(tokens, targetHits, intentHits);
+  const intentBeforeCategoryPattern = hasIntentBeforeCategoryPattern(tokens);
+  const weakOwnershipModifier = hasWeakOwnershipModifierPattern(tokens);
+  const redundantPluralCategory = hasRedundantPluralCategoryPattern(tokens);
+  const smallEstateReversal = hasSmallEstateReversalPattern(tokens);
+  const programStackPattern = hasProgramStackPattern(tokens);
   const comparisonPhrase = analyzeComparisonPhrase(sld, tokens, tokenSet, profile);
   const naturalOrder = !lastIsSoftModifier && !firstIntentBeforeKeyword && !unclearIntentStack && !firstIsAwkwardAction && !middleHasAwkwardAction && !keywordSoftIntentOrder && !weakPronounStructure && (!comparisonPhrase.hasComparison || comparisonPhrase.natural);
 
@@ -1381,6 +1443,24 @@ function scorePenaltyDetails(ctx) {
   if (hasKeywordSoftIntentOrder(knownTokens, targetKeywords.filter(k => isTermMatch(k, tokenSet, sld)), hasDirectUsefulnessSignal(tokenSet, sld)) && !brandableCandidate) {
     add(5, "less natural keyword-modifier-intent order");
   }
+  if (hasCategorySoftIntentOrder(knownTokens, targetKeywords.filter(k => isTermMatch(k, tokenSet, sld)), hasDirectUsefulnessSignal(tokenSet, sld)) && !brandableCandidate) {
+    add(6, "less natural category-modifier-intent order");
+  }
+  if (hasIntentBeforeCategoryPattern(knownTokens) && !brandableCandidate) {
+    add(5, "intent word before category");
+  }
+  if (hasWeakOwnershipModifierPattern(knownTokens) && !brandableCandidate) {
+    add(4, "weak ownership modifier");
+  }
+  if (hasRedundantPluralCategoryPattern(knownTokens) && !brandableCandidate) {
+    add(5, "plural category phrase");
+  }
+  if (hasSmallEstateReversalPattern(knownTokens) && !brandableCandidate) {
+    add(4, "small-estate phrase order");
+  }
+  if (hasProgramStackPattern(knownTokens) && profile.label !== "Course / content" && !brandableCandidate) {
+    add(5, "vague program stack");
+  }
 
   const comparisonPhrase = analyzeComparisonPhrase(sld, knownTokens, tokenSet, profile);
   if (comparisonPhrase.hasComparison && !brandableCandidate) {
@@ -1456,6 +1536,91 @@ function hasKeywordSoftIntentOrder(tokens = [], targetHits = [], intentHits = []
     if (targets.has(a) && SOFT_MODIFIER_WORDS.has(b) && intents.has(c)) return true;
   }
   return false;
+}
+
+
+function isCategoryLikeToken(token = "") {
+  const t = cleanKeyword(token);
+  if (!t) return false;
+  if (SENSITIVE_CATEGORY_WORDS.has(t) || CATEGORY_LOCK_WORDS.has(t) || COMPARISON_OPTIONS.has(t)) return true;
+  // Treat frequent real-estate/legal phrase words as categories even when the user has not
+  // entered target keywords. This helps word-order scoring work on pasted batches alone.
+  if (["estate", "estates", "probate", "executor", "executors", "heir", "heirs", "heirship", "affidavit", "rent", "buy", "own", "lease", "mortgage", "tax"].includes(t)) return true;
+  return false;
+}
+
+function hasCategorySoftIntentOrder(tokens = [], targetHits = [], intentHits = []) {
+  const cleanTokens = tokens.map(cleanKeyword).filter(Boolean);
+  const targets = new Set((targetHits || []).map(cleanKeyword));
+  const intents = new Set((intentHits || []).map(cleanKeyword));
+  for (let i = 0; i < cleanTokens.length - 2; i += 1) {
+    const a = cleanTokens[i];
+    const b = cleanTokens[i + 1];
+    const c = cleanTokens[i + 2];
+    const categoryA = targets.has(a) || isCategoryLikeToken(a);
+    const intentC = intents.has(c) || CORE_INTENT_WORDS.has(c) || DIRECT_USEFULNESS_WORDS.has(c) || PREMIUM_DIRECT_INTENT_WORDS.has(c);
+    if (categoryA && CATEGORY_MODIFIER_WORDS.has(b) && intentC) return true;
+  }
+  return false;
+}
+
+function hasIntentBeforeCategoryPattern(tokens = []) {
+  const cleanTokens = tokens.map(cleanKeyword).filter(Boolean);
+  if (cleanTokens.length < 2) return false;
+  const first = cleanTokens[0];
+  if (!INTENT_PREFIX_WEAK_WORDS.has(first)) return false;
+  // Natural decision/service compounds can start with compare/quote/estimate, so keep this
+  // focused on noun-like intent prefixes such as guide/forms/help/kit/tool.
+  return cleanTokens.slice(1).some(isCategoryLikeToken);
+}
+
+function hasWeakOwnershipModifierPattern(tokens = []) {
+  const cleanTokens = tokens.map(cleanKeyword).filter(Boolean);
+  if (cleanTokens.length < 2) return false;
+  // "ownprobateguide" / "ownestateforms" is usually less natural than
+  // "diyprobateguide" or "doyourownprobate".
+  if (OWNERSHIP_MODIFIER_WORDS.has(cleanTokens[0]) && cleanTokens.slice(1).some(isCategoryLikeToken)) {
+    return true;
+  }
+  return false;
+}
+
+function hasRedundantPluralCategoryPattern(tokens = []) {
+  const cleanTokens = tokens.map(cleanKeyword).filter(Boolean);
+  for (let i = 0; i < cleanTokens.length - 1; i += 1) {
+    const a = cleanTokens[i];
+    const b = cleanTokens[i + 1];
+    if ((a === "estates" || a === "trusts" || a === "wills") && (PRODUCT_NOUN_WORDS.has(b) || DIRECT_USEFULNESS_WORDS.has(b))) return true;
+  }
+  return false;
+}
+
+function hasSmallEstateReversalPattern(tokens = []) {
+  const cleanTokens = tokens.map(cleanKeyword).filter(Boolean);
+  const smallIdx = cleanTokens.indexOf("small");
+  const estateIdx = cleanTokens.findIndex(t => t === "estate" || t === "estates");
+  if (smallIdx < 0 || estateIdx < 0) return false;
+  const hasSmallEstate = estateIdx === smallIdx + 1;
+  if (!hasSmallEstate) return true;
+  // "small estate guide" is natural. "guide small estate" is understandable,
+  // but less clean as a domain phrase.
+  return smallIdx > 0 && INTENT_PREFIX_WEAK_WORDS.has(cleanTokens[0]);
+}
+
+function hasProgramStackPattern(tokens = []) {
+  const cleanTokens = tokens.map(cleanKeyword).filter(Boolean);
+  if (!cleanTokens.some(t => NONPREMIUM_PROGRAM_WORDS.has(t))) return false;
+  const otherIntent = cleanTokens.some(t => t !== "program" && t !== "programs" && (DIRECT_USEFULNESS_WORDS.has(t) || PREMIUM_DIRECT_INTENT_WORDS.has(t)));
+  return otherIntent || cleanTokens.length >= 3;
+}
+
+function hasUnnaturalCategoryOrderPattern(tokens = [], targetHits = [], intentHits = []) {
+  return hasCategorySoftIntentOrder(tokens, targetHits, intentHits) ||
+    hasIntentBeforeCategoryPattern(tokens) ||
+    hasWeakOwnershipModifierPattern(tokens) ||
+    hasRedundantPluralCategoryPattern(tokens) ||
+    hasSmallEstateReversalPattern(tokens) ||
+    hasProgramStackPattern(tokens);
 }
 
 function premiumDirectIntentHitCount(phraseFit = {}) {
@@ -1631,7 +1796,7 @@ function calibrateRatingScore(ctx) {
   const cleanHighEvidence = cleanStructure && compact && (brandableCandidate || (hasTarget && hasIntent));
 
   // Help very good but not perfect names break out of the high-70s without inflating weak names.
-  const weakPhraseIssue = (phraseFit.issues || []).some(issue => /backward|stacked|soft modifier|awkward|multiple utility|weak phrase|less natural|pronoun|platform|sensitive/i.test(issue));
+  const weakPhraseIssue = (phraseFit.issues || []).some(issue => /backward|stacked|soft modifier|category|ownership|plural category|small-estate|program|awkward|multiple utility|weak phrase|less natural|pronoun|platform|sensitive/i.test(issue));
 
   if (rawScore >= 74 && rawScore <= 84 && cleanHighEvidence && lowValueCount === 0 && penalty.total <= 3 && !weakPhraseIssue) {
     adjustment += 3;
@@ -1665,7 +1830,7 @@ function calibrateRatingScore(ctx) {
     issues.push("calibrated down for weaker phrase naturalness");
   }
 
-  if ((phraseFit.weakPronounStructure || phraseFit.keywordSoftIntentOrder) && rawScore >= 70 && !brandableCandidate) {
+  if ((phraseFit.weakPronounStructure || phraseFit.keywordSoftIntentOrder || phraseFit.categorySoftIntentOrder || phraseFit.intentBeforeCategoryPattern || phraseFit.weakOwnershipModifier || phraseFit.redundantPluralCategory || phraseFit.smallEstateReversal || phraseFit.programStackPattern) && rawScore >= 70 && !brandableCandidate) {
     adjustment -= 3;
     issues.push("calibrated down for awkward word order");
   }
@@ -1753,6 +1918,12 @@ function scoreCaps(ctx) {
   const sensitivePlatformMismatch = sensitiveHits.length && platformHits.length && profile.label !== "Brandable / SaaS";
   const weakPronounStructure = hasWeakPronounStructure(knownTokens, sld);
   const keywordSoftIntentOrder = hasKeywordSoftIntentOrder(knownTokens, phraseFit.targetHits || [], coreIntentHits);
+  const categorySoftIntentOrder = hasCategorySoftIntentOrder(knownTokens, phraseFit.targetHits || [], coreIntentHits);
+  const intentBeforeCategoryPattern = hasIntentBeforeCategoryPattern(knownTokens);
+  const weakOwnershipModifier = hasWeakOwnershipModifierPattern(knownTokens);
+  const redundantPluralCategory = hasRedundantPluralCategoryPattern(knownTokens);
+  const smallEstateReversal = hasSmallEstateReversalPattern(knownTokens);
+  const programStackPattern = hasProgramStackPattern(knownTokens);
   const comparisonPhrase = analyzeComparisonPhrase(sld, knownTokens, tokenSet, profile);
   const strongComparisonDecision = comparisonPhrase.hasComparison && comparisonPhrase.pairQuality === "strong" && comparisonPhrase.decisionHits.length > 0 && !comparisonPhrase.smashed && !comparisonPhrase.appOnly;
   const premiumDirectCount = premiumDirectIntentHitCount(phraseFit);
@@ -1774,6 +1945,12 @@ function scoreCaps(ctx) {
   if (platformOnlyIntent && !brandableCandidate) apply(80, "platform-only intent outside SaaS mode");
   if (weakPronounStructure && !brandableCandidate) apply(72, "weak pronoun phrase");
   if (keywordSoftIntentOrder && !brandableCandidate) apply(82, "keyword + soft modifier + intent order");
+  if (categorySoftIntentOrder && !brandableCandidate) apply(80, "category + soft modifier + intent order");
+  if (intentBeforeCategoryPattern && !brandableCandidate) apply(80, "intent word before category");
+  if (weakOwnershipModifier && !brandableCandidate) apply(82, "weak ownership modifier");
+  if (redundantPluralCategory && !brandableCandidate) apply(78, "plural category phrase");
+  if (smallEstateReversal && !brandableCandidate) apply(80, "small-estate phrase order");
+  if (programStackPattern && profile.label !== "Course / content" && !brandableCandidate) apply(78, "vague program stack");
   if (comparisonPhrase.hasComparison && !brandableCandidate) {
     if (comparisonPhrase.pairQuality === "weak") apply(70, "weak comparison pair");
     if (comparisonPhrase.appOnly && profile.label !== "Brandable / SaaS") apply(comparisonPhrase.pairQuality === "strong" ? 88 : 80, "comparison app wrapper outside SaaS mode");
@@ -1815,6 +1992,12 @@ function scoreCaps(ctx) {
       phraseFit.sensitivePlatformMismatch ||
       phraseFit.weakPronounStructure ||
       phraseFit.keywordSoftIntentOrder ||
+      phraseFit.categorySoftIntentOrder ||
+      phraseFit.intentBeforeCategoryPattern ||
+      phraseFit.weakOwnershipModifier ||
+      phraseFit.redundantPluralCategory ||
+      phraseFit.smallEstateReversal ||
+      phraseFit.programStackPattern ||
       (phraseFit.comparisonPhrase && phraseFit.comparisonPhrase.hasComparison && !phraseFit.comparisonPhrase.natural) ||
       (phraseFit.platformHits || []).some(t => PLATFORM_GENERIC_WORDS.has(t)) ||
       (phraseFit.supportOnlyIntentHits || []).length && !premiumDirectCount ||
