@@ -1,33 +1,32 @@
-# Domain Shortlist — Scoring v13
+# Domain Shortlist
 
-Static GitHub Pages domain shortlist tool.
+A static GitHub Pages app for bulk domain triage.
 
-## v13 scoring upgrade
+## What it does
 
-This release focuses only on scoring quality/calibration while keeping the public usability workflow intact.
+- Paste domains, URLs, or upload TXT/CSV files
+- Normalize URLs to registrable domains
+- Check public RDAP first and DNS fallback second
+- Rank domain quality with explainable scores
+- Show batch rank / top picks
+- Favorite shortlisted names
+- Export all results, favorites, or top picks
+- Open registrar lookup links in bulk
+- Render large batches in chunks for better performance
 
-Changes:
+## Public beta notes
 
-- `v13-general-quality-calibration-2026-06-14` scoring version.
-- Profile-aware TLD scoring:
-  - `.ai`, `.io`, `.app`, `.dev` score better in Brandable/SaaS mode.
-  - `.shop` / `.store` score better in Ecommerce mode.
-  - `.org` scores better in Trust-heavy / content contexts.
-- Token-confidence scoring:
-  - Uses recognized tokens, coverage, curated vocabulary, target keywords, and custom positive words.
-  - Reduces false boosts from dynamic vocabulary fragments.
-  - Adds `token_confidence` to CSV export.
-- Dynamic vocabulary cleanup:
-  - Learns repeated niche terms more carefully.
-  - Avoids common fragments like `tion`, `able`, `ator`, `ing`, etc.
-  - Requires stronger evidence for short learned terms.
-- Contextual number handling:
-  - Meaningful numbers like `1099`, `401k`, `529`, `360`, `365`, `3d`, `b2b`, and `b2c` are penalized less when paired with relevant context.
-  - Random numbers and `247`-style names are still treated cautiously.
-- Calibration refinements:
-  - Good names need both clean phrase shape and high token confidence for top scores.
-  - Low token-confidence names are capped/penalized more consistently.
+This app is a browser-only static site. It has no backend server, no database, and no registrar API key.
 
-## Limitations
+Availability is an estimate from public RDAP/DNS checks. A domain marked `possibly_available` still needs to be confirmed at a registrar before purchase. Pricing is not live in this app.
 
-This app is still a browser-only filter. Availability and quality scores are estimates. Always confirm domain availability and price at a registrar before buying.
+## Privacy
+
+Pasted lists and saved sessions stay in the browser's local storage. Availability checks may contact public RDAP/DNS services, and registrar links open external websites.
+
+## Scoring
+
+The quality score is a heuristic ranking based on TLD, length, target keyword fit, clarity, brandability, buyer intent, word order, comparison-phrase quality, and penalties. It is not a market valuation or trademark check.
+
+Current scoring model: `v9-word-order-category-calibration-2026-06-13`.
+Public polish/performance version: `public-beta-v11-polish-performance-2026-06-13`.

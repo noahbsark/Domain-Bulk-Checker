@@ -27,11 +27,11 @@ const SPECIAL_SUFFIXES = new Set([
 const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
-const SCORING_VERSION = "v13-general-quality-calibration-2026-06-14";
-const APP_PERFORMANCE_VERSION = "public-usability-v13-2026-06-14";
-const INITIAL_RENDER_LIMIT = 250;
+const SCORING_VERSION = "v14-large-batch-performance-2026-06-14";
+const APP_PERFORMANCE_VERSION = "large-batch-v14-2026-06-14";
+const INITIAL_RENDER_LIMIT = 150;
 const RENDER_LIMIT_STEP = 250;
-const CHECK_RENDER_INTERVAL_MS = 350;
+const CHECK_RENDER_INTERVAL_MS = 900;
 const STATE_KEY = "domainCheckerStateV6"; // keep old key so saved batches rescore after upgrades
 
 const el = {
@@ -48,6 +48,7 @@ const el = {
   registrarInput: document.getElementById("registrarInput"),
   useRdapInput: document.getElementById("useRdapInput"),
   useDnsInput: document.getElementById("useDnsInput"),
+  scoreOnlyInput: document.getElementById("scoreOnlyInput"),
   dedupeInput: document.getElementById("dedupeInput"),
   scoringStyleInput: document.getElementById("scoringStyleInput"),
   positiveWordsInput: document.getElementById("positiveWordsInput"),
@@ -2600,6 +2601,23 @@ async function checkDomain(row, options) {
     });
   }
 
+  if (options.scoreOnly) {
+    return enhanceResult({
+      input: row.input,
+      normalized_domain: row.domain,
+      namecheap_url: namecheapUrl(row.domain),
+      registrar_url: registrarUrl(row.domain),
+      registrar_name: selectedRegistrarLabel(),
+      availability_status: "not_checked_score_only",
+      available: null,
+      check_source: "score-only",
+      checked_at_utc: checkedAt,
+      rdap_url: "",
+      notes: "Score-only mode skipped network availability checks. Use registrar links to confirm availability.",
+      error: ""
+    });
+  }
+
   let rdapResult = null;
   if (options.useRdap) {
     rdapResult = await queryRdap(row.domain, options.timeoutMs);
@@ -2694,13 +2712,18 @@ async function runChecks() {
     delayMs: clampNumber(el.delayInput.value, 0, 10000, 250),
     timeoutMs: clampNumber(el.timeoutInput.value, 1000, 60000, 12000),
     useRdap: el.useRdapInput.checked,
-    useDns: el.useDnsInput.checked
+    useDns: el.useDnsInput.checked,
+    scoreOnly: el.scoreOnlyInput ? el.scoreOnlyInput.checked : false
   };
 
   let done = 0;
   el.progress.max = rows.length;
   el.progress.value = 0;
-  setStatus(`Checking ${rows.length} domains...`);
+  if (rows.length >= 10000 && !options.scoreOnly) {
+    setStatus(`Checking ${rows.length} domains with network availability checks. Large batches can take a long time; score-only mode is much faster for first-pass ranking.`);
+  } else {
+    setStatus(options.scoreOnly ? `Scoring ${rows.length} domains without network checks...` : `Checking ${rows.length} domains...`);
+  }
 
   try {
     await mapLimit(rows, options.workers, async row => {
@@ -2709,8 +2732,11 @@ async function runChecks() {
     }, (result, index) => {
       results[index] = result;
       done += 1;
-      el.progress.value = done;
-      setStatus(`Checked ${done}/${rows.length}: ${result.normalized_domain || result.input}`);
+      const progressEvery = rows.length >= 10000 ? 50 : rows.length >= 3000 ? 15 : 1;
+      if (done % progressEvery === 0 || done === rows.length) {
+        el.progress.value = done;
+        setStatus(`${options.scoreOnly ? "Scored" : "Checked"} ${done}/${rows.length}: ${result.normalized_domain || result.input}`);
+      }
       scheduleRenderResults();
     });
   } catch (err) {
@@ -2745,6 +2771,16 @@ function resetRenderLimit() {
   renderRowLimit = INITIAL_RENDER_LIMIT;
 }
 
+function adaptiveRenderIntervalMs() {
+  const targetSize = results.length || 0;
+  if (!isChecking) return CHECK_RENDER_INTERVAL_MS;
+  if (targetSize >= 15000) return 3500;
+  if (targetSize >= 10000) return 2500;
+  if (targetSize >= 5000) return 1600;
+  if (targetSize >= 2000) return 1100;
+  return CHECK_RENDER_INTERVAL_MS;
+}
+
 function scheduleRenderResults(options = {}) {
   const force = Boolean(options.force);
   if (force) {
@@ -2757,8 +2793,9 @@ function scheduleRenderResults(options = {}) {
   }
 
   const now = Date.now();
+  const interval = adaptiveRenderIntervalMs();
   const elapsed = now - lastRenderAt;
-  if (elapsed >= CHECK_RENDER_INTERVAL_MS) {
+  if (elapsed >= interval) {
     if (pendingRenderTimer) {
       clearTimeout(pendingRenderTimer);
       pendingRenderTimer = null;
@@ -2771,7 +2808,7 @@ function scheduleRenderResults(options = {}) {
     pendingRenderTimer = setTimeout(() => {
       pendingRenderTimer = null;
       renderResults();
-    }, Math.max(40, CHECK_RENDER_INTERVAL_MS - elapsed));
+    }, Math.max(80, interval - elapsed));
   }
 }
 
@@ -2784,7 +2821,11 @@ function displayedResults() {
   const noNumbers = el.filterNoNumbers.checked;
   const sort = el.sortSelect.value;
 
-  let rows = applyBatchMetrics(results.filter(Boolean)).filter(row => {
+  let sourceRows = results.filter(Boolean);
+  // During very large active checks, defer batch-rank recalculation until the run finishes.
+  // Sorting/ranking thousands of rows every redraw is the biggest browser slowdown.
+  if (!isChecking || sourceRows.length < 2500) sourceRows = applyBatchMetrics(sourceRows);
+  let rows = sourceRows.filter(row => {
     const domain = row.normalized_domain || "";
     const sld = secondLevelName(domain).replace(/\./g, "");
 
@@ -3152,6 +3193,7 @@ function currentSettings() {
     topPickCount: el.topPickCountInput?.value || "20",
     useRdap: el.useRdapInput.checked,
     useDns: el.useDnsInput.checked,
+    scoreOnly: el.scoreOnlyInput ? el.scoreOnlyInput.checked : false,
     dedupe: el.dedupeInput.checked,
     filterStatus: el.filterStatus.value,
     filterSearch: el.filterSearch.value,
@@ -3175,6 +3217,7 @@ function applySettings(settings = {}) {
   if (settings.topPickCount !== undefined && el.topPickCountInput) el.topPickCountInput.value = settings.topPickCount;
   if (settings.useRdap !== undefined) el.useRdapInput.checked = Boolean(settings.useRdap);
   if (settings.useDns !== undefined) el.useDnsInput.checked = Boolean(settings.useDns);
+  if (settings.scoreOnly !== undefined && el.scoreOnlyInput) el.scoreOnlyInput.checked = Boolean(settings.scoreOnly);
   if (settings.dedupe !== undefined) el.dedupeInput.checked = Boolean(settings.dedupe);
   if (settings.filterStatus !== undefined) el.filterStatus.value = settings.filterStatus;
   if (settings.filterSearch !== undefined) el.filterSearch.value = settings.filterSearch;
@@ -3187,13 +3230,22 @@ function applySettings(settings = {}) {
 
 function saveState() {
   if (isChecking) return;
+  const cleaned = results.filter(Boolean);
+  // localStorage gets slow and can exceed browser quotas with giant batches.
+  // Save settings/input/favorites, but only persist result rows for smaller sessions.
   const state = {
     input: el.inputBox.value,
-    results: results.filter(Boolean).slice(0, 5000),
+    results: cleaned.length > 5000 ? [] : cleaned.slice(0, 5000),
+    large_result_count_not_saved: cleaned.length > 5000 ? cleaned.length : 0,
     favorites: [...favorites],
     settings: currentSettings()
   };
-  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  } catch {
+    const smallerState = { ...state, results: [] };
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(smallerState)); } catch {}
+  }
 }
 
 function loadState() {

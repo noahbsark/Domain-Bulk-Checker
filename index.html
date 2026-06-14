@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Domain Shortlist — Bulk Domain Checker</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=14-large-batch" />
 </head>
 <body>
   <main class="shell">
@@ -20,7 +20,7 @@
           <span>3. Shortlist top picks</span>
         </div>
       </div>
-      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v13 · Performance v10</div></div>
+      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v13 · Large batch v14</div></div>
     </header>
 
     <section class="trust-grid" aria-label="Privacy and accuracy notes">
@@ -34,7 +34,7 @@
       </div>
       <div class="trust-card">
         <strong>Built for big batches</strong>
-        <span>Large lists render in chunks so 1,000+ domain batches stay usable.</span>
+        <span>Large lists render in chunks. For 10,000+ names, use score-only first, then check the shortlist.</span>
       </div>
     </section>
 
@@ -87,8 +87,10 @@
         </label>
         <label class="check"><input id="useRdapInput" type="checkbox" checked /> Try RDAP first</label>
         <label class="check"><input id="useDnsInput" type="checkbox" checked /> Use DNS fallback</label>
+        <label class="check"><input id="scoreOnlyInput" type="checkbox" /> Score only / skip availability</label>
         <label class="check"><input id="dedupeInput" type="checkbox" checked /> De-dupe domains</label>
       </div>
+      <p class="muted large-batch-help"><strong>Large batch tip:</strong> For 10,000+ names, turn on <strong>Score only / skip availability</strong> first. Then shortlist the best names and run availability checks on that smaller list.</p>
     </section>
 
     <section class="panel compact advanced-panel">
@@ -275,6 +277,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=13-general-quality-calibration"></script>
+  <script src="app.js?v=14-large-batch"></script>
 </body>
 </html>
