@@ -1,20 +1,33 @@
-# Domain Shortlist — public usability v12
+# Domain Shortlist — Scoring v13
 
-Static GitHub Pages app for bulk domain triage.
+Static GitHub Pages domain shortlist tool.
 
-## What is new in v12
+## v13 scoring upgrade
 
-- Cleaner primary workflow: **Check domains → Shortlist best names → Open/export top picks**.
-- Secondary/bulk actions moved into collapsible sections so the main screen is less cluttered.
-- Target keywords moved closer to the paste box with clearer guidance.
-- Post-check next-steps panel summarizing checked, available, taken, unknown, top picks, and favorites.
-- More helpful empty results state.
-- Keeps prior performance rendering improvements and the existing v9 scoring logic.
+This release focuses only on scoring quality/calibration while keeping the public usability workflow intact.
 
-## Important limitations
+Changes:
 
-This is a no-key, static browser app. Availability is estimated from public RDAP/DNS checks. Anything marked possibly available should still be confirmed with a registrar before purchase.
+- `v13-general-quality-calibration-2026-06-14` scoring version.
+- Profile-aware TLD scoring:
+  - `.ai`, `.io`, `.app`, `.dev` score better in Brandable/SaaS mode.
+  - `.shop` / `.store` score better in Ecommerce mode.
+  - `.org` scores better in Trust-heavy / content contexts.
+- Token-confidence scoring:
+  - Uses recognized tokens, coverage, curated vocabulary, target keywords, and custom positive words.
+  - Reduces false boosts from dynamic vocabulary fragments.
+  - Adds `token_confidence` to CSV export.
+- Dynamic vocabulary cleanup:
+  - Learns repeated niche terms more carefully.
+  - Avoids common fragments like `tion`, `able`, `ator`, `ing`, etc.
+  - Requires stronger evidence for short learned terms.
+- Contextual number handling:
+  - Meaningful numbers like `1099`, `401k`, `529`, `360`, `365`, `3d`, `b2b`, and `b2c` are penalized less when paired with relevant context.
+  - Random numbers and `247`-style names are still treated cautiously.
+- Calibration refinements:
+  - Good names need both clean phrase shape and high token confidence for top scores.
+  - Low token-confidence names are capped/penalized more consistently.
 
-## Deploy
+## Limitations
 
-Upload `index.html`, `app.js`, `style.css`, and `README.md` to the root of the GitHub Pages repository and push.
+This app is still a browser-only filter. Availability and quality scores are estimates. Always confirm domain availability and price at a registrar before buying.

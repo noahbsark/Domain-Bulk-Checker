@@ -20,7 +20,7 @@
           <span>3. Shortlist top picks</span>
         </div>
       </div>
-      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v9 · Performance v10 · UX v12</div></div>
+      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v13 · Performance v10</div></div>
     </header>
 
     <section class="trust-grid" aria-label="Privacy and accuracy notes">
@@ -53,12 +53,6 @@
         <span id="inputCount" class="muted">0 lines</span>
       </div>
       <textarea id="inputBox" spellcheck="false" placeholder="doyourownprobate.com&#10;https://example.com/page&#10;probateprogram.com"></textarea>
-      <div class="keyword-helper">
-        <label>Target keywords / niche <span class="muted">optional, improves quality scoring</span>
-          <input id="keywordsInput" type="text" placeholder="rent, buy, calculator" />
-        </label>
-        <p class="muted">Examples: <strong>roofing, quote, repair</strong> or <strong>AI, chatbot, support</strong>. Leave blank for general scoring.</p>
-      </div>
       <div class="button-row wrap">
         <button id="loadTxtBtn" type="button">Load TXT/CSV</button>
         <input id="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" hidden />
@@ -78,6 +72,9 @@
         </label>
         <label>Timeout ms
           <input id="timeoutInput" type="number" min="1000" max="60000" value="12000" />
+        </label>
+        <label class="wide">Target keywords / phrases
+          <input id="keywordsInput" type="text" placeholder="rent, buy, calculator" />
         </label>
         <label>Registrar links
           <select id="registrarInput">
@@ -129,52 +126,31 @@
 
     <section class="panel actions-panel">
       <div class="workflow-callout">
-        <strong>Recommended workflow:</strong>
-        Check the batch → shortlist best names → star favorites → export or open registrar links.
+        <strong>Recommended public workflow:</strong>
+        Check the batch → click <strong>Show top picks</strong> → star your shortlist → export or open registrar links.
       </div>
-      <div id="nextStepsPanel" class="next-steps-panel is-hidden" aria-live="polite">
-        <div>
-          <strong id="nextStepsHeadline">Batch checked.</strong>
-          <span id="nextStepsDetails">Review top picks, favorite your shortlist, then export or open registrar links.</span>
-        </div>
-        <div class="next-step-buttons">
-          <button id="nextShowTopPicksBtn" type="button" class="primary">Shortlist best names</button>
-          <button id="nextExportTopPicksBtn" type="button">Export top picks</button>
-          <button id="nextOpenTopPicksBtn" type="button" class="success ghost">Open top picks</button>
-        </div>
-      </div>
-      <div class="button-row wrap primary-actions">
-        <button id="checkBtn" type="button" class="primary">Check domains</button>
-        <button id="showTopPicksBtn" type="button" class="success ghost">Shortlist best names</button>
-        <button id="openTopPicksBtn" type="button" class="success">Open top picks</button>
-        <button id="exportTopPicksBtn" type="button">Export top picks</button>
+      <div class="button-row wrap">
+        <button id="checkBtn" type="button" class="primary">Check pasted links</button>
         <button id="stopBtn" type="button" class="ghost" disabled>Stop</button>
+        <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
+        <button id="keepAvailableBtn" type="button" class="success ghost">Keep available only</button>
+        <button id="openAllBtn" type="button" class="success">Open ALL visible registrar links</button>
+        <button id="openAvailableBtn" type="button" class="success ghost">Open available only</button>
+        <button id="openFavoritesBtn" type="button" class="success ghost">Open favorites</button>
       </div>
-
-      <details class="action-group">
-        <summary>More actions</summary>
-        <div class="button-row wrap">
-          <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
-          <button id="keepAvailableBtn" type="button" class="success ghost">Keep available only</button>
-          <button id="openAvailableBtn" type="button" class="success ghost">Open available only</button>
-          <button id="openFavoritesBtn" type="button" class="success ghost">Open favorites</button>
-          <button id="openAllBtn" type="button" class="ghost">Open visible registrar links</button>
-        </div>
-      </details>
-
-      <details class="action-group">
-        <summary>Copy, export, and session tools</summary>
-        <div class="button-row wrap secondary-actions">
-          <button id="copyTopPicksBtn" type="button">Copy top picks</button>
-          <button id="copyAvailableBtn" type="button">Copy available domains</button>
-          <button id="copyFavoritesBtn" type="button">Copy favorites</button>
-          <button id="copyVisibleBtn" type="button">Copy visible domains</button>
-          <button id="copyLinksBtn" type="button">Copy visible registrar links</button>
-          <button id="exportBtn" type="button">Export all CSV</button>
-          <button id="exportFavoritesBtn" type="button">Export favorites</button>
-          <button id="clearSessionBtn" type="button" class="ghost">Clear saved session</button>
-        </div>
-      </details>
+      <div class="button-row wrap secondary-actions">
+        <button id="copyAvailableBtn" type="button">Copy available domains</button>
+        <button id="copyFavoritesBtn" type="button">Copy favorites</button>
+        <button id="copyVisibleBtn" type="button">Copy visible domains</button>
+        <button id="copyLinksBtn" type="button">Copy visible registrar links</button>
+        <button id="showTopPicksBtn" type="button">Show top picks</button>
+        <button id="copyTopPicksBtn" type="button">Copy top picks</button>
+        <button id="openTopPicksBtn" type="button">Open top picks</button>
+        <button id="exportBtn" type="button">Export CSV</button>
+        <button id="exportFavoritesBtn" type="button">Export favorites</button>
+        <button id="exportTopPicksBtn" type="button">Export top picks</button>
+        <button id="clearSessionBtn" type="button" class="ghost">Clear saved session</button>
+      </div>
       <div class="status-row">
         <div id="statusText">Ready.</div>
         <progress id="progress" value="0" max="1"></progress>
@@ -261,7 +237,7 @@
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="empty"><td colspan="13"><strong>No results yet.</strong><br />Paste domains above, add optional target keywords, then click <strong>Check domains</strong>.</td></tr>
+            <tr class="empty"><td colspan="13">No results yet.</td></tr>
           </tbody>
         </table>
       </div>
@@ -299,6 +275,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=12-usability-cleanup"></script>
+  <script src="app.js?v=13-general-quality-calibration"></script>
 </body>
 </html>

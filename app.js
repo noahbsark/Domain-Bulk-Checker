@@ -27,8 +27,8 @@ const SPECIAL_SUFFIXES = new Set([
 const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
-const SCORING_VERSION = "v9-word-order-category-calibration-2026-06-13";
-const APP_PERFORMANCE_VERSION = "public-usability-v12-2026-06-13";
+const SCORING_VERSION = "v13-general-quality-calibration-2026-06-14";
+const APP_PERFORMANCE_VERSION = "public-usability-v13-2026-06-14";
 const INITIAL_RENDER_LIMIT = 250;
 const RENDER_LIMIT_STEP = 250;
 const CHECK_RENDER_INTERVAL_MS = 350;
@@ -359,10 +359,24 @@ function getDynamicVocabulary() {
     }
   }
 
+  const staticVocabulary = new Set([
+    ...QUALITY_WORDS, ...GENERIC_DOMAIN_WORDS, ...getKeywords(), ...getPositiveWords(), ...getNegativeWords()
+  ].map(cleanKeyword).filter(Boolean));
+  const junkFragments = new Set([
+    "tion", "ions", "ment", "ness", "able", "ible", "ator", "ators", "izer", "izers",
+    "ify", "ing", "ings", "ally", "allys", "less", "wise", "line"
+  ]);
+
   const dynamic = [...counts.entries()]
     .filter(([term, set]) => {
       const minCount = domainNames.length >= 30 ? 3 : 2;
-      return set.size >= minCount && term.length >= 4;
+      if (set.size < minCount || term.length < 4) return false;
+      if (junkFragments.has(term)) return false;
+      // v13: dynamic vocabulary should learn niche words, not arbitrary prefixes/suffixes.
+      // Short learned terms need stronger evidence unless they already exist in the curated vocabulary.
+      if (term.length <= 5 && !staticVocabulary.has(term) && set.size < Math.max(minCount + 2, Math.ceil(domainNames.length * 0.04))) return false;
+      if (/^(pre|post|auto|best|easy|quick|smart|clear)$/.test(term) && !staticVocabulary.has(term)) return false;
+      return true;
     })
     .sort((a, b) => b[1].size - a[1].size || b[0].length - a[0].length)
     .map(([term]) => term)
@@ -658,6 +672,28 @@ const CATEGORY_LOCK_WORDS = new Set([
   "estimate", "estimates"
 ]);
 
+// Rating v13: general calibration additions. These are intentionally cross-niche.
+// They reduce over-penalties for meaningful numbers, improve token-confidence scoring,
+// and avoid treating every learned substring as a real word.
+const MEANINGFUL_NUMBER_PATTERNS = [
+  { pattern: /1099/, context: new Set(["tax", "taxes", "irs", "contractor", "contractors", "freelance", "freelancer", "payroll"]) },
+  { pattern: /401k/, context: new Set(["retire", "retirement", "ira", "invest", "investment", "finance", "financial", "tax"]) },
+  { pattern: /529/, context: new Set(["college", "tuition", "education", "savings", "save", "school"]) },
+  { pattern: /360/, context: new Set(["brand", "brands", "marketing", "view", "insight", "analytics", "data", "feedback"]) },
+  { pattern: /365/, context: new Set(["planner", "calendar", "daily", "day", "fitness", "health", "productivity", "support"]) },
+  { pattern: /3d/, context: new Set(["print", "printer", "printing", "model", "models", "design", "scan", "scanning"]) },
+  { pattern: /b2b/, context: new Set(["sales", "lead", "leads", "crm", "marketing", "saas", "software", "agency"]) },
+  { pattern: /b2c/, context: new Set(["marketing", "brand", "brands", "shop", "store", "ecommerce", "sales"]) }
+];
+
+const TOKEN_FRAGMENT_WORDS = new Set([
+  "tion", "ions", "ment", "ness", "able", "ible", "ator", "ators", "izer", "izers", "ing", "ings", "less", "wise"
+]);
+
+const SHORT_COMMON_SAFE_WORDS = new Set([
+  "app", "ai", "crm", "seo", "tax", "law", "pet", "gym", "fit", "job", "pay", "buy", "rent", "own", "car", "home", "roof", "kit"
+]);
+
 
 function tokenHitCount(words, tokenSet, sld) {
   let hits = 0;
@@ -667,6 +703,51 @@ function tokenHitCount(words, tokenSet, sld) {
 
 function tokenListHits(words, tokenSet, sld) {
   return dedupeTermHits([...words].filter(word => isTermMatch(word, tokenSet, sld)));
+}
+
+function hasMeaningfulNumberPattern(sld, tokens = [], tokenSet = new Set()) {
+  const cleanSld = cleanKeyword(sld);
+  if (!/\d/.test(cleanSld)) return false;
+  const tokenWords = new Set((tokens || []).map(cleanKeyword).filter(Boolean));
+  for (const { pattern, context } of MEANINGFUL_NUMBER_PATTERNS) {
+    if (!pattern.test(cleanSld)) continue;
+    const hasContext = [...context].some(term => tokenWords.has(term) || isTermMatch(term, tokenSet, cleanSld));
+    if (hasContext) return true;
+  }
+  // 24/7 style service names are common but usually promotional, not premium.
+  if (/247|24/.test(cleanSld)) return false;
+  return false;
+}
+
+function tokenConfidenceScore(sld, knownTokens = [], coverage = 0, targetKeywords = [], positiveWords = []) {
+  const tokens = (knownTokens || []).map(cleanKeyword).filter(Boolean);
+  if (!sld) return 0;
+  let score = Math.round(coverage * 70);
+
+  if (tokens.length >= 2 && tokens.length <= 3) score += 18;
+  else if (tokens.length === 1 || tokens.length === 4) score += 10;
+  else if (tokens.length >= 5) score -= Math.min(15, (tokens.length - 4) * 4);
+
+  const targetSet = new Set((targetKeywords || []).map(cleanKeyword).filter(Boolean));
+  const positiveSet = new Set((positiveWords || []).map(cleanKeyword).filter(Boolean));
+  const curatedSet = new Set([
+    ...QUALITY_WORDS, ...GENERIC_DOMAIN_WORDS, ...DIRECT_USEFULNESS_WORDS, ...CATEGORY_LOCK_WORDS,
+    ...COMPARISON_OPTIONS, ...targetSet, ...positiveSet
+  ].map(cleanKeyword).filter(Boolean));
+
+  let strongTokens = 0;
+  let weakTokens = 0;
+  for (const token of tokens) {
+    if (curatedSet.has(token)) strongTokens += 1;
+    if (TOKEN_FRAGMENT_WORDS.has(token)) weakTokens += 1;
+    if (token.length <= 3 && !SHORT_COMMON_SAFE_WORDS.has(token) && !targetSet.has(token) && !positiveSet.has(token)) weakTokens += 1;
+  }
+  if (strongTokens >= 2) score += 8;
+  if (strongTokens === tokens.length && tokens.length >= 2) score += 4;
+  if (weakTokens) score -= Math.min(20, weakTokens * 6);
+  if (/[^a-z0-9]/.test(String(sld || ""))) score -= 4;
+
+  return Math.max(0, Math.min(100, score));
 }
 
 function dedupeTermHits(hits) {
@@ -778,12 +859,13 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
   const coverage = len ? Math.max(0, Math.min(1, (len - unknownChars) / len)) : 0;
   const tokenSet = new Set(knownTokens);
   const brandableCandidate = isBrandableCandidate(sldRaw, sld, len, coverage, knownTokens, targetKeywords, profile.keywordOptional, profile);
+  const tokenConfidence = tokenConfidenceScore(sld, knownTokens, coverage, targetKeywords, positiveWords);
 
   const components = {
-    tld: weightedScore(rawTldScore(suffix), profile.weights.tld),
+    tld: weightedScore(rawTldScore(suffix, profile), profile.weights.tld),
     length: weightedScore(rawLengthScore(len), profile.weights.length),
     keyword: weightedScore(rawKeywordScore(sld, targetKeywords, profile.keywordOptional, tokenSet), profile.weights.keyword),
-    clarity: weightedScore(rawClarityScore(sld, sldRaw, knownTokens, coverage, targetKeywords, brandableCandidate), profile.weights.clarity),
+    clarity: weightedScore(rawClarityScore(sld, sldRaw, knownTokens, coverage, targetKeywords, brandableCandidate, tokenConfidence), profile.weights.clarity),
     brand: weightedScore(rawBrandScore(sldRaw, sld, len, brandableCandidate), profile.weights.brand),
     intent: weightedScore(rawIntentScore(tokenSet, sld, positiveWords, profile), profile.weights.intent),
     fit: weightedScore(rawStyleFitScore(tokenSet, sld, profile), profile.weights.fit)
@@ -809,7 +891,7 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
 
   const calibration = calibrateRatingScore({
     rawScore: score, sldRaw, sld, len, coverage, targetKeywords, components, profile,
-    brandableCandidate, tokenSet, phraseFit, penalty
+    brandableCandidate, tokenSet, phraseFit, penalty, knownTokens, positiveWords
   });
   score += calibration.adjustment;
   strengths.push(...calibration.strengths);
@@ -827,6 +909,7 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
     `length ${components.length}/${profile.weights.length}`,
     targetKeywords.length ? `keyword fit ${components.keyword}/${profile.weights.keyword}` : `keyword fit ${components.keyword}/${profile.weights.keyword}; add target keywords for better ranking`,
     `clarity ${components.clarity}/${profile.weights.clarity}`,
+    `token confidence ${tokenConfidence}/100`,
     `brand ${components.brand}/${profile.weights.brand}`,
     `intent ${components.intent}/${profile.weights.intent}`,
     `style fit ${components.fit}/${profile.weights.fit}`,
@@ -859,23 +942,35 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
     cap_reasons: capInfo.reasons.join("; "),
     token_count: knownTokens.length,
     token_coverage: coverage.toFixed(2),
+    token_confidence: tokenConfidence,
     detected_tokens: knownTokens.join("+")
   };
 }
 
 function scoreResult(score, label, explanation, components, notes) {
-  return { score, label, explanation, components, notes, strengths: [], issues: [], style: getScoringProfile().label, phrase_adjustment: 0, calibration_adjustment: 0, penalty_total: 0, penalty_reasons: "", score_cap: score, cap_reasons: "", token_count: 0, token_coverage: "", detected_tokens: "" };
+  return { score, label, explanation, components, notes, strengths: [], issues: [], style: getScoringProfile().label, phrase_adjustment: 0, calibration_adjustment: 0, penalty_total: 0, penalty_reasons: "", score_cap: score, cap_reasons: "", token_count: 0, token_coverage: "", token_confidence: "", detected_tokens: "" };
 }
 
 function weightedScore(raw0to100, weight) {
   return Math.round(Math.max(0, Math.min(100, raw0to100)) * weight / 100);
 }
 
-function rawTldScore(suffix) {
+function rawTldScore(suffix, profile = getScoringProfile()) {
+  suffix = String(suffix || "").toLowerCase();
   if (suffix === "com") return 100;
+
+  // v13: TLD quality is now profile-aware. A .ai or .app can be strong for SaaS,
+  // .shop/.store can be strong for ecommerce, and .org can be strong for trust/content.
+  // They should still sit below .com for a general public shortlist.
+  const label = profile?.label || "General";
+  if (label === "Brandable / SaaS" && ["ai", "io", "app", "dev"].includes(suffix)) return 84;
+  if (label === "Ecommerce / product" && ["shop", "store"].includes(suffix)) return 82;
+  if ((label === "Trust-heavy" || label === "Course / content") && ["org"].includes(suffix)) return 82;
+  if (label === "Local service" && String(suffix).includes(".")) return 58;
+
   if (["org", "net"].includes(suffix)) return 72;
-  if (["co", "io", "ai", "app", "dev"].includes(suffix)) return 60;
-  if (["legal", "law", "finance", "shop", "store"].includes(suffix)) return 55;
+  if (["co", "io", "ai", "app", "dev"].includes(suffix)) return 64;
+  if (["legal", "law", "finance", "shop", "store"].includes(suffix)) return 58;
   if (String(suffix || "").includes(".")) return 45;
   return 30;
 }
@@ -930,7 +1025,7 @@ function rawKeywordScore(sld, targetKeywords, keywordOptional, tokenSet = new Se
   return Math.max(0, Math.min(100, best));
 }
 
-function rawClarityScore(sld, sldRaw, knownTokens, coverage, targetKeywords, brandableCandidate) {
+function rawClarityScore(sld, sldRaw, knownTokens, coverage, targetKeywords, brandableCandidate, tokenConfidence) {
   let score = 0;
   if (coverage >= 0.95) score += 44;
   else if (coverage >= 0.8) score += 36;
@@ -950,6 +1045,14 @@ function rawClarityScore(sld, sldRaw, knownTokens, coverage, targetKeywords, bra
 
   if (/^[a-z0-9]+$/.test(sld)) score += 7;
   if (brandableCandidate) score += 13;
+
+  // v13: coverage alone can be fooled by learned fragments. Token confidence combines
+  // coverage, token count, and whether the parts are curated/user-supplied terms.
+  if (tokenConfidence >= 85) score += 6;
+  else if (tokenConfidence >= 72) score += 3;
+  else if (tokenConfidence < 45 && !brandableCandidate) score -= 10;
+  else if (tokenConfidence < 60 && !brandableCandidate) score -= 5;
+
   if ((sldRaw.match(/-/g) || []).length > 1) score -= 10;
   if (/(.)\1\1/.test(sld)) score -= 8;
   return Math.max(0, Math.min(100, score));
@@ -1456,12 +1559,17 @@ function scorePenaltyDetails(ctx) {
 
   // Structural penalties are deliberately moderate. The cap logic handles the truly bad cases,
   // so one flaw does not collapse a domain four different ways.
+  const meaningfulNumber = hasMeaningfulNumberPattern(sld, knownTokens, tokenSet);
+  const tokenConfidence = tokenConfidenceScore(sld, knownTokens, coverage, targetKeywords, []);
+
   if (sldRaw.includes("-")) add((sldRaw.match(/-/g) || []).length > 1 ? 10 : 6, "hyphen");
-  if (/\d/.test(sld)) add(/\d{2,}/.test(sld) ? 9 : 6, "number");
+  if (/\d/.test(sld)) add(meaningfulNumber ? 2 : (/\d{2,}/.test(sld) ? 9 : 6), meaningfulNumber ? "contextual number" : "number");
   if (/(.)\1\1/.test(sld)) add(5, "repeated characters");
   if (knownTokens.length > 4) add(3, "many words");
   if (knownTokens.length > 5) add(3, "wordy");
   if (coverage < 0.45 && !brandableCandidate) add(6, "hard to parse");
+  if (tokenConfidence < 45 && !brandableCandidate) add(6, "low token confidence");
+  else if (tokenConfidence < 60 && !brandableCandidate) add(3, "moderate token confidence");
 
   const termPenalties = new Map();
   const collect = (term, points, reason) => {
@@ -1850,7 +1958,7 @@ function analyzeComparisonPhrase(sld, tokens = [], tokenSet = new Set(), profile
 }
 
 function calibrateRatingScore(ctx) {
-  const { rawScore, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, penalty } = ctx;
+  const { rawScore, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, penalty, knownTokens = [], positiveWords = [] } = ctx;
   const strengths = [];
   const issues = [];
   const notes = [];
@@ -1862,7 +1970,8 @@ function calibrateRatingScore(ctx) {
   const lowValueCount = phraseFit.fillerHits.length;
   const cleanStructure = !sldRaw.includes("-") && !/\d/.test(sld) && coverage >= 0.7;
   const compact = len >= 6 && len <= 15;
-  const cleanHighEvidence = cleanStructure && compact && (brandableCandidate || (hasTarget && hasIntent));
+  const tokenConfidence = tokenConfidenceScore(sld, knownTokens, coverage, targetKeywords, positiveWords);
+  const cleanHighEvidence = cleanStructure && compact && tokenConfidence >= 72 && (brandableCandidate || (hasTarget && hasIntent));
 
   // Help very good but not perfect names break out of the high-70s without inflating weak names.
   const weakPhraseIssue = (phraseFit.issues || []).some(issue => /backward|stacked|soft modifier|category|ownership|plural category|small-estate|program|awkward|multiple utility|weak phrase|less natural|pronoun|platform|sensitive/i.test(issue));
@@ -1892,6 +2001,14 @@ function calibrateRatingScore(ctx) {
   if (coverage < 0.55 && !brandableCandidate && rawScore >= 65) {
     adjustment -= 2;
     issues.push("calibrated down for uncertain word split");
+  }
+
+  if (tokenConfidence < 55 && !brandableCandidate && rawScore >= 65) {
+    adjustment -= 3;
+    issues.push("calibrated down for low token confidence");
+  } else if (tokenConfidence >= 88 && cleanHighEvidence && rawScore >= 70 && rawScore <= 86 && penalty.total <= 3 && !weakPhraseIssue) {
+    adjustment += 2;
+    strengths.push("calibrated upward for very high token confidence");
   }
 
   if (weakPhraseIssue && rawScore >= 76 && !brandableCandidate) {
@@ -1954,8 +2071,16 @@ function scoreCaps(ctx) {
   if (len > 24) apply(70, "very long");
   else if (len > 20) apply(79, "long name");
   else if (len > 18) apply(86, "slightly long name");
+  const meaningfulNumber = hasMeaningfulNumberPattern(sld, knownTokens, tokenSet);
+  const tokenConfidence = tokenConfidenceScore(sld, knownTokens, coverage, targetKeywords, []);
+
   if (sldRaw.includes("-")) apply((sldRaw.match(/-/g) || []).length > 1 ? 72 : 78, "hyphen");
-  if (/\d/.test(sld)) apply(/\d{2,}/.test(sld) ? 72 : 78, "number");
+  if (/\d/.test(sld)) {
+    if (meaningfulNumber) apply(profile.label === "Brandable / SaaS" ? 90 : 88, "numbered term is context-specific");
+    else apply(/\d{2,}/.test(sld) ? 72 : 78, "number");
+  }
+  if (tokenConfidence < 45 && !brandableCandidate) apply(72, "low token confidence");
+  else if (tokenConfidence < 60 && !brandableCandidate) apply(84, "moderate token confidence");
   const gimmicks = ["wizard", "genius", "guru", "ninja", "hack", "cheap", "247"];
   if (gimmicks.some(t => isTermMatch(t, tokenSet, sld))) apply(profile.strictTrust ? 68 : 80, "gimmicky word");
 
@@ -2110,7 +2235,10 @@ function addStrengthsAndIssues(ctx) {
 
   if (!sldRaw.includes("-") && !/\d/.test(sld)) strengths.push("no hyphen or number");
   if (sldRaw.includes("-")) issues.push("hyphen hurts memorability");
-  if (/\d/.test(sld)) issues.push("number hurts trust/readability");
+  if (/\d/.test(sld)) {
+    if (hasMeaningfulNumberPattern(sld, knownTokens, tokenSet)) issues.push("numbered term is niche-specific but meaningful");
+    else issues.push("number hurts trust/readability");
+  }
 
   const profileHits = Object.keys(profile.positives || {}).filter(t => isTermMatch(t, tokenSet, sld));
   if (profileHits.length) strengths.push(`${profile.label} fit: ${profileHits.slice(0, 2).join(", ")}`);
@@ -2272,6 +2400,7 @@ function enhanceResult(result) {
     cap_reasons: score.cap_reasons ?? "",
     token_count: score.token_count ?? "",
     token_coverage: score.token_coverage ?? "",
+    token_confidence: score.token_confidence ?? "",
     detected_tokens: score.detected_tokens ?? "",
     scoring_style: score.style || getScoringProfile().label,
     namecheap_url: result.normalized_domain ? namecheapUrl(result.normalized_domain) : (result.namecheap_url || ""),
@@ -2944,7 +3073,7 @@ function exportCsv(scope = "all") {
     "score_explanation", "scoring_style",
     "tld_score", "length_score", "keyword_score", "clarity_score", "brand_score", "intent_score", "fit_score",
     "phrase_adjustment", "calibration_adjustment", "penalty_total", "penalty_reasons", "score_cap", "cap_reasons",
-    "token_count", "token_coverage", "detected_tokens", "score_components", "score_notes",
+    "token_count", "token_coverage", "token_confidence", "detected_tokens", "score_components", "score_notes",
     "registrar_name", "registrar_url", "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
   ];
   const csv = [
