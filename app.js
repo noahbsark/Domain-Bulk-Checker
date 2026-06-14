@@ -28,7 +28,7 @@ const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
 const SCORING_VERSION = "v9-word-order-category-calibration-2026-06-13";
-const APP_PERFORMANCE_VERSION = "public-beta-v11-polish-performance-2026-06-13";
+const APP_PERFORMANCE_VERSION = "public-usability-v12-2026-06-13";
 const INITIAL_RENDER_LIMIT = 250;
 const RENDER_LIMIT_STEP = 250;
 const CHECK_RENDER_INTERVAL_MS = 350;
@@ -56,6 +56,12 @@ const el = {
   showTopPicksBtn: document.getElementById("showTopPicksBtn"),
   copyTopPicksBtn: document.getElementById("copyTopPicksBtn"),
   openTopPicksBtn: document.getElementById("openTopPicksBtn"),
+  nextStepsPanel: document.getElementById("nextStepsPanel"),
+  nextStepsHeadline: document.getElementById("nextStepsHeadline"),
+  nextStepsDetails: document.getElementById("nextStepsDetails"),
+  nextShowTopPicksBtn: document.getElementById("nextShowTopPicksBtn"),
+  nextExportTopPicksBtn: document.getElementById("nextExportTopPicksBtn"),
+  nextOpenTopPicksBtn: document.getElementById("nextOpenTopPicksBtn"),
   checkBtn: document.getElementById("checkBtn"),
   stopBtn: document.getElementById("stopBtn"),
   removeTakenBtn: document.getElementById("removeTakenBtn"),
@@ -2586,7 +2592,7 @@ async function runChecks() {
     updateSummary();
     setChecking(false);
     const endText = stopRequested ? `Stopped. Checked ${results.length}/${rows.length} rows.` : `Done. Checked ${results.length} rows.`;
-    setStatus(`${endText} Favorite, filter, remove taken rows, open registrar links, copy, or export CSV.`);
+    setStatus(`${endText} Next: click Shortlist best names, star favorites, then export or open registrar links.`);
     saveState();
   }
 }
@@ -2694,7 +2700,7 @@ function renderResults() {
   lastRenderAt = Date.now();
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No results yet.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13"><strong>No results yet.</strong><br />Paste domains above, add optional target keywords, then click <strong>Check domains</strong>.</td></tr>';
     el.visibleCount.textContent = "0 visible";
     if (el.renderedCount) el.renderedCount.textContent = "0 rendered";
     if (el.showMoreBtn) el.showMoreBtn.disabled = true;
@@ -2759,12 +2765,44 @@ function scoreClass(score) {
 
 function updateSummary() {
   const cleaned = results.filter(Boolean);
-  el.summaryChecked.textContent = cleaned.length;
-  el.summaryAvailable.textContent = cleaned.filter(r => r.available === true).length;
-  el.summaryTaken.textContent = cleaned.filter(r => r.available === false).length;
-  el.summaryInvalid.textContent = cleaned.filter(r => r.availability_status === "invalid_input").length;
-  el.summaryUnknown.textContent = cleaned.filter(r => r.available === null && r.availability_status !== "invalid_input").length;
-  el.summaryFavorites.textContent = cleaned.filter(r => favorites.has(r.normalized_domain)).length;
+  const checked = cleaned.length;
+  const available = cleaned.filter(r => r.available === true).length;
+  const taken = cleaned.filter(r => r.available === false).length;
+  const invalid = cleaned.filter(r => r.availability_status === "invalid_input").length;
+  const unknown = cleaned.filter(r => r.available === null && r.availability_status !== "invalid_input").length;
+  const favoriteCount = cleaned.filter(r => favorites.has(r.normalized_domain)).length;
+  const topPickCount = Math.min(available, topPickLimit());
+
+  el.summaryChecked.textContent = checked;
+  el.summaryAvailable.textContent = available;
+  el.summaryTaken.textContent = taken;
+  el.summaryInvalid.textContent = invalid;
+  el.summaryUnknown.textContent = unknown;
+  el.summaryFavorites.textContent = favoriteCount;
+
+  updateNextStepsPanel({ checked, available, taken, unknown, invalid, favoriteCount, topPickCount });
+}
+
+function updateNextStepsPanel(summary) {
+  if (!el.nextStepsPanel) return;
+  if (!summary.checked) {
+    el.nextStepsPanel.classList.add("is-hidden");
+    return;
+  }
+  el.nextStepsPanel.classList.remove("is-hidden");
+  if (el.nextStepsHeadline) {
+    el.nextStepsHeadline.textContent = `Checked ${summary.checked} domain${summary.checked === 1 ? "" : "s"}.`;
+  }
+  if (el.nextStepsDetails) {
+    const parts = [
+      `${summary.available} possibly available`,
+      `${summary.taken} taken`,
+      `${summary.unknown} unknown`,
+      `${summary.topPickCount} top pick${summary.topPickCount === 1 ? "" : "s"}`,
+      `${summary.favoriteCount} favorite${summary.favoriteCount === 1 ? "" : "s"}`
+    ];
+    el.nextStepsDetails.textContent = `${parts.join(" · ")}. Next: shortlist best names, star favorites, then export or open registrar links.`;
+  }
 }
 
 function removeTaken() {
@@ -2959,10 +2997,11 @@ function setChecking(checking) {
   el.stopBtn.disabled = !checking;
   const otherButtons = [
     el.removeTakenBtn, el.keepAvailableBtn, el.openAllBtn, el.openAvailableBtn, el.openFavoritesBtn,
-    el.exportBtn, el.exportFavoritesBtn, el.copyAvailableBtn, el.copyFavoritesBtn, el.copyVisibleBtn,
-    el.copyLinksBtn, el.showTopPicksBtn, el.copyTopPicksBtn, el.openTopPicksBtn, el.clearSessionBtn
+    el.exportBtn, el.exportFavoritesBtn, el.exportTopPicksBtn, el.copyAvailableBtn, el.copyFavoritesBtn, el.copyVisibleBtn,
+    el.copyLinksBtn, el.showTopPicksBtn, el.copyTopPicksBtn, el.openTopPicksBtn, el.clearSessionBtn,
+    el.nextShowTopPicksBtn, el.nextExportTopPicksBtn, el.nextOpenTopPicksBtn
   ];
-  for (const btn of otherButtons) btn.disabled = checking;
+  for (const btn of otherButtons.filter(Boolean)) btn.disabled = checking;
 }
 
 function updateInputCount() {
@@ -3169,6 +3208,9 @@ function bindEvents() {
   el.showTopPicksBtn.addEventListener("click", showTopPicks);
   el.copyTopPicksBtn.addEventListener("click", copyTopPicks);
   el.openTopPicksBtn.addEventListener("click", openTopPicks);
+  if (el.nextShowTopPicksBtn) el.nextShowTopPicksBtn.addEventListener("click", showTopPicks);
+  if (el.nextExportTopPicksBtn) el.nextExportTopPicksBtn.addEventListener("click", () => exportCsv("top_picks"));
+  if (el.nextOpenTopPicksBtn) el.nextOpenTopPicksBtn.addEventListener("click", openTopPicks);
   el.clearSessionBtn.addEventListener("click", clearSession);
   if (el.showMoreBtn) el.showMoreBtn.addEventListener("click", showMoreRows);
   if (el.showAllRowsBtn) el.showAllRowsBtn.addEventListener("click", showAllRows);

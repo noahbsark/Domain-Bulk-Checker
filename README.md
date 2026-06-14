@@ -1,32 +1,20 @@
-# Domain Shortlist
+# Domain Shortlist — public usability v12
 
-A static GitHub Pages app for bulk domain triage.
+Static GitHub Pages app for bulk domain triage.
 
-## What it does
+## What is new in v12
 
-- Paste domains, URLs, or upload TXT/CSV files
-- Normalize URLs to registrable domains
-- Check public RDAP first and DNS fallback second
-- Rank domain quality with explainable scores
-- Show batch rank / top picks
-- Favorite shortlisted names
-- Export all results, favorites, or top picks
-- Open registrar lookup links in bulk
-- Render large batches in chunks for better performance
+- Cleaner primary workflow: **Check domains → Shortlist best names → Open/export top picks**.
+- Secondary/bulk actions moved into collapsible sections so the main screen is less cluttered.
+- Target keywords moved closer to the paste box with clearer guidance.
+- Post-check next-steps panel summarizing checked, available, taken, unknown, top picks, and favorites.
+- More helpful empty results state.
+- Keeps prior performance rendering improvements and the existing v9 scoring logic.
 
-## Public beta notes
+## Important limitations
 
-This app is a browser-only static site. It has no backend server, no database, and no registrar API key.
+This is a no-key, static browser app. Availability is estimated from public RDAP/DNS checks. Anything marked possibly available should still be confirmed with a registrar before purchase.
 
-Availability is an estimate from public RDAP/DNS checks. A domain marked `possibly_available` still needs to be confirmed at a registrar before purchase. Pricing is not live in this app.
+## Deploy
 
-## Privacy
-
-Pasted lists and saved sessions stay in the browser's local storage. Availability checks may contact public RDAP/DNS services, and registrar links open external websites.
-
-## Scoring
-
-The quality score is a heuristic ranking based on TLD, length, target keyword fit, clarity, brandability, buyer intent, word order, comparison-phrase quality, and penalties. It is not a market valuation or trademark check.
-
-Current scoring model: `v9-word-order-category-calibration-2026-06-13`.
-Public polish/performance version: `public-beta-v11-polish-performance-2026-06-13`.
+Upload `index.html`, `app.js`, `style.css`, and `README.md` to the root of the GitHub Pages repository and push.
