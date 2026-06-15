@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Domain Shortlist — Bulk Domain Checker</title>
-  <link rel="stylesheet" href="style.css?v=14-large-batch" />
+  <title>Domain Shortlist — Find and Check Domain Ideas</title>
+  <link rel="stylesheet" href="style.css?v=15-public-affiliate" />
 </head>
 <body>
   <main class="shell">
@@ -12,15 +12,15 @@
       <div>
         <h1>Domain Shortlist</h1>
         <p>
-          Paste domains or URLs, find names that appear unregistered, rank the best candidates, and open registrar lookup links in bulk.
+          Paste domain ideas or URLs, rank the best candidates, and open registrar pages to confirm live price and availability.
         </p>
         <div class="hero-steps" aria-label="Workflow">
           <span>1. Paste names</span>
-          <span>2. Check availability</span>
-          <span>3. Shortlist top picks</span>
+          <span>2. Rank + filter</span>
+          <span>3. Check price at registrar</span>
         </div>
       </div>
-      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v13 · Large batch v14</div></div>
+      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v16 · Large batch v14 · Public v15</div></div>
     </header>
 
     <section class="trust-grid" aria-label="Privacy and accuracy notes">
@@ -30,11 +30,15 @@
       </div>
       <div class="trust-card">
         <strong>Use as a filter</strong>
-        <span>Availability is estimated from public RDAP/DNS checks. Always confirm at a registrar before buying.</span>
+        <span>Availability is estimated from public RDAP/DNS checks. Final price and availability are confirmed by the registrar.</span>
       </div>
       <div class="trust-card">
         <strong>Built for big batches</strong>
-        <span>Large lists render in chunks. For 10,000+ names, use score-only first, then check the shortlist.</span>
+        <span>Large lists render in chunks. For 10,000+ names, use score-only first, then check the shortlist at a registrar.</span>
+      </div>
+      <div class="trust-card affiliate-card">
+        <strong>Affiliate disclosure</strong>
+        <span>Some registrar buttons may be affiliate links. If you register through them, this site may earn a commission at no extra cost to you.</span>
       </div>
     </section>
 
@@ -43,7 +47,7 @@
       <ol class="steps-list">
         <li><strong>Paste</strong> generated names, domains, or full URLs.</li>
         <li><strong>Add target keywords</strong> to tune the quality score for your niche.</li>
-        <li><strong>Check</strong>, then use <strong>Show top picks</strong>, favorites, exports, or registrar links.</li>
+        <li><strong>Review top picks</strong>, then click <strong>Check price</strong> to confirm live availability at a registrar.</li>
       </ol>
     </section>
 
@@ -76,7 +80,7 @@
         <label class="wide">Target keywords / phrases
           <input id="keywordsInput" type="text" placeholder="rent, buy, calculator" />
         </label>
-        <label>Registrar links
+        <label>Registrar for price checks
           <select id="registrarInput">
             <option value="namecheap">Namecheap</option>
             <option value="porkbun">Porkbun</option>
@@ -85,6 +89,7 @@
             <option value="namesilo">NameSilo</option>
           </select>
         </label>
+        <p class="muted affiliate-inline">Registrar buttons open a new tab to confirm live availability and price. Some links may be affiliate links.</p>
         <label class="check"><input id="useRdapInput" type="checkbox" checked /> Try RDAP first</label>
         <label class="check"><input id="useDnsInput" type="checkbox" checked /> Use DNS fallback</label>
         <label class="check"><input id="scoreOnlyInput" type="checkbox" /> Score only / skip availability</label>
@@ -102,7 +107,7 @@
         <div class="options-grid advanced-grid">
           <label>Scoring style
             <select id="scoringStyleInput">
-              <option value="general">General</option>
+              <option value="general">Public buyer (default)</option>
               <option value="trust">Trust-heavy</option>
               <option value="brandable">Brandable / SaaS</option>
               <option value="local">Local service</option>
@@ -129,25 +134,25 @@
     <section class="panel actions-panel">
       <div class="workflow-callout">
         <strong>Recommended public workflow:</strong>
-        Check the batch → click <strong>Show top picks</strong> → star your shortlist → export or open registrar links.
+        Check the batch → click <strong>Show top picks</strong> → star your shortlist → click <strong>Check price</strong> at your chosen registrar.
       </div>
       <div class="button-row wrap">
-        <button id="checkBtn" type="button" class="primary">Check pasted links</button>
+        <button id="checkBtn" type="button" class="primary">Check domains</button>
         <button id="stopBtn" type="button" class="ghost" disabled>Stop</button>
         <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
         <button id="keepAvailableBtn" type="button" class="success ghost">Keep available only</button>
-        <button id="openAllBtn" type="button" class="success">Open ALL visible registrar links</button>
-        <button id="openAvailableBtn" type="button" class="success ghost">Open available only</button>
-        <button id="openFavoritesBtn" type="button" class="success ghost">Open favorites</button>
+        <button id="openAllBtn" type="button" class="success">Open visible price checks</button>
+        <button id="openAvailableBtn" type="button" class="success ghost">Open available price checks</button>
+        <button id="openFavoritesBtn" type="button" class="success ghost">Open favorites price checks</button>
       </div>
       <div class="button-row wrap secondary-actions">
         <button id="copyAvailableBtn" type="button">Copy available domains</button>
         <button id="copyFavoritesBtn" type="button">Copy favorites</button>
         <button id="copyVisibleBtn" type="button">Copy visible domains</button>
-        <button id="copyLinksBtn" type="button">Copy visible registrar links</button>
+        <button id="copyLinksBtn" type="button">Copy visible price-check links</button>
         <button id="showTopPicksBtn" type="button">Show top picks</button>
         <button id="copyTopPicksBtn" type="button">Copy top picks</button>
-        <button id="openTopPicksBtn" type="button">Open top picks</button>
+        <button id="openTopPicksBtn" type="button">Check price for top picks</button>
         <button id="exportBtn" type="button">Export CSV</button>
         <button id="exportFavoritesBtn" type="button">Export favorites</button>
         <button id="exportTopPicksBtn" type="button">Export top picks</button>
@@ -213,7 +218,7 @@
       <div class="panel-title-row results-title-row">
         <h2>Results</h2>
         <div class="results-actions">
-          <span class="muted">Scores are for triage, not guarantees. Star favorites, filter top picks, then open or export your shortlist.</span>
+          <span class="muted">Scores are for triage, not guarantees. Star favorites, filter top picks, then check price at a registrar.</span>
           <span id="renderedCount" class="muted">0 rendered</span>
           <button id="showMoreBtn" type="button" class="ghost" disabled>Show more rows</button>
           <button id="showAllRowsBtn" type="button" class="ghost" disabled>Show all rows</button>
@@ -231,7 +236,7 @@
               <th>Why score?</th>
               <th>Status</th>
               <th>Available?</th>
-              <th>Registrar</th>
+              <th>Check price</th>
               <th>TLD</th>
               <th>Name length</th>
               <th>Check source</th>
@@ -249,10 +254,13 @@
       <h2>Important limitations</h2>
       <p>
         This is a static browser app with no registrar API key and no backend. RDAP/DNS results are useful for filtering, but
-        <strong>possibly available</strong> means “worth checking,” not “guaranteed purchasable.” Confirm availability and price at a registrar before buying.
+        <strong>possibly available</strong> means “worth checking,” not “guaranteed purchasable.” Use the price-check buttons to confirm availability and price at a registrar before buying.
       </p>
       <p>
-        Privacy: pasted lists and saved sessions stay in this browser's local storage. Availability checks still contact public RDAP/DNS services, and registrar buttons open external sites.
+        Privacy: pasted lists and saved sessions stay in this browser's local storage. Availability checks still contact public RDAP/DNS services, and price-check buttons open external registrar sites.
+      </p>
+      <p>
+        Affiliate disclosure: some registrar links may be affiliate links. If you register a domain after clicking one, this site may earn a commission at no extra cost to you.
       </p>
     </section>
 
@@ -277,6 +285,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=14-large-batch"></script>
+  <script src="app.js?v=16-public-buyer-calibration"></script>
 </body>
 </html>

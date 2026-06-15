@@ -27,7 +27,7 @@ const SPECIAL_SUFFIXES = new Set([
 const RDAP_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const RDAP_ORG_DOMAIN_URL = "https://rdap.org/domain/";
 const DNS_GOOGLE_URL = "https://dns.google/resolve";
-const SCORING_VERSION = "v14-large-batch-performance-2026-06-14";
+const SCORING_VERSION = "v16-public-buyer-calibration-2026-06-15";
 const APP_PERFORMANCE_VERSION = "large-batch-v14-2026-06-14";
 const INITIAL_RENDER_LIMIT = 150;
 const RENDER_LIMIT_STEP = 250;
@@ -189,30 +189,54 @@ function secondLevelName(domain) {
   return parts.slice(0, Math.max(1, parts.length - suffixParts)).join(".");
 }
 
+// Affiliate configuration.
+// Leave enabled=false for normal direct price-check links.
+// To use an affiliate network, set enabled=true and add a template for that registrar.
+// Templates can use {url} for the encoded registrar search URL and {domain} for the encoded domain.
+// Example: namecheap: "https://affiliate-network.example/click?url={url}"
+const AFFILIATE_CONFIG = {
+  enabled: false,
+  templates: {
+    namecheap: "",
+    porkbun: "",
+    godaddy: "",
+    dynadot: "",
+    namesilo: ""
+  }
+};
+
+function applyAffiliateTemplate(registrarKey, domain, destinationUrl) {
+  const template = AFFILIATE_CONFIG.templates?.[registrarKey];
+  if (!AFFILIATE_CONFIG.enabled || !template) return destinationUrl;
+  return template
+    .replaceAll("{url}", encodeURIComponent(destinationUrl))
+    .replaceAll("{domain}", encodeURIComponent(domain));
+}
+
 function namecheapUrl(domain) {
-  return `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`;
+  return applyAffiliateTemplate("namecheap", domain, `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`);
 }
 
 const REGISTRARS = {
   namecheap: {
     label: "Namecheap",
-    url: domain => `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`
+    url: domain => applyAffiliateTemplate("namecheap", domain, `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`)
   },
   porkbun: {
     label: "Porkbun",
-    url: domain => `https://porkbun.com/checkout/search?q=${encodeURIComponent(domain)}`
+    url: domain => applyAffiliateTemplate("porkbun", domain, `https://porkbun.com/checkout/search?q=${encodeURIComponent(domain)}`)
   },
   godaddy: {
     label: "GoDaddy",
-    url: domain => `https://www.godaddy.com/domainsearch/find?domainToCheck=${encodeURIComponent(domain)}`
+    url: domain => applyAffiliateTemplate("godaddy", domain, `https://www.godaddy.com/domainsearch/find?domainToCheck=${encodeURIComponent(domain)}`)
   },
   dynadot: {
     label: "Dynadot",
-    url: domain => `https://www.dynadot.com/domain/search?domain=${encodeURIComponent(domain)}`
+    url: domain => applyAffiliateTemplate("dynadot", domain, `https://www.dynadot.com/domain/search?domain=${encodeURIComponent(domain)}`)
   },
   namesilo: {
     label: "NameSilo",
-    url: domain => `https://www.namesilo.com/domain/search-domains?query=${encodeURIComponent(domain)}`
+    url: domain => applyAffiliateTemplate("namesilo", domain, `https://www.namesilo.com/domain/search-domains?query=${encodeURIComponent(domain)}`)
   }
 };
 
@@ -260,7 +284,7 @@ function cleanKeyword(value) {
 const QUALITY_WORDS = [
   // Legal / estate planning category words
   "probate", "estate", "estates", "small", "will", "wills", "trust", "trusts", "executor", "executors", "inheritance", "heir", "heirs",
-  "court", "filing", "file", "forms", "form", "law", "legal", "attorney", "lawyer", "claim", "assets",
+  "court", "filing", "file", "forms", "form", "law", "legal", "attorney", "lawyer", "claim", "assets", "asset", "inventory", "administration", "admin", "administrator", "administrators", "personal", "representative", "representatives", "affidavit", "affidavits", "beneficiary", "beneficiaries", "debt", "debts", "creditor", "creditors", "county", "state", "informal", "without",
   // Useful domain / product words
   "help", "guide", "guides", "kit", "tool", "tools", "program", "planner", "plan", "plans", "course",
   "service", "services", "support", "assistant", "assist", "coach", "coaching", "academy", "hub", "works",
@@ -773,11 +797,69 @@ function dedupeTermHits(hits) {
   });
 }
 
+
+// v16 Public Buyer Calibration
+// These rules make the public default act like a human-curated domain shortlist.
+// A good public recommendation should be easy to understand, useful, and safe to send to a registrar.
+const PUBLIC_BUYER_UTILITY_WORDS = new Set([
+  "guide", "guides", "help", "forms", "form", "kit", "checklist", "planner", "calculator", "template", "templates",
+  "worksheet", "manual", "book", "guidebook", "course", "courses", "academy", "training", "service", "services",
+  "assistant", "assist", "finder", "compare", "comparison", "estimate", "estimates", "quote", "quotes", "generator", "builder"
+]);
+
+const PUBLIC_BUYER_PREMIUM_UTILITY_WORDS = new Set([
+  "guide", "guides", "forms", "form", "kit", "checklist", "calculator", "planner", "template", "templates", "worksheet", "manual", "guidebook"
+]);
+
+const ABSTRACT_SAAS_WORDS = new Set([
+  "grid", "signal", "signals", "logic", "base", "stack", "desk", "pilot", "platform", "crm", "dashboard", "software", "system", "systems", "portal", "hub", "flow"
+]);
+
+const PUBLIC_LOW_VALUE_BRAND_WORDS = new Set([
+  "hub", "central", "online", "now", "today", "pro", "plus", "best", "top", "easy", "fast", "quick", "smart", "wizard", "genius", "guru", "ninja", "buddy"
+]);
+
+const AMBIGUOUS_ABBREVIATIONS = new Set([
+  "pr", "pa", "pc", "ai", "ml", "hr", "seo", "ppc", "crm", "erp", "llc", "cpa", "rn", "md", "qa", "ux", "ui"
+]);
+
+const US_STATE_ABBREVIATIONS = new Set([
+  "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "ia", "id", "il", "in", "ks", "ky", "la", "ma", "md", "me", "mi", "mn", "mo", "ms", "mt", "nc", "nd", "ne", "nh", "nj", "nm", "nv", "ny", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "va", "vt", "wa", "wi", "wv", "wy"
+]);
+
+const HIGH_CONFIDENCE_STATE_ABBREVIATIONS = new Set(["ca", "ny", "tx", "fl", "dc"]);
+const MEDIUM_CONFIDENCE_STATE_ABBREVIATIONS = new Set(["pa", "nj", "ma", "ga", "wa", "nc", "sc", "va", "az", "oh", "mi", "il", "co", "tn"]);
+
+const LEGAL_SENSITIVE_PHRASE_PATTERNS = [
+  /withoutlawyer/, /nolawyer/, /legaladvice/, /courtapproved/, /official/, /guarantee/, /guaranteed/, /filedfor/i, /^irs/, /socialsecurity/, /^medicare/
+];
+
+const EXACT_LONGTAIL_UTILITY_PATTERNS = [
+  /estateinventorychecklist/,
+  /personalrepresentative(kit|guide|forms|checklist)/,
+  /estateadministration(forms|guide|checklist|kit)/,
+  /probatewithoutlawyer/,
+  /smallestate(guide|kit|forms|checklist|affidavit|help)/,
+  /probate(form|forms|kit|guide|checklist|help)/,
+  /executor(checklist|guide|forms|kit|help)/,
+  /inheritance(guide|help|forms|planner)/,
+  /diyprobate(kit|guide|forms|checklist)/
+];
+
+const NATURAL_PUBLIC_PATTERNS = [
+  /^(diy|self|simple|clear|easy)?(probate|estate|executor|heir|inheritance|will|trust)[a-z]*(guide|guides|help|forms|form|kit|checklist|planner|calculator|template|templates|worksheet|manual)$/,
+  /^(smallestate|estateinventory|estateadministration|personalrepresentative|executor)[a-z]*(guide|help|forms|kit|checklist|planner|template|templates|manual)$/,
+  /^[a-z]+(probate|estate|executor|heir|inheritance)(help|forms|kit|guide|checklist)$/
+];
+
 const SCORING_PROFILES = {
   general: {
-    label: "General",
-    weights: { tld: 12, length: 18, keyword: 22, clarity: 16, brand: 16, intent: 10, fit: 6 },
-    positives: {}, negatives: {},
+    label: "Public buyer",
+    // v16: default mode is for the general public buying a domain, not a SaaS naming contest.
+    // Clear utility phrases and .com names should beat abstract startup filler.
+    weights: { tld: 14, length: 14, keyword: 18, clarity: 20, brand: 11, intent: 16, fit: 7 },
+    positives: { guide: 4, help: 4, forms: 4, form: 3, kit: 4, checklist: 4, planner: 3, calculator: 4, template: 3, templates: 3 },
+    negatives: { grid: 6, signal: 6, logic: 6, base: 5, stack: 5, desk: 5, pilot: 5, platform: 5, crm: 7, wizard: 5, genius: 5, guru: 6, ninja: 6, cheap: 7, 247: 8 },
     strictTrust: false,
     keywordOptional: false
   },
@@ -838,6 +920,239 @@ function scoringSettingsKey() {
   });
 }
 
+
+function selectedProfileIsPublicBuyer(profile) {
+  return !profile || profile.label === "Public buyer" || profile.label === "General";
+}
+
+function publicBuyerCategoryHits(tokenSet, sld) {
+  const categories = new Set([
+    ...SENSITIVE_CATEGORY_WORDS,
+    ...CATEGORY_LOCK_WORDS,
+    "probate", "estate", "estates", "executor", "executors", "heir", "heirs", "inheritance", "will", "wills", "trust", "trusts",
+    "affidavit", "court", "filing", "tax", "loan", "insurance", "mortgage", "rent", "buy", "lease", "roof", "repair", "cleaning", "fitness", "travel", "meal", "course", "school", "pet"
+  ]);
+  return tokenListHits(categories, tokenSet, sld);
+}
+
+function publicTldCap(suffix, profile, publicSignals = {}) {
+  suffix = String(suffix || "").toLowerCase();
+  if (!suffix || suffix === "com") return 96;
+  if (profile && profile.label === "Brandable / SaaS" && ["io", "ai", "app", "dev"].includes(suffix)) return 91;
+  if (profile && profile.label === "Ecommerce / product" && ["shop", "store"].includes(suffix)) return 88;
+  if ((profile && (profile.label === "Trust-heavy" || profile.label === "Course / content")) && suffix === "org") return 90;
+  if (["org", "net"].includes(suffix)) return publicSignals.phrase_naturalness >= 82 ? 88 : 84;
+  if (suffix === "co") return publicSignals.phrase_naturalness >= 82 ? 84 : 80;
+  if (suffix === "app") return profile && profile.label === "Brandable / SaaS" ? 91 : (publicSignals.hasAppUse ? 84 : 80);
+  if (["io", "ai", "dev"].includes(suffix)) return profile && profile.label === "Brandable / SaaS" ? 91 : 78;
+  if (["legal", "law", "finance"].includes(suffix)) return publicSignals.legal_sensitive_flag ? 82 : 78;
+  if (["guide", "help", "tools", "software", "shop", "store"].includes(suffix)) return publicSignals.phrase_naturalness >= 78 ? 82 : 76;
+  if (suffix.includes(".")) return 78;
+  return 74;
+}
+
+function detectStateAbbreviationPrefix(sld, tokenSet) {
+  const prefix = cleanKeyword(sld).slice(0, 2);
+  if (!US_STATE_ABBREVIATIONS.has(prefix)) return { prefix: "", confidence: "none", penalty: 0, note: "" };
+  const remainder = cleanKeyword(sld).slice(2);
+  const contextWords = ["probate", "estate", "law", "legal", "lawyer", "attorney", "roof", "repair", "tax", "insurance", "mortgage", "rent", "homes", "home"];
+  const hasContext = contextWords.some(word => remainder.includes(word) || (tokenSet && tokenSet.has(word)));
+  if (!hasContext) return { prefix: "", confidence: "none", penalty: 0, note: "" };
+  if (HIGH_CONFIDENCE_STATE_ABBREVIATIONS.has(prefix)) return { prefix, confidence: "high", penalty: 0, note: `state abbreviation ${prefix.toUpperCase()}` };
+  if (MEDIUM_CONFIDENCE_STATE_ABBREVIATIONS.has(prefix)) return { prefix, confidence: "medium", penalty: 3, note: `state abbreviation ${prefix.toUpperCase()} may be less clear than full state name` };
+  return { prefix, confidence: "low", penalty: 7, note: `ambiguous state abbreviation ${prefix.toUpperCase()}` };
+}
+
+function detectAmbiguousAbbreviation(sld, knownTokens, tokenSet, targetKeywords) {
+  const targetSet = new Set((targetKeywords || []).map(cleanKeyword));
+  const cleanSld = cleanKeyword(sld);
+  const safePrefixWords = ["probate", "property", "price", "project", "process", "product", "program", "professional", "profile", "proof", "privacy", "private", "pro", "personal", "representative"];
+  const tokenHits = (knownTokens || []).filter(t => AMBIGUOUS_ABBREVIATIONS.has(t) && !targetSet.has(t));
+  const start = cleanSld.slice(0, 2);
+  if (start && AMBIGUOUS_ABBREVIATIONS.has(start) && !targetSet.has(start) && !safePrefixWords.some(word => cleanSld.startsWith(word))) {
+    const stateInfo = detectStateAbbreviationPrefix(cleanSld, tokenSet);
+    if (stateInfo.prefix === start && stateInfo.confidence !== "none") return { hits: [], penalty: stateInfo.penalty, cap: stateInfo.confidence === "low" ? 74 : 82, reason: stateInfo.note };
+    const rest = cleanSld.slice(2);
+    // PR/PA/PC/etc. in front of a useful word is usually not public-clear unless the user typed it as a keyword.
+    if (rest.length >= 4) return { hits: [start], penalty: start === "pr" ? 24 : 14, cap: start === "pr" ? 64 : 72, reason: `ambiguous abbreviation ${start.toUpperCase()}` };
+  }
+  if (tokenHits.length) return { hits: tokenHits, penalty: Math.min(18, 8 + tokenHits.length * 5), cap: 72, reason: `ambiguous abbreviation ${tokenHits[0].toUpperCase()}` };
+  return { hits: [], penalty: 0, cap: 96, reason: "" };
+}
+
+function hasExactLongtailUtility(sld) {
+  const cleanSld = cleanKeyword(sld);
+  return EXACT_LONGTAIL_UTILITY_PATTERNS.some(pattern => pattern.test(cleanSld));
+}
+
+function hasNaturalPublicPattern(sld) {
+  const cleanSld = cleanKeyword(sld);
+  return NATURAL_PUBLIC_PATTERNS.some(pattern => pattern.test(cleanSld));
+}
+
+function analyzePublicBuyerSignals(ctx) {
+  const {
+    suffix, sldRaw, sld, len, knownTokens = [], coverage = 0, targetKeywords = [], positiveWords = [], negativeWords = [],
+    profile, tokenSet = new Set(), brandableCandidate = false, phraseFit = {}, tokenConfidence = 0
+  } = ctx;
+
+  const strengths = [];
+  const issues = [];
+  const notes = [];
+  const cleanSld = cleanKeyword(sld);
+  const tokens = knownTokens.map(cleanKeyword).filter(Boolean);
+  const tokenCount = tokens.length;
+  const uniqueTokens = [...new Set(tokens)];
+  const isPublic = selectedProfileIsPublicBuyer(profile);
+  const categoryHits = publicBuyerCategoryHits(tokenSet, cleanSld);
+  const utilityHits = dedupeTermHits(uniqueTokens.filter(t => PUBLIC_BUYER_UTILITY_WORDS.has(t) || PUBLIC_BUYER_PREMIUM_UTILITY_WORDS.has(t) || DIRECT_USEFULNESS_WORDS.has(t)));
+  const premiumUtilityHits = dedupeTermHits(utilityHits.filter(t => PUBLIC_BUYER_PREMIUM_UTILITY_WORDS.has(t) || PREMIUM_DIRECT_INTENT_WORDS.has(t)));
+  const abstractHits = tokenListHits(ABSTRACT_SAAS_WORDS, tokenSet, cleanSld);
+  const lowValueHits = tokenListHits(PUBLIC_LOW_VALUE_BRAND_WORDS, tokenSet, cleanSld);
+  const legalRiskHits = tokenListHits(new Set([...LEGAL_PROFESSIONAL_WORDS, ...PROFESSIONAL_RISK_WORDS]), tokenSet, cleanSld);
+  const sensitiveHits = tokenListHits(SENSITIVE_CATEGORY_WORDS, tokenSet, cleanSld);
+  const legalPhraseRisk = LEGAL_SENSITIVE_PHRASE_PATTERNS.some(pattern => pattern.test(cleanSld));
+  const stateInfo = detectStateAbbreviationPrefix(cleanSld, tokenSet);
+  const abbreviation = detectAmbiguousAbbreviation(cleanSld, tokens, tokenSet, targetKeywords);
+  const exactLongtail = hasExactLongtailUtility(cleanSld);
+  const naturalPattern = hasNaturalPublicPattern(cleanSld);
+  const hasCategory = categoryHits.length > 0 || (targetKeywords.length && (phraseFit.targetHits || []).length > 0);
+  const hasUtility = utilityHits.length > 0 || (phraseFit.customPositiveHits || []).length > 0;
+  const hasPremiumUtility = premiumUtilityHits.length > 0 || exactLongtail;
+  const backwardOrder = hasIntentBeforeCategoryPattern(tokens) || hasSmallEstateReversalPattern(tokens) || hasCategorySoftIntentOrder(tokens, phraseFit.targetHits || [], phraseFit.intentHits || []);
+  const appUse = isTermMatch("app", tokenSet, cleanSld) || isTermMatch("apps", tokenSet, cleanSld);
+  const platformOutsideSaas = abstractHits.length && (!profile || profile.label !== "Brandable / SaaS");
+  const isLegalSensitive = legalRiskHits.length > 0 || legalPhraseRisk || (sensitiveHits.length > 0 && (utilityHits.length || abstractHits.length));
+
+  let buyerIntentScore = 35;
+  if (hasCategory && hasPremiumUtility) buyerIntentScore = 92;
+  else if (hasCategory && hasUtility) buyerIntentScore = 84;
+  else if (exactLongtail) buyerIntentScore = 88;
+  else if (utilityHits.length) buyerIntentScore = 68;
+  else if (abstractHits.length && isPublic) buyerIntentScore = 45;
+  if (lowValueHits.length && !hasUtility) buyerIntentScore -= Math.min(16, lowValueHits.length * 5);
+  buyerIntentScore = Math.max(0, Math.min(100, buyerIntentScore));
+
+  let seoUtilityScore = 0;
+  if (exactLongtail) seoUtilityScore += 82;
+  else if (hasCategory && hasPremiumUtility && tokenCount >= 2) seoUtilityScore += 68;
+  else if (hasCategory && hasUtility) seoUtilityScore += 56;
+  if (tokenCount >= 3 && tokenCount <= 5 && hasCategory && hasUtility && coverage >= 0.8) seoUtilityScore += 10;
+  if (cleanSld.includes("withoutlawyer")) seoUtilityScore += 6;
+  seoUtilityScore = Math.max(0, Math.min(100, seoUtilityScore));
+
+  let phraseNaturalness = 58;
+  if (naturalPattern) phraseNaturalness = 90;
+  else if (exactLongtail && coverage >= 0.8) phraseNaturalness = 84;
+  else if (hasCategory && hasPremiumUtility && tokenCount >= 2 && tokenCount <= 4 && !backwardOrder) phraseNaturalness = 82;
+  else if (hasCategory && hasUtility && !backwardOrder) phraseNaturalness = 74;
+  else if (brandableCandidate && tokenConfidence >= 70) phraseNaturalness = 74;
+  else if (platformOutsideSaas) phraseNaturalness = 56;
+  if (backwardOrder) phraseNaturalness -= 22;
+  if (abstractHits.length && isPublic && !hasPremiumUtility) phraseNaturalness -= Math.min(18, 7 + abstractHits.length * 4);
+  if (abbreviation.penalty) phraseNaturalness -= Math.min(22, Math.round(abbreviation.penalty * 0.8));
+  if (lowValueHits.length && !hasUtility) phraseNaturalness -= Math.min(12, lowValueHits.length * 3);
+  if (tokenConfidence < 55 && !brandableCandidate) phraseNaturalness -= 10;
+  phraseNaturalness = Math.max(0, Math.min(100, phraseNaturalness));
+
+  let trustRiskScore = 0;
+  if (isLegalSensitive) trustRiskScore += legalPhraseRisk ? 28 : 16;
+  if (cleanSld.includes("official") || cleanSld.includes("guarantee")) trustRiskScore += 35;
+  if (abstractHits.length && sensitiveHits.length && isPublic) trustRiskScore += 12;
+  trustRiskScore = Math.max(0, Math.min(100, trustRiskScore));
+
+  let adjustment = 0;
+  let wordOrderPenalty = backwardOrder ? (hasCategory && hasUtility ? 16 : 10) : 0;
+  let abstractPenalty = platformOutsideSaas ? Math.min(22, 8 + abstractHits.length * 5 + (sensitiveHits.length ? 6 : 0)) : 0;
+  let abbreviationPenalty = abbreviation.penalty || 0;
+
+  // Long exact-match utility names should not be buried merely for length.
+  if (isPublic && exactLongtail && coverage >= 0.75) {
+    adjustment += len > 20 ? 10 : 7;
+    strengths.push("clear long-tail utility phrase");
+  } else if (isPublic && hasCategory && hasPremiumUtility && phraseNaturalness >= 78) {
+    adjustment += 5;
+    strengths.push("clear public-use phrase");
+  }
+
+  if (isPublic && platformOutsideSaas) {
+    adjustment -= Math.min(12, abstractPenalty);
+    issues.push(`abstract SaaS word outside SaaS mode: ${abstractHits.slice(0, 2).join(", ")}`);
+  }
+  if (abbreviationPenalty) {
+    adjustment -= Math.min(16, abbreviationPenalty);
+    issues.push(abbreviation.reason);
+  }
+  if (wordOrderPenalty) {
+    adjustment -= Math.min(12, wordOrderPenalty);
+    issues.push("word order is less natural for public buyers");
+  }
+  if (stateInfo.penalty) {
+    adjustment -= stateInfo.penalty;
+    issues.push(stateInfo.note);
+  } else if (stateInfo.note) {
+    strengths.push(stateInfo.note);
+  }
+  if (trustRiskScore >= 20) {
+    issues.push("legal/trust-sensitive wording needs careful landing-page copy");
+  }
+  if (suffix !== "com") {
+    issues.push(`${suffix || "non-.com"} is a TLD fallback`);
+  }
+
+  let recommendationType = "General shortlist";
+  if (isLegalSensitive && seoUtilityScore >= 60) recommendationType = "Legal-sensitive SEO / utility";
+  else if (exactLongtail || (hasCategory && hasPremiumUtility && tokenCount >= 3)) recommendationType = "SEO / exact-match utility";
+  else if (hasCategory && hasUtility) recommendationType = "Clear public utility";
+  else if (platformOutsideSaas) recommendationType = "B2B SaaS / abstract";
+  else if (stateInfo.prefix) recommendationType = "Local / state-specific";
+  else if (brandableCandidate) recommendationType = "Brandable";
+
+  const tldCap = publicTldCap(suffix, profile, { phrase_naturalness: phraseNaturalness, legal_sensitive_flag: isLegalSensitive, hasAppUse: appUse });
+  const riskFlags = [];
+  if (isLegalSensitive) riskFlags.push("legal-sensitive");
+  if (legalPhraseRisk) riskFlags.push("high-claim wording");
+  if (abbreviationPenalty) riskFlags.push("ambiguous abbreviation");
+  if (platformOutsideSaas) riskFlags.push("abstract SaaS wording");
+  if (backwardOrder) riskFlags.push("word-order issue");
+  if (stateInfo.prefix && stateInfo.confidence !== "high") riskFlags.push("state abbreviation clarity");
+
+  notes.push(`public buyer adjustment ${adjustment >= 0 ? "+" : ""}${adjustment}`);
+  notes.push(`phrase naturalness ${phraseNaturalness}/100`);
+  notes.push(`buyer intent ${buyerIntentScore}/100`);
+  notes.push(`recommendation type: ${recommendationType}`);
+
+  return {
+    adjustment,
+    strengths,
+    issues,
+    notes,
+    recommendation_type: recommendationType,
+    phrase_naturalness: phraseNaturalness,
+    buyer_intent_score: buyerIntentScore,
+    seo_utility_score: seoUtilityScore,
+    brandability_score: Math.round(pronounceabilityScore(cleanSld) * 0.55 + (brandableCandidate ? 30 : 10)),
+    trust_risk_score: trustRiskScore,
+    abbreviation_penalty: abbreviationPenalty,
+    word_order_penalty: wordOrderPenalty,
+    abstract_saas_penalty: abstractPenalty,
+    legal_sensitive_flag: isLegalSensitive ? "yes" : "",
+    risk_flags: riskFlags.join("; "),
+    top_pick_group: cleanSld,
+    tld_cap: tldCap,
+    cap_reasons: [],
+    exactLongtail,
+    hasCategory,
+    hasUtility,
+    hasPremiumUtility,
+    abstractHits,
+    abbreviation,
+    stateInfo,
+    platformOutsideSaas,
+    backwardOrder
+  };
+}
+
 function scoreDomain(resultOrDomain, availableValue, statusValue) {
   const domain = typeof resultOrDomain === "string" ? resultOrDomain : resultOrDomain.normalized_domain;
   const status = typeof resultOrDomain === "string" ? statusValue : resultOrDomain.availability_status;
@@ -887,6 +1202,14 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
   strengths.push(...phraseFit.strengths);
   issues.push(...phraseFit.issues);
 
+  const publicBuyer = analyzePublicBuyerSignals({
+    suffix, sldRaw, sld, len, knownTokens, coverage, targetKeywords, positiveWords, negativeWords,
+    profile, tokenSet, brandableCandidate, phraseFit, tokenConfidence
+  });
+  score += publicBuyer.adjustment;
+  strengths.push(...publicBuyer.strengths);
+  issues.push(...publicBuyer.issues);
+
   const penalty = scorePenaltyDetails({ sldRaw, sld, knownTokens, coverage, targetKeywords, positiveWords, negativeWords, profile, issues, tweaks, brandableCandidate });
   score -= penalty.total;
 
@@ -898,7 +1221,7 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
   strengths.push(...calibration.strengths);
   issues.push(...calibration.issues);
 
-  const capInfo = scoreCaps({ suffix, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, knownTokens });
+  const capInfo = scoreCaps({ suffix, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, knownTokens, publicBuyer });
   if (capInfo.reasons.length) issues.push(...capInfo.reasons);
 
   const finalScore = Math.max(0, Math.min(capInfo.cap, Math.round(score)));
@@ -918,6 +1241,8 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
     phraseFit.strengths.length ? `phrase strengths: ${phraseFit.strengths.slice(0, 3).join(", ")}` : "no extra phrase-strength boost",
     phraseFit.issues.length ? `phrase tradeoffs: ${phraseFit.issues.slice(0, 3).join(", ")}` : "no extra phrase tradeoffs",
     calibration.notes.join(", "),
+    publicBuyer.notes.join(", "),
+    publicBuyer.risk_flags ? `risk flags: ${publicBuyer.risk_flags}` : "no public-buyer risk flags",
     calibration.strengths.length ? `calibration strengths: ${calibration.strengths.slice(0, 2).join(", ")}` : "no calibration boost",
     calibration.issues.length ? `calibration tradeoffs: ${calibration.issues.slice(0, 2).join(", ")}` : "no calibration penalty",
     brandableCandidate ? "brandable tolerance applied" : "standard readability rules",
@@ -944,12 +1269,25 @@ function scoreDomain(resultOrDomain, availableValue, statusValue) {
     token_count: knownTokens.length,
     token_coverage: coverage.toFixed(2),
     token_confidence: tokenConfidence,
-    detected_tokens: knownTokens.join("+")
+    detected_tokens: knownTokens.join("+"),
+    recommendation_type: publicBuyer.recommendation_type,
+    phrase_naturalness: publicBuyer.phrase_naturalness,
+    buyer_intent_score: publicBuyer.buyer_intent_score,
+    seo_utility_score: publicBuyer.seo_utility_score,
+    brandability_score: publicBuyer.brandability_score,
+    trust_risk_score: publicBuyer.trust_risk_score,
+    abbreviation_penalty: publicBuyer.abbreviation_penalty,
+    word_order_penalty: publicBuyer.word_order_penalty,
+    abstract_saas_penalty: publicBuyer.abstract_saas_penalty,
+    legal_sensitive_flag: publicBuyer.legal_sensitive_flag,
+    risk_flags: publicBuyer.risk_flags,
+    top_pick_group: publicBuyer.top_pick_group,
+    tld_cap: publicBuyer.tld_cap
   };
 }
 
 function scoreResult(score, label, explanation, components, notes) {
-  return { score, label, explanation, components, notes, strengths: [], issues: [], style: getScoringProfile().label, phrase_adjustment: 0, calibration_adjustment: 0, penalty_total: 0, penalty_reasons: "", score_cap: score, cap_reasons: "", token_count: 0, token_coverage: "", token_confidence: "", detected_tokens: "" };
+  return { score, label, explanation, components, notes, strengths: [], issues: [], style: getScoringProfile().label, phrase_adjustment: 0, calibration_adjustment: 0, penalty_total: 0, penalty_reasons: "", score_cap: score, cap_reasons: "", token_count: 0, token_coverage: "", token_confidence: "", detected_tokens: "", recommendation_type: "", phrase_naturalness: "", buyer_intent_score: "", seo_utility_score: "", brandability_score: "", trust_risk_score: "", abbreviation_penalty: "", word_order_penalty: "", abstract_saas_penalty: "", legal_sensitive_flag: "", risk_flags: "", top_pick_group: "", tld_cap: "" };
 }
 
 function weightedScore(raw0to100, weight) {
@@ -2032,7 +2370,7 @@ function calibrateRatingScore(ctx) {
 }
 
 function scoreCaps(ctx) {
-  const { suffix, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, knownTokens = [] } = ctx;
+  const { suffix, sldRaw, sld, len, coverage, targetKeywords, components, profile, brandableCandidate, tokenSet, phraseFit, knownTokens = [], publicBuyer = {} } = ctx;
   let cap = 96;
   const reasons = [];
   function apply(value, reason) {
@@ -2040,6 +2378,21 @@ function scoreCaps(ctx) {
       cap = value;
       reasons.push(reason);
     }
+  }
+
+  // v16 public-buyer gates: do not let additive keyword scores push weak human phrases into the top tier.
+  if (publicBuyer && Number.isFinite(Number(publicBuyer.tld_cap))) apply(Number(publicBuyer.tld_cap), "public-buyer TLD cap");
+  if (selectedProfileIsPublicBuyer(profile) && publicBuyer) {
+    if (Number(publicBuyer.abbreviation_penalty || 0) >= 20) apply(64, "ambiguous abbreviation central to name");
+    else if (Number(publicBuyer.abbreviation_penalty || 0) > 0) apply(72, "ambiguous abbreviation");
+    if (Number(publicBuyer.abstract_saas_penalty || 0) >= 18) apply(72, "abstract SaaS phrase in public mode");
+    else if (Number(publicBuyer.abstract_saas_penalty || 0) > 0) apply(78, "abstract product word in public mode");
+    if (Number(publicBuyer.word_order_penalty || 0) >= 16) apply(68, "reversed/awkward public phrase order");
+    else if (Number(publicBuyer.word_order_penalty || 0) > 0) apply(76, "less natural public phrase order");
+    if (Number(publicBuyer.phrase_naturalness || 0) < 58 && !brandableCandidate) apply(68, "low public phrase naturalness");
+    else if (Number(publicBuyer.phrase_naturalness || 0) < 70 && !brandableCandidate) apply(80, "only moderate public phrase naturalness");
+    if (publicBuyer.platformOutsideSaas && publicBuyer.hasCategory && !publicBuyer.hasPremiumUtility && !brandableCandidate) apply(74, "category + abstract SaaS word");
+    if (publicBuyer.legal_sensitive_flag && Number(publicBuyer.trust_risk_score || 0) >= 35) apply(78, "high legal/trust-sensitive wording");
   }
 
   const exactTargetName = targetKeywords.some(k => k && cleanKeyword(k) === sld);
@@ -2067,11 +2420,19 @@ function scoreCaps(ctx) {
   const exactOrPremiumBrandable = exactTargetName || (brandableCandidate && len <= 12 && pronounce >= 78);
 
   if (targetKeywords.length && components.keyword === 0 && !profile.keywordOptional) apply(78, "no target keyword");
-  if (coverage < 0.45 && !brandableCandidate) apply(76, "harder to read");
-  else if (coverage < 0.62 && !brandableCandidate) apply(84, "somewhat harder to read");
-  if (len > 24) apply(70, "very long");
-  else if (len > 20) apply(79, "long name");
-  else if (len > 18) apply(86, "slightly long name");
+  if (publicBuyer && publicBuyer.exactLongtail && Number(publicBuyer.buyer_intent_score || 0) >= 80) {
+    if (coverage < 0.45 && !brandableCandidate) apply(84, "long exact-match phrase needs review");
+    else if (coverage < 0.62 && !brandableCandidate) apply(86, "somewhat harder to read exact-match phrase");
+    if (len > 28) apply(82, "very long exact-match phrase");
+    else if (len > 22) apply(84, "long exact-match phrase");
+    else if (len > 18) apply(88, "slightly long exact-match phrase");
+  } else {
+    if (coverage < 0.45 && !brandableCandidate) apply(76, "harder to read");
+    else if (coverage < 0.62 && !brandableCandidate) apply(84, "somewhat harder to read");
+    if (len > 24) apply(70, "very long");
+    else if (len > 20) apply(79, "long name");
+    else if (len > 18) apply(86, "slightly long name");
+  }
   const meaningfulNumber = hasMeaningfulNumberPattern(sld, knownTokens, tokenSet);
   const tokenConfidence = tokenConfidenceScore(sld, knownTokens, coverage, targetKeywords, []);
 
@@ -2162,7 +2523,14 @@ function scoreCaps(ctx) {
       (profile.label === "Brandable / SaaS" && ["io", "ai", "app", "dev"].includes(suffix)) ||
       (profile.label === "Ecommerce / product" && ["shop", "store"].includes(suffix)) ||
       (profile.label === "Trust-heavy" && ["org", "net"].includes(suffix));
-    if (profileAlignedAlt) apply(93, `${suffix} TLD below .com`);
+    if (selectedProfileIsPublicBuyer(profile)) {
+      if (["org", "net"].includes(suffix)) apply(88, `${suffix} TLD below .com`);
+      else if (suffix === "co") apply(84, ".co confusion risk vs .com");
+      else if (["app", "legal", "law", "shop", "store"].includes(suffix)) apply(82, `${suffix} TLD is context-specific`);
+      else if (["io", "ai", "dev"].includes(suffix)) apply(78, `${suffix} TLD is SaaS/dev leaning`);
+      else if (String(suffix).includes(".")) apply(78, "compound country-code TLD");
+      else apply(74, "weaker TLD");
+    } else if (profileAlignedAlt) apply(93, `${suffix} TLD below .com`);
     else if (strongAltTlds.has(suffix)) apply(89, `${suffix} TLD below .com`);
     else if (String(suffix).includes(".")) apply(82, "compound country-code TLD");
     else apply(84, "weaker TLD");
@@ -2403,6 +2771,19 @@ function enhanceResult(result) {
     token_coverage: score.token_coverage ?? "",
     token_confidence: score.token_confidence ?? "",
     detected_tokens: score.detected_tokens ?? "",
+    recommendation_type: score.recommendation_type ?? "",
+    phrase_naturalness: score.phrase_naturalness ?? "",
+    buyer_intent_score: score.buyer_intent_score ?? "",
+    seo_utility_score: score.seo_utility_score ?? "",
+    brandability_score: score.brandability_score ?? "",
+    trust_risk_score: score.trust_risk_score ?? "",
+    abbreviation_penalty: score.abbreviation_penalty ?? "",
+    word_order_penalty: score.word_order_penalty ?? "",
+    abstract_saas_penalty: score.abstract_saas_penalty ?? "",
+    legal_sensitive_flag: score.legal_sensitive_flag ?? "",
+    risk_flags: score.risk_flags ?? "",
+    top_pick_group: score.top_pick_group || topPickGroup(result.normalized_domain || ""),
+    tld_cap: score.tld_cap ?? "",
     scoring_style: score.style || getScoringProfile().label,
     namecheap_url: result.normalized_domain ? namecheapUrl(result.normalized_domain) : (result.namecheap_url || ""),
     registrar_url: result.normalized_domain ? registrarUrl(result.normalized_domain) : (result.registrar_url || result.namecheap_url || ""),
@@ -2613,7 +2994,7 @@ async function checkDomain(row, options) {
       check_source: "score-only",
       checked_at_utc: checkedAt,
       rdap_url: "",
-      notes: "Score-only mode skipped network availability checks. Use registrar links to confirm availability.",
+      notes: "Score-only mode skipped network availability checks. Use price-check links to confirm availability.",
       error: ""
     });
   }
@@ -2747,7 +3128,7 @@ async function runChecks() {
     updateSummary();
     setChecking(false);
     const endText = stopRequested ? `Stopped. Checked ${results.length}/${rows.length} rows.` : `Done. Checked ${results.length} rows.`;
-    setStatus(`${endText} Next: click Shortlist best names, star favorites, then export or open registrar links.`);
+    setStatus(`${endText} Next: shortlist best names, star favorites, then check price or export.`);
     saveState();
   }
 }
@@ -2862,7 +3243,7 @@ function displayedResults() {
       || Number(b.domain_score || 0) - Number(a.domain_score || 0)
       || Number(a.name_length || 999) - Number(b.name_length || 999);
   });
-  if (status === "top_picks") rows = rows.slice(0, topPickLimit());
+  if (status === "top_picks") rows = diverseTopPickSubset(rows, topPickLimit());
   return rows;
 }
 
@@ -2898,7 +3279,7 @@ function renderResults() {
     const starTitle = favorite ? "Remove from favorites" : "Add to favorites";
     const lookupUrl = resultRegistrarUrl(result);
     const linkHtml = lookupUrl
-      ? `<a class="link-pill" href="${escapeAttr(lookupUrl)}" target="_blank" rel="noopener noreferrer">Open</a>`
+      ? `<a class="link-pill" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>`
       : "";
     return `<tr class="${cls}" data-domain="${escapeAttr(result.normalized_domain)}">
       <td><button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(result.normalized_domain)}" title="${starTitle}">${favorite ? "★" : "☆"}</button></td>
@@ -2971,7 +3352,7 @@ function updateNextStepsPanel(summary) {
       `${summary.topPickCount} top pick${summary.topPickCount === 1 ? "" : "s"}`,
       `${summary.favoriteCount} favorite${summary.favoriteCount === 1 ? "" : "s"}`
     ];
-    el.nextStepsDetails.textContent = `${parts.join(" · ")}. Next: shortlist best names, star favorites, then export or open registrar links.`;
+    el.nextStepsDetails.textContent = `${parts.join(" · ")}. Next: shortlist best names, star favorites, then check price or export.`;
   }
 }
 
@@ -2981,7 +3362,7 @@ function removeTaken() {
   const removed = before - results.length;
   replaceInputWithDomains(results.map(r => r.normalized_domain).filter(Boolean));
   renderResults();
-  setStatus(`Removed ${removed} taken/registered rows. Open ALL now only opens the remaining visible rows.`);
+  setStatus(`Removed ${removed} taken/registered rows. Bulk price-check actions now only open the remaining visible rows.`);
   saveState();
 }
 
@@ -3016,10 +3397,10 @@ function showAllRows() {
 function openLinks(rows, label) {
   const links = [...new Set(rows.filter(Boolean).map(resultRegistrarUrl).filter(Boolean))];
   if (!links.length) {
-    setStatus(`No ${label} ${selectedRegistrarLabel()} links to open.`);
+    setStatus(`No ${label} ${selectedRegistrarLabel()} price-check links to open.`);
     return;
   }
-  if (links.length > 10 && !confirm(`Open ${links.length} browser tabs? Your browser may block popups or slow down.`)) {
+  if (links.length > 10 && !confirm(`Open ${links.length} registrar tabs to check live prices? Your browser may block popups or slow down.`)) {
     return;
   }
 
@@ -3028,7 +3409,7 @@ function openLinks(rows, label) {
     const win = window.open(link, "_blank", "noopener,noreferrer");
     if (win) opened += 1;
   }
-  setStatus(`Opened ${opened}/${links.length} ${label} ${selectedRegistrarLabel()} links. If some did not open, allow popups for this site.`);
+  setStatus(`Opened ${opened}/${links.length} ${label} ${selectedRegistrarLabel()} price-check links. If some did not open, allow popups for this site.`);
 }
 
 async function copyText(text, label) {
@@ -3067,14 +3448,48 @@ function copyVisibleLinks() {
   copyText(links.join("\n"), `visible ${selectedRegistrarLabel()} links`);
 }
 
+
+function topPickGroup(domain) {
+  return cleanKeyword(secondLevelName(domain || "")) || cleanKeyword(domain || "");
+}
+
+function tldPreferenceScore(suffix) {
+  suffix = String(suffix || "").toLowerCase();
+  if (suffix === "com") return 100;
+  if (suffix === "org") return 82;
+  if (suffix === "net") return 78;
+  if (suffix === "co") return 72;
+  if (suffix === "app") return 68;
+  if (suffix === "legal") return 66;
+  if (["io", "ai", "dev"].includes(suffix)) return 62;
+  if (suffix.includes(".")) return 50;
+  return 42;
+}
+
+function diverseTopPickSubset(rows, limit = topPickLimit()) {
+  const selected = [];
+  const seenGroups = new Set();
+  const sorted = rows.filter(Boolean).sort((a, b) =>
+    Number(b.domain_score || 0) - Number(a.domain_score || 0) ||
+    tldPreferenceScore(effectiveSuffix(b.normalized_domain || "")) - tldPreferenceScore(effectiveSuffix(a.normalized_domain || "")) ||
+    Number(a.name_length || 999) - Number(b.name_length || 999)
+  );
+  for (const row of sorted) {
+    const group = row.top_pick_group || topPickGroup(row.normalized_domain || "");
+    if (group && seenGroups.has(group)) continue;
+    selected.push(row);
+    if (group) seenGroups.add(group);
+    if (selected.length >= limit) break;
+  }
+  return selected;
+}
+
 function topPickLimit() {
   return clampNumber(el.topPickCountInput?.value || 20, 1, 100, 20);
 }
 
 function topPickRows() {
-  return applyBatchMetrics(results.filter(r => r && r.available === true))
-    .sort((a, b) => Number(b.domain_score || 0) - Number(a.domain_score || 0) || Number(a.name_length || 999) - Number(b.name_length || 999))
-    .slice(0, topPickLimit());
+  return diverseTopPickSubset(applyBatchMetrics(results.filter(r => r && r.available === true)), topPickLimit());
 }
 
 function showTopPicks() {
@@ -3111,8 +3526,10 @@ function exportCsv(scope = "all") {
   const columns = [
     "favorite", "input", "normalized_domain", "effective_tld", "name_length", "domain_score", "score_label", "scoring_version",
     "batch_rank", "batch_percentile", "batch_label",
-    "score_explanation", "scoring_style",
+    "score_explanation", "scoring_style", "recommendation_type", "risk_flags",
     "tld_score", "length_score", "keyword_score", "clarity_score", "brand_score", "intent_score", "fit_score",
+    "phrase_naturalness", "buyer_intent_score", "seo_utility_score", "brandability_score", "trust_risk_score",
+    "abbreviation_penalty", "word_order_penalty", "abstract_saas_penalty", "legal_sensitive_flag", "top_pick_group", "tld_cap",
     "phrase_adjustment", "calibration_adjustment", "penalty_total", "penalty_reasons", "score_cap", "cap_reasons",
     "token_count", "token_coverage", "token_confidence", "detected_tokens", "score_components", "score_notes",
     "registrar_name", "registrar_url", "namecheap_url", "availability_status", "available", "check_source", "checked_at_utc", "rdap_url", "notes", "error"
@@ -3414,7 +3831,7 @@ function bindEvents() {
     el.registrarInput.addEventListener("change", () => {
       renderResults();
       saveState();
-      setStatus(`Registrar links changed to ${selectedRegistrarLabel()}.`);
+      setStatus(`Price-check registrar changed to ${selectedRegistrarLabel()}.`);
     });
   }
 

@@ -574,3 +574,19 @@ tr.empty td {
     justify-content: flex-start;
   }
 }
+
+.affiliate-card {
+  border-color: #dbeafe;
+}
+
+.affiliate-inline {
+  align-self: end;
+  margin: 0;
+  grid-column: span 2;
+}
+
+@media (max-width: 760px) {
+  .affiliate-inline {
+    grid-column: span 1;
+  }
+}
