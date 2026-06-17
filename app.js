@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v64-archive-health-limit-2026-06-17";
+const UI_VERSION = "v65-archive-cleanup-2026-06-17";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -116,6 +116,7 @@ const el = {
   topSavedCountBadge: document.getElementById("topSavedCountBadge"),
   topPicksShowMoreBtn: document.getElementById("topPicksShowMoreBtn"),
   topPicksViewAllBtn: document.getElementById("topPicksViewAllBtn"),
+  topPicksNewSearchBtn: document.getElementById("topPicksNewSearchBtn"),
   topPicksPriceLimitNote: document.getElementById("topPicksPriceLimitNote"),
   compareTray: document.getElementById("compareTray"),
   compareCount: document.getElementById("compareCount"),
@@ -168,8 +169,11 @@ const el = {
   archiveClearAllBtn: document.getElementById("archiveClearAllBtn"),
   archiveHealthBtn: document.getElementById("archiveHealthBtn"),
   archiveRepairLabelsBtn: document.getElementById("archiveRepairLabelsBtn"),
+  archiveClearBrokenBtn: document.getElementById("archiveClearBrokenBtn"),
+  archiveMergeDuplicateLabelsBtn: document.getElementById("archiveMergeDuplicateLabelsBtn"),
   archiveLimitSelect: document.getElementById("archiveLimitSelect"),
   archiveHealthSummary: document.getElementById("archiveHealthSummary"),
+  archiveStorageSummary: document.getElementById("archiveStorageSummary"),
   archiveCountSummary: document.getElementById("archiveCountSummary"),
   archiveList: document.getElementById("archiveList"),
   archiveListEmpty: document.getElementById("archiveListEmpty"),
@@ -4620,6 +4624,94 @@ function archiveCountSummaryText(archives = loadSessionArchives()) {
   return `${pinnedCount} pinned · ${list.length}/${archiveLimit()} archive${list.length === 1 ? "" : "s"}`;
 }
 
+function archiveStorageSummaryText(archives = loadSessionArchives({ includeOverLimit: true })) {
+  const list = Array.isArray(archives) ? archives : [];
+  if (!list.length) return "Archive storage: 0 KB";
+  let bytes = 0;
+  try {
+    bytes = new Blob([JSON.stringify(list)]).size;
+  } catch {
+    bytes = JSON.stringify(list).length;
+  }
+  const kb = Math.max(1, Math.round(bytes / 1024));
+  if (kb < 1024) return `Archive storage: about ${kb.toLocaleString()} KB`;
+  const mb = (kb / 1024).toFixed(kb >= 10240 ? 0 : 1);
+  return `Archive storage: about ${mb} MB`;
+}
+
+function archiveIsBroken(archive) {
+  return !normalizeArchiveSnapshot(archive, archive?.label || "Saved archive");
+}
+
+function clearBrokenArchives() {
+  const archives = loadSessionArchives({ includeOverLimit: true });
+  if (!archives.length) {
+    setStatus("No archives saved yet.");
+    return;
+  }
+  const broken = archives.filter(archiveIsBroken);
+  if (!broken.length) {
+    setStatus("No broken archives found.");
+    if (el.archiveHealthSummary) {
+      el.archiveHealthSummary.textContent = "Archive cleanup: no broken archives found.";
+      el.archiveHealthSummary.classList.remove("is-hidden");
+    }
+    return;
+  }
+  if (!confirm(`Remove ${broken.length} broken archive${broken.length === 1 ? "" : "s"}? Valid archives will stay.`)) return;
+  const next = archives.filter(archive => !archiveIsBroken(archive));
+  if (saveSessionArchives(next)) {
+    renderArchiveTools();
+    if (el.archiveHealthSummary) {
+      el.archiveHealthSummary.textContent = `Removed ${broken.length} broken archive${broken.length === 1 ? "" : "s"}.`;
+      el.archiveHealthSummary.classList.remove("is-hidden");
+    }
+    setStatus(`Removed ${broken.length} broken archive${broken.length === 1 ? "" : "s"}.`);
+    trackEvent("session_archive_broken_cleared", { removed_count: broken.length, archive_count: loadSessionArchives().length });
+  }
+}
+
+function mergeDuplicateArchiveLabels() {
+  const archives = loadSessionArchives({ includeOverLimit: true });
+  if (!archives.length) {
+    setStatus("No archives saved yet.");
+    return;
+  }
+  const groups = new Map();
+  for (const archive of archives) {
+    const label = String(archive?.label || sessionArchiveLabel(archive).label || "Saved archive").trim() || "Saved archive";
+    const key = label.toLowerCase();
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(archive);
+  }
+  let changed = 0;
+  const seen = new Map();
+  const next = archives.map(archive => {
+    const label = String(archive?.label || sessionArchiveLabel(archive).label || "Saved archive").trim() || "Saved archive";
+    const key = label.toLowerCase();
+    const group = groups.get(key) || [];
+    if (group.length <= 1) return archive;
+    const index = (seen.get(key) || 0) + 1;
+    seen.set(key, index);
+    changed += 1;
+    const base = label.replace(/\s+·\s+\d+$/g, "").trim() || "Saved archive";
+    return {
+      ...archive,
+      label: `${base} · ${index}`.slice(0, 90),
+      label_merged_at: new Date().toISOString()
+    };
+  });
+  if (!changed) {
+    setStatus("No duplicate archive labels found.");
+    return;
+  }
+  if (saveSessionArchives(next)) {
+    renderArchiveTools();
+    setStatus(`Merged ${changed} duplicate archive label${changed === 1 ? "" : "s"}.`);
+    trackEvent("session_archive_duplicate_labels_merged", { changed_count: changed });
+  }
+}
+
 function addArchiveToLocalList(snapshot, options = {}) {
   const fallbackLabel = options.fallbackLabel || "Imported archive";
   const normalized = normalizeArchiveSnapshot(snapshot, fallbackLabel);
@@ -4738,10 +4830,16 @@ function renderArchiveTools() {
   if (el.archiveDownloadAllBtn) el.archiveDownloadAllBtn.disabled = !hasArchives;
   if (el.archiveHealthBtn) el.archiveHealthBtn.disabled = !hasArchives;
   if (el.archiveRepairLabelsBtn) el.archiveRepairLabelsBtn.disabled = !hasArchives;
+  if (el.archiveClearBrokenBtn) el.archiveClearBrokenBtn.disabled = !hasArchives;
+  if (el.archiveMergeDuplicateLabelsBtn) el.archiveMergeDuplicateLabelsBtn.disabled = !hasArchives;
   if (el.archiveLimitSelect && el.archiveLimitSelect.value !== String(archiveLimit())) el.archiveLimitSelect.value = String(archiveLimit());
   if (el.archiveCountSummary) {
     el.archiveCountSummary.textContent = archiveCountSummaryText(archives);
     el.archiveCountSummary.classList.toggle("is-hidden", !hasArchives);
+  }
+  if (el.archiveStorageSummary) {
+    el.archiveStorageSummary.textContent = archiveStorageSummaryText(archives);
+    el.archiveStorageSummary.classList.toggle("is-hidden", !hasArchives);
   }
   if (el.archiveSearchInput && el.archiveSearchInput.value !== archiveSearchQuery) el.archiveSearchInput.value = archiveSearchQuery;
   if (el.archiveSearchInput) el.archiveSearchInput.disabled = !hasArchives;
@@ -5957,8 +6055,10 @@ function displayedResults() {
 
 function renderResults() {
   lastRenderAt = Date.now();
-  document.body.classList.toggle("has-results", results.filter(Boolean).length > 0);
+  const hasAnyResults = results.filter(Boolean).length > 0;
+  document.body.classList.toggle("has-results", hasAnyResults);
   document.body.classList.toggle("has-saved", savedShortlist.size > 0);
+  if (hasAnyResults) document.body.classList.add("show-all-results");
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
     el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13"><strong>No results yet.</strong><br />Paste domains above, add optional target keywords, then click <strong>Check domains</strong>.</td></tr>';
@@ -7905,6 +8005,7 @@ function bindEvents() {
   if (el.topPicksShowMoreBtn) el.topPicksShowMoreBtn.addEventListener("click", toggleTopPicksExpanded);
   if (el.cardExportTopPicksBtn) el.cardExportTopPicksBtn.addEventListener("click", () => exportCsv("top_picks"));
   if (el.topPicksViewAllBtn) el.topPicksViewAllBtn.addEventListener("click", showAllResultsSection);
+  if (el.topPicksNewSearchBtn) el.topPicksNewSearchBtn.addEventListener("click", startOverSimple);
   if (el.allResultsBackTopPicksBtn) el.allResultsBackTopPicksBtn.addEventListener("click", backToTopPicks);
   if (el.nextViewAllBtn) el.nextViewAllBtn.addEventListener("click", showAllResultsSection);
   if (el.stickyViewAllBtn) el.stickyViewAllBtn.addEventListener("click", showAllResultsSection);
@@ -8099,6 +8200,8 @@ function bindEvents() {
   if (el.archiveDownloadAllBtn) el.archiveDownloadAllBtn.addEventListener("click", downloadAllArchivesJson);
   if (el.archiveHealthBtn) el.archiveHealthBtn.addEventListener("click", checkSessionArchives);
   if (el.archiveRepairLabelsBtn) el.archiveRepairLabelsBtn.addEventListener("click", repairArchiveLabels);
+  if (el.archiveClearBrokenBtn) el.archiveClearBrokenBtn.addEventListener("click", clearBrokenArchives);
+  if (el.archiveMergeDuplicateLabelsBtn) el.archiveMergeDuplicateLabelsBtn.addEventListener("click", mergeDuplicateArchiveLabels);
   if (el.archiveLimitSelect) el.archiveLimitSelect.addEventListener("change", event => setArchiveLimit(event.target.value));
   if (el.archiveImportInput) el.archiveImportInput.addEventListener("change", importArchiveJson);
   if (el.archiveSearchInput) el.archiveSearchInput.addEventListener("input", event => updateArchiveSearch(event.target.value));

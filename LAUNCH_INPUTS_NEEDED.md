@@ -90,3 +90,8 @@ Advanced Mode now supports archive counts, all-archive export, and importing JSO
 ## v64 note
 
 No new launch input needed. Archive health, label repair, and archive limit controls are Advanced Mode utilities only.
+
+
+## v66 cleanup note
+
+The app now shows all results automatically after a check while keeping the default public screen simpler.

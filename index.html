@@ -43,9 +43,9 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="style.css?v=51-check-cleanup" />
+  <link rel="stylesheet" href="style.css?v=66-clean-results" />
 </head>
-<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit">
+<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit v66-clean-results">
   <a class="skip-link" href="#domain-input">Skip to domain input</a>
   <main class="shell">
     <header class="hero simple-hero">
@@ -420,6 +420,8 @@
           <button id="archiveImportSaveBtn" type="button" class="ghost">Import as new archive</button>
           <button id="archiveDownloadAllBtn" type="button" class="ghost">Download all archives</button>
           <button id="archiveHealthBtn" type="button" class="ghost">Check archives</button>
+          <button id="archiveClearBrokenBtn" type="button" class="ghost">Clear broken archives</button>
+          <button id="archiveMergeDuplicateLabelsBtn" type="button" class="ghost">Merge duplicate labels</button>
           <button id="archiveRepairLabelsBtn" type="button" class="ghost">Repair labels</button>
           <label class="archive-limit-label" for="archiveLimitSelect">Keep
             <select id="archiveLimitSelect" aria-label="Archive limit">
@@ -434,6 +436,7 @@
         </div>
         <div id="archiveCurrentSummary" class="archive-current-summary muted">Current session: nothing saved yet.</div>
         <div id="archiveHealthSummary" class="archive-health-summary muted is-hidden">Archives not checked yet.</div>
+        <div id="archiveStorageSummary" class="archive-storage-summary muted is-hidden">Archive storage: 0 KB</div>
         <div class="archive-manager" aria-live="polite">
           <div class="archive-manager-head">
             <div>
@@ -500,7 +503,8 @@
           <button id="hideWeakPicksBtn" type="button" class="ghost" aria-pressed="false">Hide weak picks</button>
           <button id="topPicksShowMoreBtn" type="button" class="ghost is-hidden" aria-expanded="false">Show more picks</button>
           <button id="cardExportTopPicksBtn" type="button" class="ghost advanced-only-inline">Export top picks</button>
-          <button id="topPicksViewAllBtn" type="button" class="ghost">View all results</button>
+          <button id="topPicksViewAllBtn" type="button" class="ghost">All Results</button>
+          <button id="topPicksNewSearchBtn" type="button" class="ghost">New search</button>
         </div>
       </div>
       <p id="topPicksPriceLimitNote" class="muted top-picks-price-note">Bulk price checks open only the first 3 top picks by default. You can change this in Simple check settings.</p>
@@ -692,9 +696,9 @@
 
     <section class="panel results-panel">
       <div class="panel-title-row results-title-row">
-        <h2>All checked names</h2>
+        <h2>All Results</h2>
         <div class="results-actions">
-          <span class="muted">Optional detailed view. Top Picks is the simpler place to start.</span>
+          <span class="muted">Every checked name appears here. Start with Top Picks, then scan the full list below.</span>
           <span id="renderedCount" class="muted">0 rendered</span>
           <button id="allResultsBackTopPicksBtn" type="button" class="ghost">Back to Top Picks</button>
           <button id="showMoreBtn" type="button" class="ghost" disabled>Show more rows</button>
@@ -718,7 +722,7 @@
           <button type="button" class="result-preset advanced-only" data-results-preset="checked_saved">Checked saved</button>
           <button type="button" class="result-preset" data-results-preset="review">Needs review</button>
         </div>
-        <p id="allResultsHelper" class="muted all-results-helper">Use Top Picks for the fastest shortlist, or review every checked domain here. Quick filters do not delete anything.</p>
+        <p id="allResultsHelper" class="muted all-results-helper">All checked names are visible here. Use quick filters to narrow the list without deleting anything.</p>
       </div>
       <div id="resultCards" class="result-cards" aria-live="polite"></div>
       <div class="table-wrap">

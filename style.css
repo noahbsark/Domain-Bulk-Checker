@@ -3914,3 +3914,268 @@ body.v35-beginner {
     justify-content: flex-start;
   }
 }
+
+.archive-storage-summary {
+  margin-top: 6px;
+}
+
+/* v66: clean results view + always-visible All Results */
+.v66-clean-results.has-results .simple-hero {
+  grid-template-columns: 1fr;
+  padding: 22px 26px;
+  border-radius: 24px;
+}
+.v66-clean-results.has-results .hero-copy h1 {
+  max-width: 760px;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+}
+.v66-clean-results.has-results .hero-copy > p {
+  max-width: 660px;
+}
+.v66-clean-results.has-results .hero-visual,
+.v66-clean-results.has-results .simple-trust-strip,
+.v66-clean-results.has-results #simpleOnboardingPanel,
+.v66-clean-results.has-results #returnUserPanel,
+.v66-clean-results.has-results #how-it-works {
+  display: none !important;
+}
+
+.v66-clean-results.has-results .input-panel {
+  padding: 18px;
+}
+.v66-clean-results.has-results .input-panel .panel-title-row {
+  margin-bottom: 10px;
+}
+.v66-clean-results.has-results .input-panel textarea {
+  min-height: 86px;
+  max-height: 128px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+.v66-clean-results.has-results .input-coach-panel,
+.v66-clean-results.has-results .keyword-helper,
+.v66-clean-results.has-results .template-panel,
+.v66-clean-results.has-results .input-preview-stats,
+.v66-clean-results.has-results .input-panel > .button-row {
+  display: none !important;
+}
+.v66-clean-results.has-results .input-preview-panel {
+  margin-top: 10px;
+}
+.v66-clean-results.has-results .input-preview-head {
+  gap: 12px;
+}
+.v66-clean-results.has-results .input-preview-actions {
+  justify-content: flex-end;
+}
+
+.v66-clean-results.has-results:not(.advanced-mode) .simple-settings-panel,
+.v66-clean-results.has-results:not(.advanced-mode) .actions-panel,
+.v66-clean-results.has-results:not(.advanced-mode) #recentRunsPanel,
+.v66-clean-results.has-results:not(.advanced-mode) .compare-tray:not(.has-items),
+.v66-clean-results.has-results .next-steps-panel {
+  display: none !important;
+}
+
+.v66-clean-results.has-results .summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.v66-clean-results.has-results .summary-card {
+  padding: 13px 14px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+.v66-clean-results.has-results .summary-card:nth-child(n+4) {
+  display: none !important;
+}
+
+.v66-clean-results .top-picks-panel,
+.v66-clean-results .results-panel {
+  border-color: rgba(15, 23, 42, 0.10);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.055);
+}
+.v66-clean-results .top-picks-title-row,
+.v66-clean-results .results-title-row {
+  align-items: center;
+}
+.v66-clean-results .top-picks-controls {
+  gap: 8px;
+  justify-content: flex-end;
+}
+.v66-clean-results .top-picks-controls button {
+  display: none !important;
+}
+.v66-clean-results .top-picks-controls #cardCheckBestChoiceBtn,
+.v66-clean-results .top-picks-controls #cardOpenTopPicksBtn,
+.v66-clean-results .top-picks-controls #topPicksViewAllBtn,
+.v66-clean-results .top-picks-controls #topPicksShowMoreBtn,
+.v66-clean-results .top-picks-controls #topPicksNewSearchBtn {
+  display: inline-flex !important;
+}
+.v66-clean-results .top-picks-controls #topPicksShowMoreBtn.is-hidden {
+  display: none !important;
+}
+.v66-clean-results .top-picks-controls #topPicksViewAllBtn {
+  border-color: rgba(37, 99, 235, 0.28);
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.v66-clean-results .top-picks-price-note {
+  display: none !important;
+}
+.v66-clean-results .buy-ready-reminder {
+  margin: 10px 0 16px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.v66-clean-results .top-picks-grid {
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  gap: 14px;
+}
+.v66-clean-results .top-pick-card {
+  padding: 17px;
+  gap: 12px;
+  min-height: 0;
+}
+.v66-clean-results .top-pick-card-head {
+  align-items: center;
+}
+.v66-clean-results .top-pick-domain {
+  font-size: clamp(1.35rem, 2.1vw, 1.85rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+.v66-clean-results .simple-reason-pill {
+  padding: 10px 12px;
+  border-radius: 13px;
+  line-height: 1.38;
+  margin: 0;
+}
+.v66-clean-results:not(.advanced-mode) .top-pick-why-details,
+.v66-clean-results:not(.advanced-mode) .top-pick-quiet-more {
+  display: none !important;
+}
+.v66-clean-results .top-pick-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: stretch;
+}
+.v66-clean-results .top-pick-actions .top-pick-cta {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+.v66-clean-results:not(.advanced-mode) .top-pick-actions .compare-button,
+.v66-clean-results:not(.advanced-mode) .top-pick-actions [data-copy-domain] {
+  display: none !important;
+}
+
+.v66-clean-results.has-results .results-panel {
+  display: block !important;
+}
+.v66-clean-results .results-title-row h2::after {
+  content: "";
+}
+.v66-clean-results .results-actions {
+  gap: 8px;
+}
+.v66-clean-results .results-actions > .muted:first-child {
+  display: none;
+}
+.v66-clean-results .all-results-dashboard {
+  border-radius: 16px;
+  padding: 12px;
+  background: #f8fafc;
+}
+.v66-clean-results .all-results-summary {
+  gap: 8px;
+}
+.v66-clean-results .all-results-summary span,
+.v66-clean-results .result-preset {
+  border-radius: 999px;
+}
+.v66-clean-results .all-results-presets {
+  gap: 7px;
+}
+.v66-clean-results .all-results-helper {
+  margin-top: 8px;
+}
+.v66-clean-results .result-cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.v66-clean-results:not(.advanced-mode) .table-wrap {
+  display: none !important;
+}
+.v66-clean-results .result-card,
+.v66-clean-results .result-card-empty {
+  box-shadow: none;
+  border-radius: 16px;
+  padding: 13px;
+}
+.v66-clean-results .result-card-head strong {
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+.v66-clean-results .result-card-meta {
+  margin: 8px 0;
+}
+.v66-clean-results .result-card p {
+  font-size: 0.92rem;
+  margin: 6px 0;
+}
+.v66-clean-results:not(.advanced-mode) .result-card .top-pick-tags,
+.v66-clean-results:not(.advanced-mode) .result-card-actions .compare-button,
+.v66-clean-results:not(.advanced-mode) .result-card-actions [data-copy-domain] {
+  display: none !important;
+}
+.v66-clean-results .result-card-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 10px;
+}
+.v66-clean-results .result-card-actions .top-pick-cta {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .v66-clean-results.has-results .simple-hero,
+  .v66-clean-results.has-results .input-panel,
+  .v66-clean-results .top-picks-panel,
+  .v66-clean-results .results-panel {
+    padding: 16px;
+  }
+  .v66-clean-results.has-results .summary-grid,
+  .v66-clean-results .top-picks-grid,
+  .v66-clean-results .result-cards {
+    grid-template-columns: 1fr;
+  }
+  .v66-clean-results .top-picks-title-row,
+  .v66-clean-results .results-title-row {
+    align-items: stretch;
+  }
+  .v66-clean-results .top-picks-controls,
+  .v66-clean-results .results-actions {
+    justify-content: stretch;
+  }
+  .v66-clean-results .top-picks-controls #cardCheckBestChoiceBtn,
+  .v66-clean-results .top-picks-controls #cardOpenTopPicksBtn,
+  .v66-clean-results .top-picks-controls #topPicksViewAllBtn,
+  .v66-clean-results .top-picks-controls #topPicksNewSearchBtn {
+    flex: 1 1 46%;
+  }
+  .v66-clean-results .top-pick-actions,
+  .v66-clean-results .result-card-actions {
+    grid-template-columns: 1fr;
+  }
+}
+

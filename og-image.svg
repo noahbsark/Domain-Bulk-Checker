@@ -15,5 +15,5 @@
     <rect x="928" width="220" height="96" rx="24" fill="#fff7ed" stroke="#fed7aa"/>
     <text x="960" y="58" fill="#9a3412" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">Check price</text>
   </g>
-  <text x="120" y="492" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="24">v64 · Simple public flow · Advanced archive health tools</text>
+  <text x="120" y="492" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="24">v65 · Simple public flow · Archive cleanup tools</text>
 </svg>

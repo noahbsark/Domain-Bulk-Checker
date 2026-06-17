@@ -1,5 +1,14 @@
 # Domain Shortlist — v62: Archive Session Summary
 
+
+## v66 clean results view
+
+- Cleans up the post-check screen so users see fewer repeated panels after a run.
+- Compresses the hero and input area after results exist.
+- Shows **All Results** automatically after checking, not only behind a hidden button.
+- Uses clean result cards for the full list by default; the large table stays available in Advanced Mode.
+- Simplifies Top Picks cards and keeps extra actions/details out of the default public view.
+
 A static GitHub Pages app for cleaning, scoring, shortlisting, comparing, and price-checking domain ideas.
 
 ## v60 updates
