@@ -1,4 +1,4 @@
-# Domain Shortlist — v81 — Final Simple Polish
+# Domain Shortlist — v84 Tool-First Final Layout
 
 ## v80 no-mistake simple layout
 
@@ -258,14 +258,25 @@ This pass focuses on making the public app hard to misuse:
 The app still does not buy domains, change DNS, or delete the checked list automatically. Registrar tabs are opened only when the user chooses to check price.
 
 
-## v81 — Final Simple Polish
+## v83 UI Audit
 
-This pass reduces visible choices and clarifies the safe default path:
+This version removes the stacked trust/help panels above the tool. Users now see a compact header and then the paste box almost immediately. Registrar settings and extra explanations stay hidden until they are useful or Advanced Mode is enabled.
 
-1. Paste your list.
-2. Check my list.
-3. Start with the #1 pick.
-4. Star finalists.
-5. Decide at the registrar.
 
-Public visitors now see fewer controls by default, clearer labels, shorter inline help, and a calmer layout. Advanced tools remain available behind Advanced Mode or optional view controls.
+## v83 UI audit pass
+
+This version focuses on design quality and ease of use rather than adding more features.
+
+What changed:
+- Fixed the tool-first styling so the page no longer shows stacked helper panels above the tool.
+- Made the hero shorter and cleaner.
+- Put the paste box immediately after the header.
+- Hid empty Top Picks, Full List, Saved Names, and recent-run panels until they are useful.
+- Kept Advanced Mode reachable while hiding registrar and power-user settings from the normal flow.
+- Reduced public controls to the main actions: paste, check, start with best pick, save names, and search the list.
+- Hid the technical table in the public UI; result cards are the default view.
+
+
+## v84 Tool-First Final Layout
+
+This version is a visual/usability cleanup. It puts the paste box immediately after a compact header, hides empty zero-states, hides registrar/settings clutter until Advanced Mode, renames the full list to “All checked names,” and keeps one obvious next action visible at each step.

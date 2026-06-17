@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v81-final-simple-polish-2026-06-17";
+const UI_VERSION = "v84-tool-first-final-2026-06-17";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -6536,9 +6536,9 @@ function renderResults() {
   if (hasAnyResults) document.body.classList.add("show-all-results");
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13"><strong>No results yet.</strong><br />Paste domains above, add optional target keywords, then click <strong>Check domains</strong>.</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13"><strong>No results yet.</strong><br />Paste names above, then click <strong>Check my list</strong>.</td></tr>';
     el.visibleCount.textContent = "0 visible";
-    if (el.resultCards) el.resultCards.innerHTML = '<div class="result-card-empty">All results will also appear here after you check domains.</div>';
+    if (el.resultCards) el.resultCards.innerHTML = '<div class="result-card-empty">All checked names will appear here after you check your list.</div>';
     updateAllResultsSummary();
     updateResultsFiltersPanelState();
     updateHideWeakPicksButton();
@@ -6559,9 +6559,9 @@ function renderResults() {
 
   if (!visibleRows.length) {
     updateTakenToggle(0);
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No results match this filter. Show all results?</td></tr>';
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No names match this filter. Reset the view?</td></tr>';
     el.visibleCount.textContent = `0 visible of ${results.filter(Boolean).length}`;
-    if (el.resultCards) el.resultCards.innerHTML = `<div class="result-card-empty result-filter-empty"><strong>No results match this filter.</strong><span>Try a different filter or show the full checked list again.</span><button type="button" class="ghost" data-empty-show-all-results>Show all results</button></div>`;
+    if (el.resultCards) el.resultCards.innerHTML = `<div class="result-card-empty result-filter-empty"><strong>No results match this filter.</strong><span>Try a different filter or reset the view.</span><button type="button" class="ghost" data-empty-show-all-results>Show all results</button></div>`;
     updateAllResultsSummary();
     updateResultsFiltersPanelState();
     updateHideWeakPicksButton();
@@ -7951,6 +7951,7 @@ function setStatus(text) {
 
 function setChecking(checking) {
   isChecking = checking;
+  document.body.classList.toggle("is-checking", Boolean(checking));
   el.checkBtn.disabled = checking;
   el.stopBtn.disabled = !checking;
   const otherButtons = [

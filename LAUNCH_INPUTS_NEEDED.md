@@ -159,6 +159,17 @@ Review the simplified public flow after deployment:
 Advanced settings, archive tools, exports, and destructive controls should stay out of the normal public view.
 
 
-## v81 UI note
+## v82 note
 
-The public UI is now intentionally simple-first. Extra controls should stay hidden unless they help the user avoid a mistake. Keep the normal path focused on: paste, check, #1 pick, saved finalists, registrar confirmation.
+The public page is now tool-first: compact header, then paste box. Extra trust/help panels are no longer stacked above the tool.
+
+
+## v84 launch note
+
+UI audit pass complete. Before launch, visually test the page at desktop and mobile widths and confirm:
+- The paste box appears immediately after the header.
+- Top Picks and Full List are hidden before a check.
+- Advanced Mode is still reachable.
+- Public controls feel simple and self-explanatory.
+
+<!-- v84 Tool-First Final Layout: compact header, cleaner empty paste state, calmer results controls. -->
