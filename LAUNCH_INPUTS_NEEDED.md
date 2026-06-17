@@ -95,3 +95,30 @@ No new launch input needed. Archive health, label repair, and archive limit cont
 ## v66 cleanup note
 
 The app now shows all results automatically after a check while keeping the default public screen simpler.
+
+## v67 compact results note
+
+No new launch input is needed. v67 only cleans up the tested post-check UI:
+
+- hero collapses after results exist
+- paste input collapses after checking with an **Edit list** option
+- All Results stays visible and easier to scan
+- extra public buttons are hidden unless Advanced Mode is on
+
+Before launch, test one short list and confirm a new visitor can see both Top Picks and All Results without enabling Advanced Mode.
+
+## v72 UI polish note
+
+No new launch input is needed. v72 adds result keyboard shortcuts, a compact sticky results summary, and an Advanced-only Copy visible results action.
+
+
+## v72 results view polish check
+
+No new launch input is required. Test All Results compact/comfortable view and saved feedback after pushing.
+
+<!-- v72: Keyboard shortcuts, sticky results summary, and Advanced-only Copy visible results. -->
+
+
+## v72 launch note
+
+Test that All Results defaults to Best sort, Copy worth-checking works, and Show taken names reveals registered domains without losing them.

@@ -43,9 +43,9 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="style.css?v=66-clean-results" />
+  <link rel="stylesheet" href="style.css?v=70-inline-results" />
 </head>
-<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit v66-clean-results">
+<body class="v72-sort-taken v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit v66-clean-results v67-compact-results v68-filter-polish v69-results-view-polish v70-inline-results">
   <a class="skip-link" href="#domain-input">Skip to domain input</a>
   <main class="shell">
     <header class="hero simple-hero">
@@ -180,7 +180,10 @@
           <h2>Paste your ideas</h2>
           <p class="muted">One per line works best. The app cleans messy URLs and spaced names automatically.</p>
         </div>
-        <span id="inputCount" class="muted">0 lines</span>
+        <div class="input-title-actions">
+          <span id="inputCount" class="muted">0 lines</span>
+          <button id="editInputBtn" type="button" class="ghost small-button compact-edit-input">Edit list</button>
+        </div>
       </div>
       <label class="sr-only" for="inputBox">Domain ideas or URLs to check</label>
       <textarea id="inputBox" spellcheck="false" placeholder="brightgarden.com&#10;my startup idea.io&#10;brandpilotapp.com"></textarea>
@@ -410,6 +413,7 @@
           <button id="copyAvailableBtn" type="button">Copy available domains</button>
           <button id="copyFavoritesBtn" type="button">Copy saved</button>
           <button id="copyVisibleBtn" type="button">Copy visible domains</button>
+          <button id="copyVisibleResultsBtn" type="button">Copy visible results</button>
           <button id="copyLinksBtn" type="button">Copy visible price-check links</button>
           <button id="copyTopPicksBtn" type="button">Copy top picks</button>
           <button id="exportBtn" type="button">Export all CSV</button>
@@ -470,6 +474,7 @@
       <div class="summary-card purple"><span id="summaryFavorites">0</span><label>Saved</label></div>
       <div class="summary-card gray"><span id="summaryInvalid">0</span><label>Invalid</label></div>
     </section>
+    <p id="resultPlainSummary" class="result-plain-summary muted is-hidden" aria-live="polite">No domains checked yet.</p>
 
     <section id="nextStepsPanel" class="next-steps-panel is-hidden" aria-live="polite">
       <div>
@@ -698,8 +703,13 @@
       <div class="panel-title-row results-title-row">
         <h2>All Results</h2>
         <div class="results-actions">
-          <span class="muted">Every checked name appears here. Start with Top Picks, then scan the full list below.</span>
+          <span class="muted">Every checked name is shown below.</span>
           <span id="renderedCount" class="muted">0 rendered</span>
+          <button id="copyWorthCheckingBtn" type="button" class="ghost">Copy worth-checking</button>
+          <button id="allResultsDensityBtn" type="button" class="ghost" aria-pressed="false">Comfortable view</button>
+          <button id="takenToggleBtn" type="button" class="ghost is-hidden" aria-pressed="false">Show taken names</button>
+          <button id="editResultsFiltersBtn" type="button" class="ghost" aria-expanded="false">Edit filters</button>
+          <button id="saveAllWorthCheckingBtn" type="button" class="ghost advanced-only-inline">Save all worth-checking</button>
           <button id="allResultsBackTopPicksBtn" type="button" class="ghost">Back to Top Picks</button>
           <button id="showMoreBtn" type="button" class="ghost" disabled>Show more rows</button>
           <button id="showAllRowsBtn" type="button" class="ghost" disabled>Show all rows</button>
@@ -713,6 +723,12 @@
           <span><strong id="allResultsCom">0</strong> .com</span>
           <span><strong id="allResultsSaved">0</strong> saved</span>
         </div>
+        <div id="allResultsSortPills" class="all-results-sort-pills" aria-label="Sort all results">
+          <span class="muted">Sort</span>
+          <button type="button" class="result-sort-pill is-active" data-result-sort="score_desc" aria-pressed="true">Best</button>
+          <button type="button" class="result-sort-pill" data-result-sort="domain_asc" aria-pressed="false">A–Z</button>
+          <button type="button" class="result-sort-pill" data-result-sort="length_asc" aria-pressed="false">Shortest</button>
+        </div>
         <div class="all-results-presets" aria-label="Quick result filters">
           <button type="button" class="result-preset is-active" data-results-preset="all">All</button>
           <button type="button" class="result-preset" data-results-preset="worth">Worth checking</button>
@@ -723,6 +739,8 @@
           <button type="button" class="result-preset" data-results-preset="review">Needs review</button>
         </div>
         <p id="allResultsHelper" class="muted all-results-helper">All checked names are visible here. Use quick filters to narrow the list without deleting anything.</p>
+        <p class="muted all-results-shortcut-hint">Tip: press <kbd>/</kbd> to search results, <kbd>Esc</kbd> to clear filters.</p>
+        <p class="muted taken-explanation">Taken means already registered or likely unavailable. Check registrar results before making a final decision.</p>
       </div>
       <div id="resultCards" class="result-cards" aria-live="polite"></div>
       <div class="table-wrap">
@@ -774,6 +792,7 @@
       <div class="sticky-price-actions">
         <button id="stickyOpenTopPicksBtn" type="button" class="success">Check top 3</button>
         <button id="stickyViewAllBtn" type="button" class="ghost">View all</button>
+        <button id="stickyNewSearchBtn" type="button" class="ghost">New search</button>
       </div>
     </div>
 

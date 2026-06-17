@@ -1,5 +1,33 @@
-# Domain Shortlist — v62: Archive Session Summary
+# Domain Shortlist — v72: Results Sort + Taken Collapse
 
+
+## v72 keyboard and summary polish
+
+- Adds keyboard shortcuts for All Results: `/` opens/focuses result search and `Esc` clears active filters.
+- Updates the sticky post-results bar into a compact result summary with New search.
+- Adds Advanced-only Copy visible results with status, score, and reason.
+- Keeps the public workflow simple: Top Picks first, All Results visible, advanced tools hidden until needed.
+
+
+- Adds a simple inline **Quick details** expansion inside each All Results row.
+- Adds a small explanation for **Taken** results so the label is easier to understand.
+- Adds Advanced Mode **Save all worth-checking** for quickly saving every strong candidate.
+- Keeps the default public view simple while moving bulk actions into Advanced Mode.
+
+## v69 results view polish
+
+- Adds a simple **Comfortable view / Compact view** toggle for All Results.
+- Makes taken domains visually quieter so worth-checking domains stand out.
+- Shows quick **Saved** / **Removed** feedback directly on All Results rows after using the star.
+- Keeps the default public view simple while leaving deeper controls in Advanced Mode.
+
+## v68 filter polish
+
+- Adds **Edit filters** above All Results so filter chips stay hidden until needed.
+- Uses a roomier two-column Top Picks layout on desktop to reduce awkward wrapping for long domains.
+- Adds a clear empty filter recovery state: **No results match this filter. Show all results?**
+- Keeps All Results visible after checking while reducing visual clutter around filters.
+- Keeps deeper filters, tables, exports, and archive tools in Advanced Mode.
 
 ## v66 clean results view
 
@@ -20,6 +48,12 @@ A static GitHub Pages app for cleaning, scoring, shortlisting, comparing, and pr
 
 ## Recent updates
 
+- v72: Add All Results keyboard shortcuts, a sticky mini summary, and Advanced-only Copy visible results.
+- v70: Add inline All Results details, a Taken explanation, and Advanced-only Save all worth-checking.
+- v69: Add All Results compact/comfortable view, quieter taken rows, and inline saved feedback.
+- v68: Hide All Results filters until needed, use roomier Top Pick cards, and add a clear empty-filter recovery action.
+- v67: Compact post-check view with visible All Results and fewer repeated controls.
+- v66: Cleaner post-check results view and automatic All Results.
 - v60: Restore archives, delete archives, and download archive JSON.
 - v57: Done flow, Start a new search, and Archive session.
 - v56: Winner ready, Copy winner report, and Clear completed checked.
@@ -178,3 +212,11 @@ This app can help shortlist and open registrar checks. It does not reserve domai
 - Added archive label repair for blank or generic archive names.
 - Added archive limit setting: keep 5, 10, or 25 local archives.
 - Public workflow remains unchanged.
+
+
+## v72 update
+
+- Added public All Results sort pills: Best, A–Z, and Shortest.
+- Added a public Copy worth-checking button.
+- Collapsed taken names in the default simple All Results view with a clear Show taken names button.
+- Kept advanced sorting, exports, and bulk tools in Advanced Mode.

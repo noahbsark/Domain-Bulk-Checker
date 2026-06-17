@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v65-archive-cleanup-2026-06-17";
+const UI_VERSION = "v72-results-sort-taken-2026-06-17";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -72,6 +72,7 @@ const el = {
   inputCoachPanel: document.getElementById("inputCoachPanel"),
   inputCoachTitle: document.getElementById("inputCoachTitle"),
   inputCoachText: document.getElementById("inputCoachText"),
+  editInputBtn: document.getElementById("editInputBtn"),
   inputPreviewPanel: document.getElementById("inputPreviewPanel"),
   inputPreviewHeadline: document.getElementById("inputPreviewHeadline"),
   inputPreviewDetails: document.getElementById("inputPreviewDetails"),
@@ -219,6 +220,7 @@ const el = {
   stickyPriceDetails: document.getElementById("stickyPriceDetails"),
   stickyOpenTopPicksBtn: document.getElementById("stickyOpenTopPicksBtn"),
   stickyViewAllBtn: document.getElementById("stickyViewAllBtn"),
+  stickyNewSearchBtn: document.getElementById("stickyNewSearchBtn"),
   firstRunPanel: document.getElementById("firstRunPanel"),
   firstRunDismissBtn: document.getElementById("firstRunDismissBtn"),
   domainDetailOverlay: document.getElementById("domainDetailOverlay"),
@@ -275,6 +277,7 @@ const el = {
   copyAvailableBtn: document.getElementById("copyAvailableBtn"),
   copyFavoritesBtn: document.getElementById("copyFavoritesBtn"),
   copyVisibleBtn: document.getElementById("copyVisibleBtn"),
+  copyVisibleResultsBtn: document.getElementById("copyVisibleResultsBtn"),
   copyLinksBtn: document.getElementById("copyLinksBtn"),
   clearSessionBtn: document.getElementById("clearSessionBtn"),
   statusText: document.getElementById("statusText"),
@@ -285,6 +288,7 @@ const el = {
   summaryUnknown: document.getElementById("summaryUnknown"),
   summaryInvalid: document.getElementById("summaryInvalid"),
   summaryFavorites: document.getElementById("summaryFavorites"),
+  resultPlainSummary: document.getElementById("resultPlainSummary"),
   filterStatus: document.getElementById("filterStatus"),
   filterSearch: document.getElementById("filterSearch"),
   filterTld: document.getElementById("filterTld"),
@@ -300,6 +304,12 @@ const el = {
   allResultsSaved: document.getElementById("allResultsSaved"),
   allResultsHelper: document.getElementById("allResultsHelper"),
   allResultsBackTopPicksBtn: document.getElementById("allResultsBackTopPicksBtn"),
+  allResultsDensityBtn: document.getElementById("allResultsDensityBtn"),
+  allResultsSortPills: document.getElementById("allResultsSortPills"),
+  copyWorthCheckingBtn: document.getElementById("copyWorthCheckingBtn"),
+  takenToggleBtn: document.getElementById("takenToggleBtn"),
+  editResultsFiltersBtn: document.getElementById("editResultsFiltersBtn"),
+  saveAllWorthCheckingBtn: document.getElementById("saveAllWorthCheckingBtn"),
   resultCards: document.getElementById("resultCards"),
   renderedCount: document.getElementById("renderedCount"),
   showMoreBtn: document.getElementById("showMoreBtn"),
@@ -317,6 +327,7 @@ let topPicksExpanded = false;
 let pendingRenderTimer = null;
 let lastRenderAt = 0;
 let resultQuickPreset = "all";
+let resultsFiltersOpen = false;
 let compareSet = new Set();
 let savedShortlist = new Set();
 let savedNotes = {};
@@ -324,6 +335,9 @@ let savedChecked = new Set();
 let savedWinner = "";
 let winnerDoneShown = false;
 let savedShowUncheckedOnly = false;
+let allResultsComfortable = false;
+let showTakenResults = false;
+let resultCardFeedback = { domain: "", message: "", type: "", expires: 0, timer: null };
 let archiveSearchQuery = "";
 let archiveImportMode = "restore";
 let recentRuns = [];
@@ -4026,6 +4040,87 @@ function updateAllResultsSummary() {
   if (el.allResultsCom) el.allResultsCom.textContent = rows.filter(row => effectiveSuffix(row.normalized_domain || "") === "com").length.toLocaleString();
   if (el.allResultsSaved) el.allResultsSaved.textContent = rows.filter(row => favorites.has(row.normalized_domain) || savedShortlist.has(row.normalized_domain)).length.toLocaleString();
   updateResultPresetButtons();
+  updateAllResultsSortPills();
+  updateTakenToggle();
+}
+
+function updateResultsFiltersPanelState() {
+  const hasAnyResults = results.filter(Boolean).length > 0;
+  if (!hasAnyResults) resultsFiltersOpen = false;
+  document.body.classList.toggle("results-filters-open", Boolean(resultsFiltersOpen && hasAnyResults));
+  if (el.editResultsFiltersBtn) {
+    el.editResultsFiltersBtn.disabled = !hasAnyResults;
+    el.editResultsFiltersBtn.textContent = resultsFiltersOpen ? "Hide filters" : "Edit filters";
+    el.editResultsFiltersBtn.setAttribute("aria-expanded", resultsFiltersOpen ? "true" : "false");
+  }
+}
+
+function toggleResultsFiltersPanel() {
+  if (!results.filter(Boolean).length) return;
+  resultsFiltersOpen = !resultsFiltersOpen;
+  updateResultsFiltersPanelState();
+  setStatus(resultsFiltersOpen ? "Result filters shown." : "Result filters hidden.");
+  trackEvent("all_results_filters_toggled", { open: resultsFiltersOpen });
+}
+
+function resetAllResultFiltersFromEmptyState() {
+  clearAllResultFilters({ keepFiltersOpen: false, statusMessage: "Showing all results again.", eventName: "all_results_empty_show_all_clicked" });
+}
+
+function clearAllResultFilters(options = {}) {
+  const { keepFiltersOpen = false, statusMessage = "All result filters cleared.", eventName = "all_results_filters_cleared" } = options;
+  resultQuickPreset = "all";
+  hideWeakPicks = false;
+  showTakenResults = false;
+  if (el.filterStatus) el.filterStatus.value = "all";
+  if (el.filterSearch) el.filterSearch.value = "";
+  if (el.filterTld) el.filterTld.value = "";
+  if (el.filterMaxLen) el.filterMaxLen.value = "";
+  if (el.filterNoHyphen) el.filterNoHyphen.checked = false;
+  if (el.filterNoNumbers) el.filterNoNumbers.checked = false;
+  resetRenderLimit();
+  resultsFiltersOpen = Boolean(keepFiltersOpen);
+  renderResults();
+  setStatus(statusMessage);
+  saveState();
+  trackEvent(eventName);
+}
+
+function hasActiveAllResultFilters() {
+  return resultQuickPreset !== "all" || hideWeakPicks ||
+    (el.filterStatus && el.filterStatus.value !== "all") ||
+    Boolean(String(el.filterSearch?.value || "").trim()) ||
+    Boolean(String(el.filterTld?.value || "").trim()) ||
+    Boolean(String(el.filterMaxLen?.value || "").trim()) ||
+    Boolean(el.filterNoHyphen?.checked) ||
+    Boolean(el.filterNoNumbers?.checked);
+}
+
+function focusAllResultsFilterSearch() {
+  if (!results.filter(Boolean).length || !el.filterSearch) return;
+  document.body.classList.add("show-all-results");
+  resultsFiltersOpen = true;
+  updateResultsFiltersPanelState();
+  document.querySelector(".results-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.setTimeout(() => el.filterSearch?.focus(), 120);
+  setStatus("Search result filters. Press Esc to clear filters.");
+  trackEvent("all_results_filter_shortcut_focus");
+}
+
+function handleResultsKeyboardShortcuts(event) {
+  const target = event.target;
+  const tag = String(target?.tagName || "").toLowerCase();
+  const isTyping = target?.isContentEditable || ["input", "textarea", "select"].includes(tag);
+  if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !isTyping) {
+    event.preventDefault();
+    focusAllResultsFilterSearch();
+    return;
+  }
+  if (event.key === "Escape" && results.filter(Boolean).length && hasActiveAllResultFilters()) {
+    if (isTyping && !target.closest?.(".filters-panel")) return;
+    event.preventDefault();
+    clearAllResultFilters({ keepFiltersOpen: Boolean(resultsFiltersOpen), statusMessage: "All result filters cleared." });
+  }
 }
 
 
@@ -5961,39 +6056,173 @@ function clearRecentRuns() {
   trackEvent("recent_runs_cleared");
 }
 
+function updateAllResultsDensity() {
+  document.body.classList.toggle("results-comfortable", Boolean(allResultsComfortable));
+  if (!el.allResultsDensityBtn) return;
+  el.allResultsDensityBtn.textContent = allResultsComfortable ? "Compact view" : "Comfortable view";
+  el.allResultsDensityBtn.setAttribute("aria-pressed", allResultsComfortable ? "true" : "false");
+}
+
+
+function isAdvancedModeActive() {
+  return Boolean(el.advancedModeInput && el.advancedModeInput.checked);
+}
+
+function hasManualResultFilters() {
+  return Boolean(String(el.filterSearch?.value || "").trim())
+    || Boolean(String(el.filterTld?.value || "").trim())
+    || Boolean(String(el.filterMaxLen?.value || "").trim())
+    || Boolean(el.filterNoHyphen?.checked)
+    || Boolean(el.filterNoNumbers?.checked);
+}
+
+function canCollapseTakenResults() {
+  if (isAdvancedModeActive()) return false;
+  if (!results.filter(Boolean).some(row => row && row.available === false)) return false;
+  if (resultQuickPreset !== "all") return false;
+  if (el.filterStatus && el.filterStatus.value !== "all") return false;
+  if (hasManualResultFilters()) return false;
+  return true;
+}
+
+function takenResultsAreCollapsed() {
+  return canCollapseTakenResults() && !showTakenResults;
+}
+
+function updateTakenToggle(rowsShown = null) {
+  if (!el.takenToggleBtn) return;
+  const takenCount = results.filter(row => row && row.available === false).length;
+  const canCollapse = canCollapseTakenResults();
+  el.takenToggleBtn.classList.toggle("is-hidden", !canCollapse);
+  el.takenToggleBtn.disabled = !takenCount;
+  el.takenToggleBtn.textContent = showTakenResults ? `Hide taken names (${takenCount.toLocaleString()})` : `Show taken names (${takenCount.toLocaleString()})`;
+  el.takenToggleBtn.setAttribute("aria-pressed", showTakenResults ? "true" : "false");
+  if (el.allResultsHelper && takenResultsAreCollapsed()) {
+    const shown = Number.isFinite(rowsShown) ? rowsShown.toLocaleString() : "";
+    el.allResultsHelper.textContent = `${shown ? `${shown} active result${rowsShown === 1 ? "" : "s"} shown. ` : ""}${takenCount.toLocaleString()} taken name${takenCount === 1 ? " is" : "s are"} collapsed so the best options are easier to scan.`;
+  }
+}
+
+function toggleTakenResults() {
+  showTakenResults = !showTakenResults;
+  resetRenderLimit();
+  renderResults();
+  saveState();
+  setStatus(showTakenResults ? "Taken names shown in All Results." : "Taken names collapsed in All Results.");
+  trackEvent("taken_results_toggled", { shown: showTakenResults });
+}
+
+function updateAllResultsSortPills() {
+  if (!el.allResultsSortPills || !el.sortSelect) return;
+  const current = el.sortSelect.value || "score_desc";
+  el.allResultsSortPills.querySelectorAll("button[data-result-sort]").forEach(button => {
+    const active = button.getAttribute("data-result-sort") === current;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function applyAllResultsSort(value) {
+  if (!el.sortSelect) return;
+  const allowed = new Set(["score_desc", "domain_asc", "length_asc"]);
+  if (!allowed.has(value)) return;
+  el.sortSelect.value = value;
+  resetRenderLimit();
+  renderResults();
+  saveState();
+  const labels = { score_desc: "Best results first", domain_asc: "A–Z sorting", length_asc: "Shortest names first" };
+  setStatus(`${labels[value] || "Sort"} applied.`);
+  trackEvent("all_results_sort_pill_clicked", { sort: value });
+}
+
+function toggleAllResultsDensity() {
+  allResultsComfortable = !allResultsComfortable;
+  updateAllResultsDensity();
+  saveState();
+  setStatus(allResultsComfortable ? "Comfortable All Results view shown." : "Compact All Results view shown.");
+  trackEvent("all_results_density_toggled", { density: allResultsComfortable ? "comfortable" : "compact" });
+}
+
+function setResultCardFeedback(domain, message, type = "saved") {
+  domain = normalizeSavedDomain(domain);
+  if (!domain) return;
+  if (resultCardFeedback.timer) clearTimeout(resultCardFeedback.timer);
+  resultCardFeedback = { domain, message, type, expires: Date.now() + 1300, timer: null };
+  resultCardFeedback.timer = setTimeout(() => {
+    if (resultCardFeedback.domain === domain) {
+      resultCardFeedback = { domain: "", message: "", type: "", expires: 0, timer: null };
+      if (results.length) renderResults();
+    }
+  }, 1350);
+}
+
 function resultCardHtml(result) {
   const cls = classForStatus(result.availability_status);
   const domain = result.normalized_domain || "";
-  const favorite = favorites.has(domain);
+  const favorite = favorites.has(domain) || savedShortlist.has(normalizeSavedDomain(domain));
   const lookupUrl = resultRegistrarUrl(result);
   const linkHtml = lookupUrl
     ? `<a class="top-pick-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>`
     : "";
-  const issueTags = topPickIssueTags(result).map(tag => cardTagHtml(tag.label, tag.kind)).join("");
-  const strengths = topPickStrengthTags(result).slice(0, 3).map(tag => cardTagHtml(tag.label, tag.kind)).join("");
-  return `<article class="result-card ${cls} score-${scoreClass(result.domain_score)}" data-domain="${escapeAttr(domain)}">
-    <div class="result-card-head">
-      <div>
-        <strong>${escapeHtml(domain)}</strong>
-        <span>${escapeHtml(publicRecommendationType(result))}</span>
-      </div>
+  const statusLabel = availabilityText(result);
+  const scoreLabel = result.score_label || "";
+  const reason = publicScoreExplanation(result);
+  const tld = result.effective_tld || effectiveSuffix(domain);
+  const feedbackHtml = resultCardFeedback.domain === domain && Date.now() < resultCardFeedback.expires
+    ? `<span class="result-card-feedback ${escapeAttr(resultCardFeedback.type)}">${escapeHtml(resultCardFeedback.message)}</span>`
+    : "";
+  return `<article class="result-card compact-result-row ${cls} score-${scoreClass(result.domain_score)}" data-domain="${escapeAttr(domain)}">
+    <div class="result-main">
       <button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(domain)}" title="${favorite ? "Remove from saved" : "Save"}">${favorite ? "★" : "☆"}</button>
+      <div class="result-name-block">
+        <strong>${escapeHtml(domain)}</strong>
+        <span>${escapeHtml(reason)}</span>
+      </div>
     </div>
-    <div class="result-card-meta">
+    <div class="result-status-line">
       <span class="score-badge score-${scoreClass(result.domain_score)}">${escapeHtml(result.domain_score ?? "")}</span>
-      <span>${escapeHtml(result.score_label || "")}</span>
-      <span>${escapeHtml(availabilityText(result))}</span>
-      <span>.${escapeHtml(result.effective_tld || effectiveSuffix(domain))}</span>
+      <span>${escapeHtml(scoreLabel)}</span>
+      <span>${escapeHtml(statusLabel)}</span>
+      <span>.${escapeHtml(tld)}</span>
+      ${feedbackHtml}
     </div>
-    <p>${escapeHtml(publicScoreExplanation(result))}</p>
-    <div class="top-pick-tags">${strengths}${issueTags}</div>
-    <div class="result-card-actions">
+    <details class="result-inline-details">
+      <summary>Quick details</summary>
+      <div class="result-inline-details-grid">
+        <span><strong>Status</strong>${escapeHtml(statusLabel)}</span>
+        <span><strong>Score</strong>${escapeHtml(result.domain_score ?? "")} · ${escapeHtml(scoreLabel)}</span>
+        <span><strong>Length</strong>${escapeHtml(result.name_length || secondLevelName(domain).length || "")}</span>
+        <span><strong>Why</strong>${escapeHtml(result.score_explanation || reason)}</span>
+        <span class="wide"><strong>Notes</strong>${escapeHtml(result.notes || result.error || result.score_notes || "No extra notes.")}</span>
+      </div>
+    </details>
+    <div class="result-card-actions compact-actions">
       ${linkHtml}
-      <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Details</button>
-      ${compareButtonHtml(domain)}
-      <button type="button" class="ghost" data-copy-domain="${escapeAttr(domain)}">Copy</button>
+      <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Full details</button>
     </div>
   </article>`;
+}
+
+function saveAllWorthCheckingResults() {
+  const rows = results.filter(Boolean).filter(isWorthCheckingRow);
+  if (!rows.length) {
+    setStatus("No worth-checking names to save yet.");
+    return;
+  }
+  let added = 0;
+  for (const row of rows) {
+    const domain = normalizeSavedDomain(row.normalized_domain);
+    if (!domain) continue;
+    if (!savedShortlist.has(domain)) added += 1;
+    savedShortlist.add(domain);
+    favorites.add(domain);
+  }
+  saveSavedShortlistData();
+  refreshResultsScoring();
+  renderResults();
+  saveState();
+  setStatus(added ? `Saved ${added} worth-checking name${added === 1 ? "" : "s"}.` : "All worth-checking names are already saved.");
+  trackEvent("all_worth_checking_saved", { added_count: added, total_worth: rows.length });
 }
 
 function displayedResults() {
@@ -6022,6 +6251,7 @@ function displayedResults() {
     if (status === "top_picks" && !topPickDomainSet.has(domain)) return false;
     if (!matchesResultQuickPreset(row)) return false;
     if (hideWeakPicks && !isSimpleStrongEnoughRow(row)) return false;
+    if (takenResultsAreCollapsed() && row.available === false) return false;
 
     if (search) {
       const haystack = [row.input, domain, row.availability_status, row.check_source, row.notes, row.error, row.score_label, row.score_explanation, row.score_notes]
@@ -6058,6 +6288,8 @@ function renderResults() {
   const hasAnyResults = results.filter(Boolean).length > 0;
   document.body.classList.toggle("has-results", hasAnyResults);
   document.body.classList.toggle("has-saved", savedShortlist.size > 0);
+  updateAllResultsDensity();
+  if (!hasAnyResults) document.body.classList.remove("editing-input");
   if (hasAnyResults) document.body.classList.add("show-all-results");
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
@@ -6065,8 +6297,9 @@ function renderResults() {
     el.visibleCount.textContent = "0 visible";
     if (el.resultCards) el.resultCards.innerHTML = '<div class="result-card-empty">All results will also appear here after you check domains.</div>';
     updateAllResultsSummary();
+    updateResultsFiltersPanelState();
     updateHideWeakPicksButton();
-    if (el.renderedCount) el.renderedCount.textContent = "0 rendered";
+    if (el.renderedCount) el.renderedCount.textContent = "0 shown";
     if (el.showMoreBtn) el.showMoreBtn.disabled = true;
     if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = true;
     renderTopPickCards();
@@ -6080,12 +6313,14 @@ function renderResults() {
   }
 
   if (!visibleRows.length) {
-    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No rows match the current filters.</td></tr>';
+    updateTakenToggle(0);
+    el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13">No results match this filter. Show all results?</td></tr>';
     el.visibleCount.textContent = `0 visible of ${results.filter(Boolean).length}`;
-    if (el.resultCards) el.resultCards.innerHTML = `<div class="result-card-empty">No rows match ${escapeHtml(resultPresetLabel()).toLowerCase()} and the current filters.</div>`;
+    if (el.resultCards) el.resultCards.innerHTML = `<div class="result-card-empty result-filter-empty"><strong>No results match this filter.</strong><span>Try a different filter or show the full checked list again.</span><button type="button" class="ghost" data-empty-show-all-results>Show all results</button></div>`;
     updateAllResultsSummary();
+    updateResultsFiltersPanelState();
     updateHideWeakPicksButton();
-    if (el.renderedCount) el.renderedCount.textContent = "0 rendered";
+    if (el.renderedCount) el.renderedCount.textContent = "0 shown";
     if (el.showMoreBtn) el.showMoreBtn.disabled = true;
     if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = true;
     renderTopPickCards();
@@ -6099,6 +6334,7 @@ function renderResults() {
   }
 
   const totalVisibleRows = visibleRows.length;
+  updateTakenToggle(totalVisibleRows);
   const renderedRows = visibleRows.slice(0, renderRowLimit);
   const rowsHtml = renderedRows.map(result => {
     const cls = classForStatus(result.availability_status);
@@ -6129,10 +6365,11 @@ function renderResults() {
   el.resultsBody.innerHTML = rowsHtml;
   if (el.resultCards) el.resultCards.innerHTML = renderedRows.map(resultCardHtml).join("");
   updateAllResultsSummary();
+  updateResultsFiltersPanelState();
   updateHideWeakPicksButton();
   const totalResults = results.filter(Boolean).length;
   el.visibleCount.textContent = `${totalVisibleRows} visible of ${totalResults}`;
-  if (el.renderedCount) el.renderedCount.textContent = `${renderedRows.length} rendered`;
+  if (el.renderedCount) el.renderedCount.textContent = `Showing ${renderedRows.length.toLocaleString()} result${renderedRows.length === 1 ? "" : "s"}${renderedRows.length < totalVisibleRows ? ` of ${totalVisibleRows.toLocaleString()}` : ""}`;
   if (el.showMoreBtn) el.showMoreBtn.disabled = renderedRows.length >= totalVisibleRows;
   if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = renderedRows.length >= totalVisibleRows;
   renderTopPickCards();
@@ -6589,6 +6826,26 @@ function updateSummary() {
   el.summaryUnknown.textContent = unknown;
   el.summaryFavorites.textContent = favoriteCount;
 
+  if (el.resultPlainSummary) {
+    if (checked) {
+      const pieces = [`Checked ${checked.toLocaleString()} domain${checked === 1 ? "" : "s"}`];
+      pieces.push(`${available.toLocaleString()} worth checking`);
+      pieces.push(`${taken.toLocaleString()} taken`);
+      if (unknown) pieces.push(`${unknown.toLocaleString()} unknown`);
+      if (favoriteCount) pieces.push(`${favoriteCount.toLocaleString()} saved`);
+      el.resultPlainSummary.textContent = pieces.join(" · ") + ".";
+      el.resultPlainSummary.classList.remove("is-hidden");
+    } else {
+      el.resultPlainSummary.textContent = "No domains checked yet.";
+      el.resultPlainSummary.classList.add("is-hidden");
+    }
+  }
+
+  if (checked && el.inputPreviewHeadline && el.inputPreviewDetails) {
+    el.inputPreviewHeadline.textContent = `Input checked: ${checked.toLocaleString()} domain${checked === 1 ? "" : "s"}.`;
+    el.inputPreviewDetails.textContent = "Review Top Picks or scan All Results below. Use Edit list to change the pasted names.";
+  }
+
   updateNextStepsPanel({ checked, available, taken, unknown, invalid, favoriteCount, topPickCount });
 }
 
@@ -6724,6 +6981,16 @@ function copyAvailable() {
   copyText(uniqueDomains(results.filter(r => r && r.available === true)).join("\n"), "available domains");
 }
 
+function copyWorthChecking() {
+  const domains = uniqueDomains(results.filter(isWorthCheckingRow));
+  if (!domains.length) {
+    setStatus("No worth-checking names to copy yet.");
+    return;
+  }
+  copyText(domains.join("\n"), "worth-checking domains");
+  trackEvent("worth_checking_domains_copied", { domain_count: domains.length });
+}
+
 function copyFavorites() {
   const domains = [...new Set([...favorites, ...savedShortlist])].filter(Boolean).sort();
   if (!domains.length) {
@@ -6735,6 +7002,22 @@ function copyFavorites() {
 
 function copyVisible() {
   copyText(uniqueDomains(displayedResults()).join("\n"), "visible domains");
+}
+
+function copyVisibleResults() {
+  const rows = displayedResults();
+  if (!rows.length) {
+    setStatus("No visible results to copy.");
+    return;
+  }
+  const text = rows.map(row => {
+    const domain = row.normalized_domain || row.input || "";
+    const status = availabilityText(row);
+    const score = row.domain_score ?? "";
+    const reason = publicScoreExplanation(row) || row.score_explanation || "";
+    return `${domain} — ${status}${score !== "" ? ` · score ${score}` : ""}${reason ? ` · ${reason}` : ""}`;
+  }).join("\n");
+  copyText(text, "visible results");
 }
 
 function copyVisibleLinks() {
@@ -7315,15 +7598,19 @@ function backToTopPicks() {
 
 function updateStickyPriceBar() {
   if (!el.stickyPriceBar) return;
+  const rows = results.filter(Boolean);
   const picks = topPickRows();
-  if (!picks.length) {
+  if (!rows.length || !picks.length) {
     el.stickyPriceBar.classList.add("is-hidden");
     return;
   }
+  const checked = rows.length;
+  const worth = rows.filter(isWorthCheckingRow).length;
+  const taken = rows.filter(row => row.available === false).length;
   const first = picks[0]?.normalized_domain || "top pick";
   const limitLabel = topPickPriceOpenLimitLabel(picks.length);
-  if (el.stickyPriceHeadline) el.stickyPriceHeadline.textContent = `${picks.length} top pick${picks.length === 1 ? "" : "s"} ready`;
-  if (el.stickyPriceDetails) el.stickyPriceDetails.textContent = `Best: ${first}. Check price for the ${limitLabel} or view every result.`;
+  if (el.stickyPriceHeadline) el.stickyPriceHeadline.textContent = `${checked.toLocaleString()} checked · ${worth.toLocaleString()} worth checking · ${taken.toLocaleString()} taken`;
+  if (el.stickyPriceDetails) el.stickyPriceDetails.textContent = `Best choice: ${first}.`;
   if (el.stickyOpenTopPicksBtn) el.stickyOpenTopPicksBtn.textContent = `Check ${limitLabel}`;
   el.stickyPriceBar.classList.remove("is-hidden");
 }
@@ -7491,6 +7778,8 @@ function currentSettings() {
     filterTld: el.filterTld.value,
     filterMaxLen: el.filterMaxLen.value,
     resultQuickPreset,
+    allResultsComfortable,
+    showTakenResults,
     hideWeakPicks,
     filterNoHyphen: el.filterNoHyphen.checked,
     filterNoNumbers: el.filterNoNumbers.checked,
@@ -7516,6 +7805,9 @@ function applySettings(settings = {}) {
   if (settings.scoreOnly !== undefined && el.scoreOnlyInput) el.scoreOnlyInput.checked = Boolean(settings.scoreOnly);
   if (settings.dedupe !== undefined) el.dedupeInput.checked = Boolean(settings.dedupe);
   if (settings.resultQuickPreset !== undefined) resultQuickPreset = ["all", "worth", "strong", "com", "saved", "checked_saved", "review"].includes(String(settings.resultQuickPreset)) ? String(settings.resultQuickPreset) : "all";
+  if (settings.allResultsComfortable !== undefined) allResultsComfortable = Boolean(settings.allResultsComfortable);
+  if (settings.showTakenResults !== undefined) showTakenResults = Boolean(settings.showTakenResults);
+  updateAllResultsDensity();
   if (settings.hideWeakPicks !== undefined) hideWeakPicks = Boolean(settings.hideWeakPicks);
   if (settings.filterStatus !== undefined) el.filterStatus.value = settings.filterStatus;
   if (settings.filterSearch !== undefined) el.filterSearch.value = settings.filterSearch;
@@ -7636,10 +7928,12 @@ function toggleFavorite(domain) {
     savedShortlist.delete(domain);
     delete savedNotes[domain];
     savedChecked.delete(domain);
+    setResultCardFeedback(domain, "Removed", "removed");
     setStatus(`${domain} removed from saved.`);
   } else {
     favorites.add(domain);
     savedShortlist.add(domain);
+    setResultCardFeedback(domain, "Saved", "saved");
     setStatus(`${domain} saved as finalist.`);
   }
   saveSavedShortlistData();
@@ -7751,6 +8045,13 @@ function dismissStartOverUndo() {
   setStatus("Undo dismissed.");
 }
 
+function editInputAfterResults() {
+  document.body.classList.add("editing-input");
+  el.inputBox?.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => el.inputBox?.focus(), 120);
+  setStatus("Editing the pasted list. Check valid domains again when you are ready.");
+}
+
 function startOverSimple() {
   const hasSaved = Boolean(savedShortlist.size || favorites.size);
   let archivedBeforeReset = false;
@@ -7777,7 +8078,7 @@ function startOverSimple() {
   localStorage.removeItem(SAVED_NOTES_KEY);
   localStorage.removeItem(SAVED_CHECKED_KEY);
   localStorage.removeItem(SAVED_WINNER_KEY);
-  document.body.classList.remove("results-ready", "has-results", "has-saved", "show-all-results");
+  document.body.classList.remove("results-ready", "has-results", "has-saved", "show-all-results", "editing-input");
   updateInputCount();
   updateInputPreview();
   updateBestNextAction();
@@ -7963,6 +8264,7 @@ function bindEvents() {
   if (el.advancedModeInput) {
     el.advancedModeInput.addEventListener("change", () => {
       applyAdvancedMode();
+      if (results.filter(Boolean).length) renderResults();
       saveState();
       trackEvent(el.advancedModeInput.checked ? "advanced_mode_enabled" : "simple_mode_enabled");
       setStatus(el.advancedModeInput.checked ? "Advanced controls shown." : "Simple mode shown. Advanced controls are hidden." );
@@ -7987,6 +8289,16 @@ function bindEvents() {
   el.copyAvailableBtn.addEventListener("click", copyAvailable);
   el.copyFavoritesBtn.addEventListener("click", copyFavorites);
   el.copyVisibleBtn.addEventListener("click", copyVisible);
+  if (el.copyVisibleResultsBtn) el.copyVisibleResultsBtn.addEventListener("click", copyVisibleResults);
+  if (el.copyWorthCheckingBtn) el.copyWorthCheckingBtn.addEventListener("click", copyWorthChecking);
+  if (el.takenToggleBtn) el.takenToggleBtn.addEventListener("click", toggleTakenResults);
+  if (el.allResultsSortPills) {
+    el.allResultsSortPills.addEventListener("click", event => {
+      const button = event.target.closest("button[data-result-sort]");
+      if (!button) return;
+      applyAllResultsSort(button.getAttribute("data-result-sort"));
+    });
+  }
   el.copyLinksBtn.addEventListener("click", copyVisibleLinks);
   el.showTopPicksBtn.addEventListener("click", showTopPicks);
   el.copyTopPicksBtn.addEventListener("click", copyTopPicks);
@@ -8006,10 +8318,16 @@ function bindEvents() {
   if (el.cardExportTopPicksBtn) el.cardExportTopPicksBtn.addEventListener("click", () => exportCsv("top_picks"));
   if (el.topPicksViewAllBtn) el.topPicksViewAllBtn.addEventListener("click", showAllResultsSection);
   if (el.topPicksNewSearchBtn) el.topPicksNewSearchBtn.addEventListener("click", startOverSimple);
+  if (el.editInputBtn) el.editInputBtn.addEventListener("click", editInputAfterResults);
   if (el.allResultsBackTopPicksBtn) el.allResultsBackTopPicksBtn.addEventListener("click", backToTopPicks);
+  if (el.allResultsDensityBtn) el.allResultsDensityBtn.addEventListener("click", toggleAllResultsDensity);
+  if (el.editResultsFiltersBtn) el.editResultsFiltersBtn.addEventListener("click", toggleResultsFiltersPanel);
+  if (el.saveAllWorthCheckingBtn) el.saveAllWorthCheckingBtn.addEventListener("click", saveAllWorthCheckingResults);
   if (el.nextViewAllBtn) el.nextViewAllBtn.addEventListener("click", showAllResultsSection);
   if (el.stickyViewAllBtn) el.stickyViewAllBtn.addEventListener("click", showAllResultsSection);
   if (el.stickyOpenTopPicksBtn) el.stickyOpenTopPicksBtn.addEventListener("click", openTopPicks);
+  if (el.stickyNewSearchBtn) el.stickyNewSearchBtn.addEventListener("click", startOverSimple);
+  document.addEventListener("keydown", handleResultsKeyboardShortcuts);
   document.querySelectorAll("[data-results-preset]").forEach(button => {
     button.addEventListener("click", () => {
       resultQuickPreset = button.getAttribute("data-results-preset") || "all";
@@ -8340,6 +8658,11 @@ updateBestNextAction();
 
   if (el.resultCards) {
     el.resultCards.addEventListener("click", event => {
+      const emptyShowAllButton = event.target.closest("button[data-empty-show-all-results]");
+      if (emptyShowAllButton) {
+        resetAllResultFiltersFromEmptyState();
+        return;
+      }
       const favoriteButton = event.target.closest("button[data-favorite]");
       if (favoriteButton) {
         toggleFavorite(favoriteButton.getAttribute("data-favorite"));
