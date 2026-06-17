@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v72-results-sort-taken-2026-06-17";
+const UI_VERSION = "v81-final-simple-polish-2026-06-17";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -307,7 +307,16 @@ const el = {
   allResultsDensityBtn: document.getElementById("allResultsDensityBtn"),
   allResultsSortPills: document.getElementById("allResultsSortPills"),
   copyWorthCheckingBtn: document.getElementById("copyWorthCheckingBtn"),
+  copyVisibleWorthReasonsBtn: document.getElementById("copyVisibleWorthReasonsBtn"),
+  saveVisibleWorthCheckingBtn: document.getElementById("saveVisibleWorthCheckingBtn"),
+  undoSaveVisibleBtn: document.getElementById("undoSaveVisibleBtn"),
+  allResultsBadgeLegend: document.getElementById("allResultsBadgeLegend"),
+  hideWeakNamesBtn: document.getElementById("hideWeakNamesBtn"),
+  resultsCleanedNotice: document.getElementById("resultsCleanedNotice"),
+  resultsCleanedText: document.getElementById("resultsCleanedText"),
+  showEverythingResultsBtn: document.getElementById("showEverythingResultsBtn"),
   takenToggleBtn: document.getElementById("takenToggleBtn"),
+  takenCollapseNote: document.getElementById("takenCollapseNote"),
   editResultsFiltersBtn: document.getElementById("editResultsFiltersBtn"),
   saveAllWorthCheckingBtn: document.getElementById("saveAllWorthCheckingBtn"),
   resultCards: document.getElementById("resultCards"),
@@ -327,6 +336,7 @@ let topPicksExpanded = false;
 let pendingRenderTimer = null;
 let lastRenderAt = 0;
 let resultQuickPreset = "all";
+let resultBadgeFilter = "all";
 let resultsFiltersOpen = false;
 let compareSet = new Set();
 let savedShortlist = new Set();
@@ -338,6 +348,7 @@ let savedShowUncheckedOnly = false;
 let allResultsComfortable = false;
 let showTakenResults = false;
 let resultCardFeedback = { domain: "", message: "", type: "", expires: 0, timer: null };
+let lastBulkSaveChanges = [];
 let archiveSearchQuery = "";
 let archiveImportMode = "restore";
 let recentRuns = [];
@@ -3954,12 +3965,17 @@ function weakPicksHiddenCount() {
 }
 
 function updateHideWeakPicksButton() {
-  if (!el.hideWeakPicksBtn) return;
   const count = weakPicksHiddenCount();
-  el.hideWeakPicksBtn.textContent = hideWeakPicks ? "Show weak picks" : "Hide weak picks";
-  el.hideWeakPicksBtn.setAttribute("aria-pressed", hideWeakPicks ? "true" : "false");
-  el.hideWeakPicksBtn.disabled = !results.filter(Boolean).length || count === 0;
-  el.hideWeakPicksBtn.title = count ? `${count.toLocaleString()} lower-score result${count === 1 ? "" : "s"} can be hidden.` : "No weak picks to hide.";
+  const disabled = !results.filter(Boolean).length || count === 0;
+  const title = count ? `${count.toLocaleString()} lower-score result${count === 1 ? "" : "s"} can be hidden.` : "No weak names to hide.";
+  const buttons = [el.hideWeakPicksBtn, el.hideWeakNamesBtn].filter(Boolean);
+  buttons.forEach(button => {
+    button.textContent = hideWeakPicks ? "Show weak names" : "Hide weak names";
+    button.setAttribute("aria-label", hideWeakPicks ? "Show weak names again" : "Hide lower-score names without deleting anything");
+    button.setAttribute("aria-pressed", hideWeakPicks ? "true" : "false");
+    button.disabled = disabled;
+    button.title = title;
+  });
 }
 
 function toggleHideWeakPicks() {
@@ -3987,6 +4003,66 @@ function needsReviewRow(row) {
     row.availability_status === "not_checked_score_only" ||
     effectiveSuffix(row.normalized_domain || "") !== "com"
   );
+}
+
+const RESULT_BADGE_FILTER_LABELS = {
+  all: "All badges",
+  com: ".com",
+  short: "Short",
+  saved: "Saved",
+  review: "Needs review",
+  strong: "Strong",
+  taken: "Taken"
+};
+
+function normalizeResultBadgeFilter(kind) {
+  const value = String(kind || "all").toLowerCase();
+  return Object.prototype.hasOwnProperty.call(RESULT_BADGE_FILTER_LABELS, value) ? value : "all";
+}
+
+function resultBadgeFilterLabel(kind = resultBadgeFilter) {
+  return RESULT_BADGE_FILTER_LABELS[normalizeResultBadgeFilter(kind)] || "All badges";
+}
+
+function savedOnlyFilterActive() {
+  return resultQuickPreset === "saved" || resultBadgeFilter === "saved" || Boolean(el.filterStatus && el.filterStatus.value === "favorites");
+}
+
+function updateResultBadgeFilterControls() {
+  document.querySelectorAll("button[data-result-badge-filter]").forEach(button => {
+    const kind = normalizeResultBadgeFilter(button.getAttribute("data-result-badge-filter"));
+    const active = kind !== "all" && kind === resultBadgeFilter;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function matchesResultBadgeFilter(row, kind = resultBadgeFilter) {
+  kind = normalizeResultBadgeFilter(kind);
+  if (kind === "all") return true;
+  const domain = row?.normalized_domain || "";
+  const suffix = row?.effective_tld || effectiveSuffix(domain);
+  const nameLength = Number(row?.name_length || secondLevelName(domain).length || 0);
+  if (kind === "com") return suffix === "com";
+  if (kind === "short") return nameLength > 0 && nameLength <= 12;
+  if (kind === "saved") return favorites.has(domain) || savedShortlist.has(normalizeSavedDomain(domain));
+  if (kind === "review") return needsReviewRow(row);
+  if (kind === "strong") return isStrongNameRow(row);
+  if (kind === "taken") return row?.available === false;
+  return true;
+}
+
+function applyResultBadgeFilter(kind) {
+  kind = normalizeResultBadgeFilter(kind);
+  const wasActive = kind !== "all" && kind === resultBadgeFilter;
+  resultBadgeFilter = wasActive ? "all" : kind;
+  if (resultBadgeFilter === "taken") showTakenResults = true;
+  resetRenderLimit();
+  document.body.classList.add("show-all-results");
+  renderResults();
+  saveState();
+  setStatus(resultBadgeFilter === "all" ? "Badge filter cleared." : `Showing results tagged ${resultBadgeFilterLabel(resultBadgeFilter)}. Click the badge again to clear it.`);
+  trackEvent("all_results_badge_filter_clicked", { badge_filter: resultBadgeFilter, cleared: wasActive });
 }
 
 function matchesResultQuickPreset(row, preset = resultQuickPreset) {
@@ -4028,8 +4104,12 @@ function updateResultPresetButtons() {
       checked_saved: "Showing saved finalists you already marked checked. This is an advanced review filter.",
       review: "Showing domains with useful scores but possible concerns, non-.com extensions, or uncertain availability."
     };
-    el.allResultsHelper.textContent = (helpers[resultQuickPreset] || helpers.all) + (hideWeakPicks ? " Weak picks are hidden." : "");
+    const extras = [];
+    if (resultBadgeFilter !== "all") extras.push(`Badge filter: ${resultBadgeFilterLabel(resultBadgeFilter)}.`);
+    if (hideWeakPicks) extras.push("Weak picks are hidden.");
+    el.allResultsHelper.textContent = `${helpers[resultQuickPreset] || helpers.all}${extras.length ? ` ${extras.join(" ")}` : ""}`;
   }
+  updateResultsCleanedNotice();
 }
 
 function updateAllResultsSummary() {
@@ -4041,6 +4121,7 @@ function updateAllResultsSummary() {
   if (el.allResultsSaved) el.allResultsSaved.textContent = rows.filter(row => favorites.has(row.normalized_domain) || savedShortlist.has(row.normalized_domain)).length.toLocaleString();
   updateResultPresetButtons();
   updateAllResultsSortPills();
+  updateResultBadgeFilterControls();
   updateTakenToggle();
 }
 
@@ -4050,7 +4131,7 @@ function updateResultsFiltersPanelState() {
   document.body.classList.toggle("results-filters-open", Boolean(resultsFiltersOpen && hasAnyResults));
   if (el.editResultsFiltersBtn) {
     el.editResultsFiltersBtn.disabled = !hasAnyResults;
-    el.editResultsFiltersBtn.textContent = resultsFiltersOpen ? "Hide filters" : "Edit filters";
+    el.editResultsFiltersBtn.textContent = resultsFiltersOpen ? "Hide search/filter" : "Search / filter";
     el.editResultsFiltersBtn.setAttribute("aria-expanded", resultsFiltersOpen ? "true" : "false");
   }
 }
@@ -4059,7 +4140,7 @@ function toggleResultsFiltersPanel() {
   if (!results.filter(Boolean).length) return;
   resultsFiltersOpen = !resultsFiltersOpen;
   updateResultsFiltersPanelState();
-  setStatus(resultsFiltersOpen ? "Result filters shown." : "Result filters hidden.");
+  setStatus(resultsFiltersOpen ? "Search and filters shown. They only change what is visible." : "Search and filters hidden.");
   trackEvent("all_results_filters_toggled", { open: resultsFiltersOpen });
 }
 
@@ -4070,6 +4151,7 @@ function resetAllResultFiltersFromEmptyState() {
 function clearAllResultFilters(options = {}) {
   const { keepFiltersOpen = false, statusMessage = "All result filters cleared.", eventName = "all_results_filters_cleared" } = options;
   resultQuickPreset = "all";
+  resultBadgeFilter = "all";
   hideWeakPicks = false;
   showTakenResults = false;
   if (el.filterStatus) el.filterStatus.value = "all";
@@ -4087,7 +4169,7 @@ function clearAllResultFilters(options = {}) {
 }
 
 function hasActiveAllResultFilters() {
-  return resultQuickPreset !== "all" || hideWeakPicks ||
+  return resultQuickPreset !== "all" || resultBadgeFilter !== "all" || hideWeakPicks ||
     (el.filterStatus && el.filterStatus.value !== "all") ||
     Boolean(String(el.filterSearch?.value || "").trim()) ||
     Boolean(String(el.filterTld?.value || "").trim()) ||
@@ -6026,6 +6108,7 @@ function restoreRecentRun(runId) {
   if (!run) return;
   results = applyBatchMetrics(Array.isArray(run.rows) ? run.rows : []);
   resultQuickPreset = "all";
+  resultBadgeFilter = "all";
   if (el.filterStatus) el.filterStatus.value = "all";
   if (el.sortSelect) el.sortSelect.value = "score_desc";
   if (el.registrarInput && run.registrar && REGISTRARS[run.registrar]) el.registrarInput.value = run.registrar;
@@ -6059,7 +6142,7 @@ function clearRecentRuns() {
 function updateAllResultsDensity() {
   document.body.classList.toggle("results-comfortable", Boolean(allResultsComfortable));
   if (!el.allResultsDensityBtn) return;
-  el.allResultsDensityBtn.textContent = allResultsComfortable ? "Compact view" : "Comfortable view";
+  el.allResultsDensityBtn.textContent = allResultsComfortable ? "Compact rows" : "Roomier rows";
   el.allResultsDensityBtn.setAttribute("aria-pressed", allResultsComfortable ? "true" : "false");
 }
 
@@ -6090,16 +6173,32 @@ function takenResultsAreCollapsed() {
 }
 
 function updateTakenToggle(rowsShown = null) {
-  if (!el.takenToggleBtn) return;
   const takenCount = results.filter(row => row && row.available === false).length;
   const canCollapse = canCollapseTakenResults();
-  el.takenToggleBtn.classList.toggle("is-hidden", !canCollapse);
-  el.takenToggleBtn.disabled = !takenCount;
-  el.takenToggleBtn.textContent = showTakenResults ? `Hide taken names (${takenCount.toLocaleString()})` : `Show taken names (${takenCount.toLocaleString()})`;
-  el.takenToggleBtn.setAttribute("aria-pressed", showTakenResults ? "true" : "false");
-  if (el.allResultsHelper && takenResultsAreCollapsed()) {
+  const collapsed = canCollapse && !showTakenResults;
+  if (el.takenToggleBtn) {
+    el.takenToggleBtn.classList.toggle("is-hidden", !canCollapse);
+    el.takenToggleBtn.disabled = !takenCount;
+    el.takenToggleBtn.textContent = showTakenResults ? `Hide taken (${takenCount.toLocaleString()})` : `Show taken names (${takenCount.toLocaleString()})`;
+    el.takenToggleBtn.title = "Taken names are only hidden to reduce clutter. Nothing is deleted.";
+    el.takenToggleBtn.setAttribute("aria-pressed", showTakenResults ? "true" : "false");
+  }
+  if (el.takenCollapseNote) {
+    el.takenCollapseNote.classList.toggle("is-hidden", !collapsed);
+    el.takenCollapseNote.textContent = collapsed
+      ? `${takenCount.toLocaleString()} taken name${takenCount === 1 ? " is" : "s are"} hidden only to reduce clutter. Nothing was deleted.`
+      : "";
+  }
+  if (!el.allResultsHelper) return;
+  if (collapsed) {
     const shown = Number.isFinite(rowsShown) ? rowsShown.toLocaleString() : "";
-    el.allResultsHelper.textContent = `${shown ? `${shown} active result${rowsShown === 1 ? "" : "s"} shown. ` : ""}${takenCount.toLocaleString()} taken name${takenCount === 1 ? " is" : "s are"} collapsed so the best options are easier to scan.`;
+    el.allResultsHelper.textContent = `${shown ? `${shown} active result${rowsShown === 1 ? "" : "s"} shown. ` : ""}Taken names are hidden for clarity. Click Show taken names if you want the complete list.`;
+    return;
+  }
+  if (hasActiveAllResultFilters()) {
+    el.allResultsHelper.textContent = "Filtered results are shown. Use Show everything to return to the full checked list.";
+  } else {
+    el.allResultsHelper.textContent = "All checked names are here. Filters only hide rows temporarily; nothing is deleted.";
   }
 }
 
@@ -6108,7 +6207,7 @@ function toggleTakenResults() {
   resetRenderLimit();
   renderResults();
   saveState();
-  setStatus(showTakenResults ? "Taken names shown in All Results." : "Taken names collapsed in All Results.");
+  setStatus(showTakenResults ? "Taken names shown. Nothing changed except the view." : "Taken names hidden. Nothing was deleted.");
   trackEvent("taken_results_toggled", { shown: showTakenResults });
 }
 
@@ -6139,7 +6238,7 @@ function toggleAllResultsDensity() {
   allResultsComfortable = !allResultsComfortable;
   updateAllResultsDensity();
   saveState();
-  setStatus(allResultsComfortable ? "Comfortable All Results view shown." : "Compact All Results view shown.");
+  setStatus(allResultsComfortable ? "Roomier result rows shown." : "Compact result rows shown.");
   trackEvent("all_results_density_toggled", { density: allResultsComfortable ? "comfortable" : "compact" });
 }
 
@@ -6156,6 +6255,44 @@ function setResultCardFeedback(domain, message, type = "saved") {
   }, 1350);
 }
 
+function worthCheckingReason(row) {
+  if (!isWorthCheckingRow(row)) return "";
+  const domain = row.normalized_domain || "";
+  const score = Number(row.domain_score || 0);
+  const suffix = effectiveSuffix(domain);
+  if (suffix === "com" && score >= 80) return "Strong .com with a high quality score.";
+  if (row.available === true && score >= 80) return "Looks available and has a high quality score.";
+  if (row.available === true) return "Looks available and passes the quality checks.";
+  if (score >= 80) return "High quality score; worth a registrar price check.";
+  return publicScoreExplanation(row) || "Strong enough to compare before deciding.";
+}
+
+function resultRowBadges(result) {
+  const domain = result?.normalized_domain || "";
+  const suffix = result?.effective_tld || effectiveSuffix(domain);
+  const nameLength = Number(result?.name_length || secondLevelName(domain).length || 0);
+  const saved = favorites.has(domain) || savedShortlist.has(normalizeSavedDomain(domain));
+  const badges = [];
+  if (suffix) badges.push({ label: `.${suffix}`, kind: suffix === "com" ? "com" : "tld" });
+  if (nameLength > 0 && nameLength <= 12) badges.push({ label: "Short", kind: "short" });
+  if (saved) badges.push({ label: "Saved", kind: "saved" });
+  if (needsReviewRow(result)) badges.push({ label: "Needs review", kind: "review" });
+  if (isStrongNameRow(result)) badges.push({ label: "Strong", kind: "strong" });
+  if (result?.available === false) badges.push({ label: "Taken", kind: "taken" });
+  return badges.slice(0, 5);
+}
+
+function resultRowBadgesHtml(result) {
+  const badges = resultRowBadges(result);
+  if (!badges.length) return "";
+  return `<div class="result-row-badges" aria-label="Quick labels">${badges.map(badge => {
+    const kind = normalizeResultBadgeFilter(badge.kind);
+    if (kind === "all") return `<span class="result-row-badge badge-${escapeAttr(badge.kind)}">${escapeHtml(badge.label)}</span>`;
+    const active = kind === resultBadgeFilter;
+    return `<button type="button" class="result-row-badge badge-${escapeAttr(badge.kind)}${active ? " is-active" : ""}" data-result-badge-filter="${escapeAttr(kind)}" title="Filter All Results to ${escapeAttr(badge.label)}">${escapeHtml(badge.label)}</button>`;
+  }).join("")}</div>`;
+}
+
 function resultCardHtml(result) {
   const cls = classForStatus(result.availability_status);
   const domain = result.normalized_domain || "";
@@ -6167,16 +6304,20 @@ function resultCardHtml(result) {
   const statusLabel = availabilityText(result);
   const scoreLabel = result.score_label || "";
   const reason = publicScoreExplanation(result);
+  const worthReason = worthCheckingReason(result);
   const tld = result.effective_tld || effectiveSuffix(domain);
   const feedbackHtml = resultCardFeedback.domain === domain && Date.now() < resultCardFeedback.expires
     ? `<span class="result-card-feedback ${escapeAttr(resultCardFeedback.type)}">${escapeHtml(resultCardFeedback.message)}</span>`
     : "";
+  const badgesHtml = resultRowBadgesHtml(result);
   return `<article class="result-card compact-result-row ${cls} score-${scoreClass(result.domain_score)}" data-domain="${escapeAttr(domain)}">
     <div class="result-main">
       <button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(domain)}" title="${favorite ? "Remove from saved" : "Save"}">${favorite ? "★" : "☆"}</button>
       <div class="result-name-block">
         <strong>${escapeHtml(domain)}</strong>
         <span>${escapeHtml(reason)}</span>
+        ${worthReason ? `<div class="result-worth-reason"><strong>Why:</strong> ${escapeHtml(worthReason)}</div>` : ""}
+        ${badgesHtml}
       </div>
     </div>
     <div class="result-status-line">
@@ -6187,7 +6328,7 @@ function resultCardHtml(result) {
       ${feedbackHtml}
     </div>
     <details class="result-inline-details">
-      <summary>Quick details</summary>
+      <summary>Why this result?</summary>
       <div class="result-inline-details-grid">
         <span><strong>Status</strong>${escapeHtml(statusLabel)}</span>
         <span><strong>Score</strong>${escapeHtml(result.domain_score ?? "")} · ${escapeHtml(scoreLabel)}</span>
@@ -6203,26 +6344,127 @@ function resultCardHtml(result) {
   </article>`;
 }
 
-function saveAllWorthCheckingResults() {
-  const rows = results.filter(Boolean).filter(isWorthCheckingRow);
+function updateUndoSaveVisibleButton() {
+  if (!el.undoSaveVisibleBtn) return;
+  const count = lastBulkSaveChanges.length;
+  el.undoSaveVisibleBtn.classList.toggle("is-hidden", !count);
+  el.undoSaveVisibleBtn.disabled = !count;
+  el.undoSaveVisibleBtn.textContent = count ? `Undo save (${count.toLocaleString()})` : "Undo save";
+  el.undoSaveVisibleBtn.title = "Only removes names added by the last bulk save.";
+}
+
+function saveWorthCheckingRows(rows, eventName = "worth_checking_saved") {
+  rows = rows.filter(Boolean).filter(isWorthCheckingRow);
   if (!rows.length) {
-    setStatus("No worth-checking names to save yet.");
+    setStatus("No visible good names to save. Clear filters or reset the view.");
     return;
   }
   let added = 0;
+  let lastDomain = "";
+  const newlyAdded = [];
   for (const row of rows) {
     const domain = normalizeSavedDomain(row.normalized_domain);
     if (!domain) continue;
-    if (!savedShortlist.has(domain)) added += 1;
+    lastDomain = domain;
+    const wasSaved = savedShortlist.has(domain);
+    const wasFavorite = favorites.has(domain);
+    if (!wasSaved) {
+      added += 1;
+      newlyAdded.push({ domain, wasFavorite });
+    }
     savedShortlist.add(domain);
     favorites.add(domain);
   }
+  lastBulkSaveChanges = newlyAdded;
+  saveSavedShortlistData();
+  refreshResultsScoring();
+  if (lastDomain) setResultCardFeedback(lastDomain, added ? "Saved" : "Already saved", "saved");
+  renderResults();
+  saveState();
+  setStatus(added ? `Saved ${added} good name${added === 1 ? "" : "s"}. Use Undo save if that was accidental.` : "The visible good names are already saved.");
+  trackEvent(eventName, { added_count: added, total_worth: rows.length });
+}
+
+function undoLastBulkSave() {
+  const changes = lastBulkSaveChanges.filter(item => item && item.domain);
+  if (!changes.length) {
+    setStatus("No recent bulk save to undo.");
+    return;
+  }
+  let removed = 0;
+  for (const item of changes) {
+    const domain = normalizeSavedDomain(item.domain);
+    if (!domain) continue;
+    if (savedShortlist.delete(domain)) removed += 1;
+    if (!item.wasFavorite) favorites.delete(domain);
+    compareSet.delete(domain);
+  }
+  lastBulkSaveChanges = [];
   saveSavedShortlistData();
   refreshResultsScoring();
   renderResults();
   saveState();
-  setStatus(added ? `Saved ${added} worth-checking name${added === 1 ? "" : "s"}.` : "All worth-checking names are already saved.");
-  trackEvent("all_worth_checking_saved", { added_count: added, total_worth: rows.length });
+  setStatus(removed ? `Undid save for ${removed} domain${removed === 1 ? "" : "s"}.` : "Nothing changed. Those domains were already removed.");
+  trackEvent("bulk_save_undone", { removed_count: removed });
+}
+
+function saveAllWorthCheckingResults() {
+  saveWorthCheckingRows(results.filter(Boolean).filter(isWorthCheckingRow), "all_worth_checking_saved");
+}
+
+function saveVisibleWorthCheckingResults() {
+  saveWorthCheckingRows(displayedResults().filter(isWorthCheckingRow), "visible_worth_checking_saved");
+}
+
+function updateSaveVisibleWorthCheckingButton() {
+  if (!el.saveVisibleWorthCheckingBtn) return;
+  const count = displayedResults().filter(isWorthCheckingRow).length;
+  el.saveVisibleWorthCheckingBtn.disabled = !count;
+  el.saveVisibleWorthCheckingBtn.textContent = count ? `Save good names (${count.toLocaleString()})` : "Save good names";
+  el.saveVisibleWorthCheckingBtn.title = "Marks visible good names as saved finalists. You can undo the last bulk save.";
+  updateUndoSaveVisibleButton();
+}
+
+function activeCleanupPieces() {
+  const pieces = [];
+  if (savedOnlyFilterActive()) pieces.push("saved names only");
+  if (takenResultsAreCollapsed()) pieces.push("taken names hidden");
+  if (hideWeakPicks) pieces.push("weak names hidden");
+  if (resultBadgeFilter !== "all" && resultBadgeFilter !== "saved") pieces.push(`${resultBadgeFilterLabel(resultBadgeFilter)} badge filter`);
+  return pieces;
+}
+
+function updateResultsCleanedNotice() {
+  if (!el.resultsCleanedNotice || !el.resultsCleanedText) return;
+  const pieces = activeCleanupPieces();
+  const visible = pieces.length > 0 && results.filter(Boolean).length > 0;
+  el.resultsCleanedNotice.classList.toggle("is-hidden", !visible);
+  if (!visible) {
+    el.resultsCleanedText.textContent = "";
+    return;
+  }
+  el.resultsCleanedText.textContent = savedOnlyFilterActive()
+    ? `Showing saved results only${pieces.length > 1 ? ` with ${pieces.filter(piece => piece !== "saved names only").join(", ")}` : ""}. Nothing was deleted.`
+    : `Your view is simplified: ${pieces.join(", ")}. Nothing was deleted.`;
+}
+
+function showEverythingResults() {
+  resultQuickPreset = "all";
+  resultBadgeFilter = "all";
+  hideWeakPicks = false;
+  showTakenResults = true;
+  if (el.filterStatus) el.filterStatus.value = "all";
+  if (el.filterSearch) el.filterSearch.value = "";
+  if (el.filterTld) el.filterTld.value = "";
+  if (el.filterMaxLen) el.filterMaxLen.value = "";
+  if (el.filterNoHyphen) el.filterNoHyphen.checked = false;
+  if (el.filterNoNumbers) el.filterNoNumbers.checked = false;
+  resetRenderLimit();
+  resultsFiltersOpen = false;
+  renderResults();
+  saveState();
+  setStatus("View reset. Every result is shown again. Nothing was deleted.");
+  trackEvent("all_results_show_everything_clicked");
 }
 
 function displayedResults() {
@@ -6250,6 +6492,7 @@ function displayedResults() {
     if (status === "favorites" && !(favorites.has(domain) || savedShortlist.has(domain))) return false;
     if (status === "top_picks" && !topPickDomainSet.has(domain)) return false;
     if (!matchesResultQuickPreset(row)) return false;
+    if (!matchesResultBadgeFilter(row)) return false;
     if (hideWeakPicks && !isSimpleStrongEnoughRow(row)) return false;
     if (takenResultsAreCollapsed() && row.available === false) return false;
 
@@ -6299,6 +6542,8 @@ function renderResults() {
     updateAllResultsSummary();
     updateResultsFiltersPanelState();
     updateHideWeakPicksButton();
+    updateSaveVisibleWorthCheckingButton();
+    updateResultsCleanedNotice();
     if (el.renderedCount) el.renderedCount.textContent = "0 shown";
     if (el.showMoreBtn) el.showMoreBtn.disabled = true;
     if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = true;
@@ -6320,6 +6565,8 @@ function renderResults() {
     updateAllResultsSummary();
     updateResultsFiltersPanelState();
     updateHideWeakPicksButton();
+    updateSaveVisibleWorthCheckingButton();
+    updateResultsCleanedNotice();
     if (el.renderedCount) el.renderedCount.textContent = "0 shown";
     if (el.showMoreBtn) el.showMoreBtn.disabled = true;
     if (el.showAllRowsBtn) el.showAllRowsBtn.disabled = true;
@@ -6367,6 +6614,8 @@ function renderResults() {
   updateAllResultsSummary();
   updateResultsFiltersPanelState();
   updateHideWeakPicksButton();
+  updateSaveVisibleWorthCheckingButton();
+  updateResultsCleanedNotice();
   const totalResults = results.filter(Boolean).length;
   el.visibleCount.textContent = `${totalVisibleRows} visible of ${totalResults}`;
   if (el.renderedCount) el.renderedCount.textContent = `Showing ${renderedRows.length.toLocaleString()} result${renderedRows.length === 1 ? "" : "s"}${renderedRows.length < totalVisibleRows ? ` of ${totalVisibleRows.toLocaleString()}` : ""}`;
@@ -6982,13 +7231,29 @@ function copyAvailable() {
 }
 
 function copyWorthChecking() {
-  const domains = uniqueDomains(results.filter(isWorthCheckingRow));
+  const rows = displayedResults().filter(isWorthCheckingRow);
+  const domains = uniqueDomains(rows);
   if (!domains.length) {
-    setStatus("No worth-checking names to copy yet.");
+    setStatus("No visible worth-checking names to copy. Clear filters or show more results.");
     return;
   }
-  copyText(domains.join("\n"), "worth-checking domains");
-  trackEvent("worth_checking_domains_copied", { domain_count: domains.length });
+  copyText(domains.join("\n"), "visible worth-checking domains");
+  trackEvent("visible_worth_checking_domains_copied", { domain_count: domains.length });
+}
+
+function copyVisibleWorthCheckingWithReasons() {
+  const rows = displayedResults().filter(isWorthCheckingRow);
+  if (!rows.length) {
+    setStatus("No visible worth-checking names with reasons to copy. Clear filters or show more results.");
+    return;
+  }
+  const lines = rows.map(row => {
+    const domain = row.normalized_domain || row.input || "";
+    const reason = worthCheckingReason(row) || publicScoreExplanation(row) || row.score_explanation || "Worth checking.";
+    return `${domain} — ${reason}`;
+  }).filter(Boolean);
+  copyText(lines.join("\n"), "visible worth-checking domains with reasons");
+  trackEvent("visible_worth_checking_reasons_copied", { domain_count: lines.length });
 }
 
 function copyFavorites() {
@@ -7581,6 +7846,7 @@ function openAllTopPicks() {
 function showAllResultsSection() {
   document.body.classList.add("show-all-results");
   resultQuickPreset = "all";
+  resultBadgeFilter = "all";
   if (el.filterStatus) el.filterStatus.value = "all";
   if (el.sortSelect) el.sortSelect.value = "score_desc";
   resetRenderLimit();
@@ -7778,6 +8044,7 @@ function currentSettings() {
     filterTld: el.filterTld.value,
     filterMaxLen: el.filterMaxLen.value,
     resultQuickPreset,
+    resultBadgeFilter,
     allResultsComfortable,
     showTakenResults,
     hideWeakPicks,
@@ -7805,6 +8072,7 @@ function applySettings(settings = {}) {
   if (settings.scoreOnly !== undefined && el.scoreOnlyInput) el.scoreOnlyInput.checked = Boolean(settings.scoreOnly);
   if (settings.dedupe !== undefined) el.dedupeInput.checked = Boolean(settings.dedupe);
   if (settings.resultQuickPreset !== undefined) resultQuickPreset = ["all", "worth", "strong", "com", "saved", "checked_saved", "review"].includes(String(settings.resultQuickPreset)) ? String(settings.resultQuickPreset) : "all";
+  if (settings.resultBadgeFilter !== undefined) resultBadgeFilter = normalizeResultBadgeFilter(settings.resultBadgeFilter);
   if (settings.allResultsComfortable !== undefined) allResultsComfortable = Boolean(settings.allResultsComfortable);
   if (settings.showTakenResults !== undefined) showTakenResults = Boolean(settings.showTakenResults);
   updateAllResultsDensity();
@@ -8291,6 +8559,17 @@ function bindEvents() {
   el.copyVisibleBtn.addEventListener("click", copyVisible);
   if (el.copyVisibleResultsBtn) el.copyVisibleResultsBtn.addEventListener("click", copyVisibleResults);
   if (el.copyWorthCheckingBtn) el.copyWorthCheckingBtn.addEventListener("click", copyWorthChecking);
+  if (el.copyVisibleWorthReasonsBtn) el.copyVisibleWorthReasonsBtn.addEventListener("click", copyVisibleWorthCheckingWithReasons);
+  if (el.saveVisibleWorthCheckingBtn) el.saveVisibleWorthCheckingBtn.addEventListener("click", saveVisibleWorthCheckingResults);
+  if (el.undoSaveVisibleBtn) el.undoSaveVisibleBtn.addEventListener("click", undoLastBulkSave);
+  if (el.allResultsBadgeLegend) {
+    el.allResultsBadgeLegend.addEventListener("click", event => {
+      const button = event.target.closest("button[data-result-badge-filter]");
+      if (!button) return;
+      applyResultBadgeFilter(button.getAttribute("data-result-badge-filter"));
+    });
+  }
+  if (el.hideWeakNamesBtn) el.hideWeakNamesBtn.addEventListener("click", toggleHideWeakPicks);
   if (el.takenToggleBtn) el.takenToggleBtn.addEventListener("click", toggleTakenResults);
   if (el.allResultsSortPills) {
     el.allResultsSortPills.addEventListener("click", event => {
@@ -8299,6 +8578,7 @@ function bindEvents() {
       applyAllResultsSort(button.getAttribute("data-result-sort"));
     });
   }
+  if (el.showEverythingResultsBtn) el.showEverythingResultsBtn.addEventListener("click", showEverythingResults);
   el.copyLinksBtn.addEventListener("click", copyVisibleLinks);
   el.showTopPicksBtn.addEventListener("click", showTopPicks);
   el.copyTopPicksBtn.addEventListener("click", copyTopPicks);
@@ -8331,12 +8611,13 @@ function bindEvents() {
   document.querySelectorAll("[data-results-preset]").forEach(button => {
     button.addEventListener("click", () => {
       resultQuickPreset = button.getAttribute("data-results-preset") || "all";
+      resultBadgeFilter = "all";
       if (resultQuickPreset === "saved" && el.filterStatus) el.filterStatus.value = "all";
       resetRenderLimit();
       document.body.classList.add("show-all-results");
       renderResults();
       trackEvent("all_results_quick_filter", { preset: resultQuickPreset });
-      setStatus(`Showing ${resultPresetLabel().toLowerCase()}.`);
+      setStatus(`Showing ${resultPresetLabel().toLowerCase()}. Use Reset view to show everything again.`);
       saveState();
     });
   });
@@ -8661,6 +8942,11 @@ updateBestNextAction();
       const emptyShowAllButton = event.target.closest("button[data-empty-show-all-results]");
       if (emptyShowAllButton) {
         resetAllResultFiltersFromEmptyState();
+        return;
+      }
+      const badgeButton = event.target.closest("button[data-result-badge-filter]");
+      if (badgeButton) {
+        applyResultBadgeFilter(badgeButton.getAttribute("data-result-badge-filter"));
         return;
       }
       const favoriteButton = event.target.closest("button[data-favorite]");

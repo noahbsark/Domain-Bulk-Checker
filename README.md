@@ -1,13 +1,16 @@
-# Domain Shortlist — v72: Results Sort + Taken Collapse
+# Domain Shortlist — v81 — Final Simple Polish
 
+## v80 no-mistake simple layout
 
-## v72 keyboard and summary polish
+- Reduces visible buttons in the normal public view so there is one obvious next step.
+- Keeps Top Picks focused on checking the best choice, checking the top 3, viewing all results, or starting over.
+- Hides copy/export/power-user Top Picks actions unless Advanced Mode is on.
+- Adds clearer short help: Save only stars names, Copy only copies text, filters only hide rows, and price checks open registrar tabs.
+- Makes All Results calmer with a bigger primary save action, clearer optional controls, and a safer **Reset view** recovery button.
 
-- Adds keyboard shortcuts for All Results: `/` opens/focuses result search and `Esc` clears active filters.
-- Updates the sticky post-results bar into a compact result summary with New search.
-- Adds Advanced-only Copy visible results with status, score, and reason.
-- Keeps the public workflow simple: Top Picks first, All Results visible, advanced tools hidden until needed.
+# Domain Shortlist — v70: Inline Results Details
 
+## v70 inline results details
 
 - Adds a simple inline **Quick details** expansion inside each All Results row.
 - Adds a small explanation for **Taken** results so the label is easier to understand.
@@ -48,7 +51,6 @@ A static GitHub Pages app for cleaning, scoring, shortlisting, comparing, and pr
 
 ## Recent updates
 
-- v72: Add All Results keyboard shortcuts, a sticky mini summary, and Advanced-only Copy visible results.
 - v70: Add inline All Results details, a Taken explanation, and Advanced-only Save all worth-checking.
 - v69: Add All Results compact/comfortable view, quieter taken rows, and inline saved feedback.
 - v68: Hide All Results filters until needed, use roomier Top Pick cards, and add a clear empty-filter recovery action.
@@ -214,9 +216,56 @@ This app can help shortlist and open registrar checks. It does not reserve domai
 - Public workflow remains unchanged.
 
 
-## v72 update
+## v73 update — visible worth-checking reasons
 
-- Added public All Results sort pills: Best, A–Z, and Shortest.
-- Added a public Copy worth-checking button.
-- Collapsed taken names in the default simple All Results view with a clear Show taken names button.
-- Kept advanced sorting, exports, and bulk tools in Advanced Mode.
+- The public copy button now copies only the visible worth-checking results, so active filters are respected.
+- Collapsed taken names now include helper text explaining that nothing was deleted.
+- Worth-checking rows show a small one-line reason directly in All Results.
+
+
+## v76 update — result cleanup actions
+
+- Added public **Save visible worth-checking** for the filtered All Results view.
+- Made row badges clickable so users can filter by `.com`, `Short`, `Saved`, `Strong`, `Taken`, or `Needs review`.
+- Added a small **Results cleaned up** notice whenever taken names, weak names, or a badge filter is hiding rows, with **Show everything** to restore the full list.
+- Kept Advanced Mode tools hidden from the normal public flow.
+
+## v74 update — scan badges and copy-with-reasons
+
+- Added **Copy visible with reasons** so visible worth-checking names can be copied with their short why line.
+- Added a public **Hide weak names** toggle in All Results, while keeping advanced filters hidden until needed.
+- Added quick result badges such as `.com`, `Short`, `Saved`, `Strong`, `Taken`, and `Needs review` for faster scanning.
+
+
+## v76 update
+
+- Added Undo save for the last bulk save from All Results.
+- Added a compact badge legend so users know row badges are clickable filters.
+- Improved the cleaned-up notice when Saved-only filters are active.
+
+
+## v80 Simple-First Polish
+
+This pass focuses on making the public app hard to misuse:
+
+- fewer visible public controls
+- one obvious Top Picks next step
+- simpler All Results labels
+- safer help copy near actions
+- Advanced-only controls remain hidden unless needed
+- saved finalist actions are simplified in the normal view
+
+The app still does not buy domains, change DNS, or delete the checked list automatically. Registrar tabs are opened only when the user chooses to check price.
+
+
+## v81 — Final Simple Polish
+
+This pass reduces visible choices and clarifies the safe default path:
+
+1. Paste your list.
+2. Check my list.
+3. Start with the #1 pick.
+4. Star finalists.
+5. Decide at the registrar.
+
+Public visitors now see fewer controls by default, clearer labels, shorter inline help, and a calmer layout. Advanced tools remain available behind Advanced Mode or optional view controls.

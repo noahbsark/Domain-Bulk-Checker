@@ -1,3 +1,13 @@
+# Launch Inputs Needed — v80
+
+This version keeps the public app focused on a safe, self-explanatory flow:
+
+1. Paste ideas.
+2. Review the best picks first.
+3. Save finalists or check price at the registrar.
+
+No new launch inputs are required for this polish pass.
+
 # Inputs needed before going live
 
 Current placeholders are centralized in `app.js`:
@@ -107,18 +117,48 @@ No new launch input is needed. v67 only cleans up the tested post-check UI:
 
 Before launch, test one short list and confirm a new visitor can see both Top Picks and All Results without enabling Advanced Mode.
 
-## v72 UI polish note
+## v70 filter polish note
 
-No new launch input is needed. v72 adds result keyboard shortcuts, a compact sticky results summary, and an Advanced-only Copy visible results action.
+No new launch input is needed. v70 cleans up the tested results UI by hiding filters until needed, making Top Picks roomier, and adding a clear recovery action when filters match no rows.
 
 
-## v72 results view polish check
+## v70 results view polish check
 
 No new launch input is required. Test All Results compact/comfortable view and saved feedback after pushing.
 
-<!-- v72: Keyboard shortcuts, sticky results summary, and Advanced-only Copy visible results. -->
+<!-- v70: Inline All Results details, Taken explanation, and Advanced-only Save all worth-checking. -->
 
 
-## v72 launch note
+## v74 launch note
 
-Test that All Results defaults to Best sort, Copy worth-checking works, and Show taken names reveals registered domains without losing them.
+The public results view now includes quick scan badges and a copy-with-reasons action. No extra launch input is required.
+
+
+## v76 launch note
+
+Check the public All Results flow after a test run: Save visible worth-checking should save only the currently visible worth-checking rows, badge clicks should filter rows, and Show everything should restore taken/weak/filtered names without deleting anything.
+
+
+## v76 update
+
+- Added Undo save for the last bulk save from All Results.
+- Added a compact badge legend so users know row badges are clickable filters.
+- Improved the cleaned-up notice when Saved-only filters are active.
+
+
+## v80 review note
+
+Review the simplified public flow after deployment:
+
+1. Paste names.
+2. Click Check my list.
+3. Start with the #1 Top Pick.
+4. Save finalists.
+5. Confirm price and spelling at the registrar.
+
+Advanced settings, archive tools, exports, and destructive controls should stay out of the normal public view.
+
+
+## v81 UI note
+
+The public UI is now intentionally simple-first. Extra controls should stay hidden unless they help the user avoid a mistake. Keep the normal path focused on: paste, check, #1 pick, saved finalists, registrar confirmation.

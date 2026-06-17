@@ -4830,3 +4830,1688 @@ body.results-comfortable .compact-result-row.status-unavailable {
     flex: 1 1 auto;
   }
 }
+
+
+/* v73: clearer collapsed taken state and visible worth-checking reasons */
+body.v73-visible-worth-reasons .taken-collapse-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.45rem 0 0;
+  padding: 0.48rem 0.68rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+body.v73-visible-worth-reasons .taken-collapse-note::before {
+  content: "Hidden";
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.12rem 0.42rem;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+body.v73-visible-worth-reasons .taken-collapse-note.is-hidden {
+  display: none !important;
+}
+body.v73-visible-worth-reasons .result-worth-reason {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-top: 0.32rem;
+  padding: 0.28rem 0.48rem;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 0.79rem;
+  line-height: 1.35;
+  font-weight: 700;
+  max-width: 58ch;
+}
+body.v73-visible-worth-reasons .result-worth-reason strong {
+  color: #047857;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+}
+body.v73-visible-worth-reasons .compact-result-row.taken .result-worth-reason,
+body.v73-visible-worth-reasons .compact-result-row.status-taken .result-worth-reason,
+body.v73-visible-worth-reasons .compact-result-row.status-registered .result-worth-reason,
+body.v73-visible-worth-reasons .compact-result-row.status-unavailable .result-worth-reason {
+  display: none;
+}
+body.v73-visible-worth-reasons #copyWorthCheckingBtn {
+  border-color: rgba(16, 185, 129, 0.26);
+}
+@media (max-width: 760px) {
+  body.v73-visible-worth-reasons .taken-collapse-note {
+    border-radius: 14px;
+    align-items: flex-start;
+  }
+  body.v73-visible-worth-reasons .result-worth-reason {
+    display: flex;
+    width: fit-content;
+  }
+}
+
+
+/* v74: public weak-name toggle, copy-with-reasons, and quick scan badges */
+body.v74-scan-badges .results-actions #hideWeakNamesBtn[aria-pressed="true"],
+body.v74-scan-badges .top-picks-controls #hideWeakPicksBtn[aria-pressed="true"] {
+  border-color: rgba(15, 118, 110, 0.32);
+  background: #ecfdf5;
+  color: #065f46;
+}
+body.v74-scan-badges #copyVisibleWorthReasonsBtn {
+  border-color: rgba(37, 99, 235, 0.24);
+}
+body.v74-scan-badges .result-row-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin-top: 0.42rem;
+}
+body.v74-scan-badges .result-row-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.13rem 0.46rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+}
+body.v74-scan-badges .badge-com {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+body.v74-scan-badges .badge-short {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #047857;
+}
+body.v74-scan-badges .badge-saved {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+body.v74-scan-badges .badge-review {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+body.v74-scan-badges .badge-strong {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #047857;
+}
+body.v74-scan-badges .badge-taken {
+  border-color: #e2e8f0;
+  background: #f1f5f9;
+  color: #64748b;
+}
+body.v74-scan-badges .compact-result-row.taken .result-row-badge,
+body.v74-scan-badges .compact-result-row.status-taken .result-row-badge,
+body.v74-scan-badges .compact-result-row.status-registered .result-row-badge,
+body.v74-scan-badges .compact-result-row.status-unavailable .result-row-badge {
+  opacity: 0.72;
+}
+@media (max-width: 760px) {
+  body.v74-scan-badges .results-actions #copyVisibleWorthReasonsBtn,
+  body.v74-scan-badges .results-actions #hideWeakNamesBtn {
+    flex: 1 1 100%;
+  }
+}
+
+
+/* v75: public save-visible action, clickable badges, and cleanup notice */
+body.v75-result-cleanup-actions .results-actions #saveVisibleWorthCheckingBtn {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: #ecfdf5;
+  color: #065f46;
+}
+body.v75-result-cleanup-actions .results-actions #saveVisibleWorthCheckingBtn:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+body.v75-result-cleanup-actions .result-row-badge {
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+body.v75-result-cleanup-actions .result-row-badge:hover,
+body.v75-result-cleanup-actions .result-row-badge.is-active {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  border-color: rgba(37, 99, 235, 0.36);
+}
+body.v75-result-cleanup-actions .results-cleaned-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.55rem 0 0;
+  padding: 0.5rem 0.62rem 0.5rem 0.75rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+body.v75-result-cleanup-actions .results-cleaned-notice.is-hidden {
+  display: none !important;
+}
+body.v75-result-cleanup-actions .results-cleaned-notice .small-button {
+  padding: 0.28rem 0.55rem;
+  border-color: rgba(22, 101, 52, 0.2);
+  background: #fff;
+  color: #166534;
+}
+@media (max-width: 760px) {
+  body.v75-result-cleanup-actions .results-actions #saveVisibleWorthCheckingBtn,
+  body.v75-result-cleanup-actions .results-actions #copyWorthCheckingBtn,
+  body.v75-result-cleanup-actions .results-actions #copyVisibleWorthReasonsBtn,
+  body.v75-result-cleanup-actions .results-actions #hideWeakNamesBtn,
+  body.v75-result-cleanup-actions .results-actions #takenToggleBtn {
+    flex: 1 1 100%;
+  }
+  body.v75-result-cleanup-actions .results-cleaned-notice {
+    width: 100%;
+  }
+}
+
+
+/* v76: compact badge legend and undo-save polish */
+.badge-filter-legend {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.15rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.badge-filter-legend button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.25rem 0.58rem;
+}
+
+.badge-filter-legend button:hover,
+.badge-filter-legend button.is-active {
+  border-color: rgba(37, 99, 235, 0.55);
+  background: rgba(219, 234, 254, 0.9);
+  color: #1d4ed8;
+}
+
+#undoSaveVisibleBtn:not(.is-hidden) {
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #92400e;
+}
+
+.results-cleaned-notice {
+  gap: 0.5rem;
+}
+
+
+/* v77: guided simple UI polish */
+body.v77-guided-simple {
+  background:
+    radial-gradient(circle at top left, rgba(219, 234, 254, 0.58), transparent 34rem),
+    linear-gradient(180deg, #f8fbff 0%, #f8fafc 34rem, #f6f8fb 100%);
+  color: #0f172a;
+}
+
+.v77-guided-simple .shell {
+  max-width: 1040px;
+}
+
+.v77-guided-simple .panel,
+.v77-guided-simple .simple-hero,
+.v77-guided-simple .trust-card {
+  border-color: rgba(148, 163, 184, 0.24);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+}
+
+.v77-guided-simple .simple-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 56%, #eef6ff 100%);
+  overflow: hidden;
+}
+
+.v77-guided-simple .hero-copy h1 {
+  max-width: 760px;
+  letter-spacing: -0.055em;
+}
+
+.v77-guided-simple .hero-copy > p:not(.eyebrow) {
+  max-width: 620px;
+  color: #475569;
+}
+
+.v77-guided-simple .hero-actions #shareAppLinkBtn {
+  display: none !important;
+}
+
+.v77-guided-simple .hero-steps.simple-flow span {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.v77-guided-simple .simple-trust-strip {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.v77-guided-simple .trust-card strong {
+  color: #0f172a;
+}
+
+.v77-guided-simple .v77-simple-path {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr);
+  gap: 18px;
+  align-items: center;
+  padding: 22px;
+  background: #ffffff;
+}
+
+.v77-guided-simple .v77-simple-path h2 {
+  margin: 2px 0 6px;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  letter-spacing: -0.035em;
+}
+
+.v77-guided-simple .v77-path-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.v77-guided-simple .v77-path-steps li {
+  display: grid;
+  gap: 4px;
+  min-height: 96px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.v77-guided-simple .v77-path-steps strong {
+  color: #1d4ed8;
+  font-size: 0.96rem;
+}
+
+.v77-guided-simple .v77-path-steps span {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.v77-guided-simple:not(.advanced-mode) .legacy-guide,
+.v77-guided-simple:not(.advanced-mode) #how-it-works,
+.v77-guided-simple:not(.advanced-mode).has-results .v77-simple-path,
+.v77-guided-simple:not(.advanced-mode).has-results .simple-trust-strip {
+  display: none !important;
+}
+
+.v77-guided-simple .v77-short-help,
+.v77-guided-simple .v77-safe-note {
+  margin: 8px 0 0;
+  max-width: 720px;
+  color: #1e40af;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.v77-guided-simple .v77-safe-note {
+  color: #166534;
+}
+
+.v77-guided-simple textarea#inputBox {
+  border-radius: 18px;
+  border-color: #cbd5e1;
+  background: #ffffff;
+  font-size: 0.98rem;
+}
+
+.v77-guided-simple textarea#inputBox:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.v77-guided-simple .top-picks-title-row h2,
+.v77-guided-simple .results-title-row h2,
+.v77-guided-simple .saved-title-row h2 {
+  letter-spacing: -0.035em;
+}
+
+.v77-guided-simple .top-picks-panel {
+  border-color: rgba(15, 159, 110, 0.18);
+}
+
+.v77-guided-simple .simple-pick-card {
+  border-radius: 22px;
+  border-color: rgba(148, 163, 184, 0.22);
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.v77-guided-simple .simple-pick-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.09);
+}
+
+.v77-guided-simple .results-panel {
+  background: #ffffff;
+}
+
+.v77-guided-simple .results-title-row {
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.v77-guided-simple .rendered-count-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.66rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 850;
+}
+
+.v77-guided-simple .results-action-groups {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 12px;
+}
+
+.v77-guided-simple .results-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.v77-guided-simple .recommended-actions {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.v77-guided-simple .view-actions {
+  background: #f8fbff;
+  border-color: #dbeafe;
+}
+
+.v77-guided-simple .action-group-label {
+  width: 100%;
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.v77-guided-simple .results-action-group button {
+  min-height: 38px;
+  border-radius: 999px;
+  font-weight: 850;
+}
+
+.v77-guided-simple .recommended-actions .success {
+  background: #0f9f6e;
+  border-color: #0f9f6e;
+  color: #fff;
+  box-shadow: 0 12px 22px rgba(15, 159, 110, 0.18);
+}
+
+.v77-guided-simple .advanced-results-actions {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.v77-guided-simple .all-results-dashboard {
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+.v77-guided-simple .all-results-summary {
+  gap: 8px;
+}
+
+.v77-guided-simple .all-results-summary span {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.36rem 0.6rem;
+}
+
+.v77-guided-simple .all-results-helper,
+.v77-guided-simple .taken-explanation,
+.v77-guided-simple .v77-safe-note {
+  line-height: 1.45;
+}
+
+.v77-guided-simple .badge-filter-legend {
+  padding: 8px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.v77-guided-simple .badge-filter-legend span {
+  color: #334155;
+  font-weight: 850;
+}
+
+.v77-guided-simple .compact-result-row {
+  border-radius: 18px;
+  border-color: rgba(148, 163, 184, 0.24);
+  background: #ffffff;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+}
+
+.v77-guided-simple .compact-result-row:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.v77-guided-simple .compact-result-row .star-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.v77-guided-simple .result-name-block strong {
+  color: #0f172a;
+}
+
+.v77-guided-simple .result-worth-reason {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.v77-guided-simple .result-inline-details summary {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.24rem 0.56rem;
+  background: #eff6ff;
+}
+
+.v77-guided-simple:not(.advanced-mode) #removeTakenBtn,
+.v77-guided-simple:not(.advanced-mode) #removeUnsavedBtn,
+.v77-guided-simple:not(.advanced-mode) #keepAvailableBtn,
+.v77-guided-simple:not(.advanced-mode) #openAllBtn,
+.v77-guided-simple:not(.advanced-mode) #openAvailableBtn,
+.v77-guided-simple:not(.advanced-mode) #openFavoritesBtn,
+.v77-guided-simple:not(.advanced-mode) #openAllTopPicksBtn,
+.v77-guided-simple:not(.advanced-mode) #copyAvailableBtn,
+.v77-guided-simple:not(.advanced-mode) #copyFavoritesBtn,
+.v77-guided-simple:not(.advanced-mode) #copyVisibleBtn,
+.v77-guided-simple:not(.advanced-mode) #copyLinksBtn,
+.v77-guided-simple:not(.advanced-mode) #exportBtn,
+.v77-guided-simple:not(.advanced-mode) #exportFavoritesBtn,
+.v77-guided-simple:not(.advanced-mode) #exportTopPicksBtn,
+.v77-guided-simple:not(.advanced-mode) #clearSessionBtn {
+  display: none !important;
+}
+
+.v77-guided-simple .public-note {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+@media (max-width: 900px) {
+  .v77-guided-simple .v77-simple-path {
+    grid-template-columns: 1fr;
+  }
+  .v77-guided-simple .v77-path-steps {
+    grid-template-columns: 1fr;
+  }
+  .v77-guided-simple .simple-trust-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .v77-guided-simple .results-action-group button,
+  .v77-guided-simple .recommended-actions .success {
+    width: 100%;
+    justify-content: center;
+  }
+  .v77-guided-simple .rendered-count-pill {
+    width: fit-content;
+  }
+}
+
+/* v78 — simple polish: fewer visible controls, better guidance, safer defaults */
+body.v78-simple-polish {
+  background:
+    radial-gradient(circle at top left, rgba(219, 234, 254, 0.34), transparent 28rem),
+    linear-gradient(180deg, #fbfdff 0%, #f8fafc 42rem, #f7f8fb 100%);
+}
+
+.v78-simple-polish .shell {
+  max-width: 1020px;
+}
+
+.v78-simple-polish .panel,
+.v78-simple-polish .simple-hero,
+.v78-simple-polish .trust-card {
+  border-color: rgba(148, 163, 184, 0.20);
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.055);
+}
+
+.v78-simple-polish .simple-hero {
+  border-radius: 28px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 58%, #eff6ff 100%);
+}
+
+.v78-simple-polish .hero-copy h1 {
+  max-width: 720px;
+  line-height: 0.98;
+}
+
+.v78-simple-polish .hero-actions .primary,
+.v78-simple-polish button.primary,
+.v78-simple-polish button.success,
+.v78-simple-polish .button-link.primary {
+  border-radius: 999px;
+}
+
+.v78-safety-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -6px;
+  margin-bottom: 16px;
+  border-color: #bbf7d0 !important;
+  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+  color: #14532d;
+}
+
+.v78-safety-strip strong {
+  white-space: nowrap;
+  font-weight: 950;
+}
+
+.v78-safety-strip span {
+  color: #166534;
+  line-height: 1.45;
+}
+
+.v78-simple-polish.has-results .v78-safety-strip {
+  display: none;
+}
+
+.v78-simple-polish .top-picks-panel {
+  border-color: rgba(15, 159, 110, 0.24);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfefc 100%);
+}
+
+.v78-simple-polish .top-picks-title-row {
+  gap: 18px;
+}
+
+.v78-simple-polish .top-picks-controls {
+  max-width: 470px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #f8fafc;
+}
+
+.v78-simple-polish .top-picks-controls #cardCheckBestChoiceBtn {
+  min-height: 42px;
+  padding-inline: 16px;
+  box-shadow: 0 12px 22px rgba(15, 159, 110, 0.17);
+}
+
+.v78-simple-polish .top-picks-controls #topPicksViewAllBtn,
+.v78-simple-polish .top-picks-controls #topPicksNewSearchBtn {
+  min-height: 40px;
+}
+
+.v78-button-help,
+.v78-action-help {
+  flex-basis: 100%;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.v78-button-help::before,
+.v78-action-help::before {
+  content: "Help: ";
+  color: #1d4ed8;
+  font-weight: 900;
+}
+
+.v78-simple-polish .results-panel {
+  border-radius: 24px;
+}
+
+.v78-simple-polish .results-title-row {
+  border-bottom: 1px solid #eef2f7;
+  padding-bottom: 12px;
+}
+
+.v78-simple-polish .rendered-count-pill {
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.v78-results-actions {
+  margin-top: 14px;
+}
+
+.v78-simple-polish .results-action-group {
+  border-radius: 20px;
+}
+
+.v78-simple-polish .recommended-actions {
+  padding: 14px;
+  gap: 10px;
+}
+
+.v78-simple-polish .recommended-actions .action-group-label {
+  color: #166534;
+}
+
+.v78-simple-polish .recommended-actions button {
+  min-height: 42px;
+  padding-inline: 14px;
+}
+
+.v78-simple-polish .recommended-actions #saveVisibleWorthCheckingBtn {
+  font-size: 0.95rem;
+}
+
+.v78-more-options {
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: #f8fbff;
+  overflow: hidden;
+}
+
+.v78-more-options summary {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 14px;
+  cursor: pointer;
+  color: #1d4ed8;
+  font-weight: 900;
+}
+
+.v78-more-options summary::after {
+  content: "Optional";
+  margin-left: auto;
+  padding: 0.2rem 0.52rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.72rem;
+}
+
+.v78-more-options[open] summary {
+  border-bottom: 1px solid #dbeafe;
+}
+
+.v78-more-options .results-action-group {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+}
+
+.v78-simple-polish .all-results-dashboard {
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff, #f9fbff);
+}
+
+.v78-simple-polish .all-results-sort-pills,
+.v78-simple-polish .all-results-presets,
+.v78-simple-polish .badge-filter-legend {
+  padding: 8px;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.v78-simple-polish .all-results-helper,
+.v78-simple-polish .v78-safe-note,
+.v78-simple-polish .taken-explanation {
+  font-size: 0.86rem;
+  color: #475569;
+}
+
+.v78-simple-polish .v78-safe-note {
+  padding: 9px 11px;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.v78-simple-polish .compact-result-row {
+  border-radius: 20px;
+}
+
+.v78-simple-polish .result-row-badge {
+  cursor: pointer;
+}
+
+.v78-simple-polish .results-cleaned-notice {
+  border-radius: 16px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+}
+
+.v78-simple-polish:not(.advanced-mode) .advanced-results-actions,
+.v78-simple-polish:not(.advanced-mode) #saveAllWorthCheckingBtn,
+.v78-simple-polish:not(.advanced-mode) #copyVisibleResultsBtn {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .v78-safety-strip,
+  .v78-simple-polish .results-title-row,
+  .v78-simple-polish .top-picks-title-row {
+    align-items: stretch;
+  }
+
+  .v78-safety-strip {
+    display: block;
+  }
+
+  .v78-safety-strip strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .v78-simple-polish .top-picks-controls,
+  .v78-simple-polish .recommended-actions button,
+  .v78-more-options .results-action-group button {
+    width: 100%;
+  }
+}
+
+
+/* v79 — no-mistake simple layout: fewer visible buttons, clearer next step, calmer controls */
+body.v79-no-mistake-simple {
+  background:
+    radial-gradient(circle at top left, rgba(219, 234, 254, 0.22), transparent 24rem),
+    linear-gradient(180deg, #fbfdff 0%, #f8fafc 42rem, #f8fafc 100%);
+}
+
+.v79-no-mistake-simple .shell {
+  max-width: 980px;
+}
+
+.v79-no-mistake-simple .simple-hero {
+  padding: clamp(22px, 4vw, 42px);
+  border-radius: 30px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.07);
+}
+
+.v79-no-mistake-simple .hero-copy h1 {
+  max-width: 760px;
+  letter-spacing: -0.055em;
+}
+
+.v79-no-mistake-simple .hero-copy > p {
+  max-width: 680px;
+  font-size: clamp(1.02rem, 2vw, 1.18rem);
+}
+
+.v79-no-mistake-simple .v78-safety-strip {
+  align-items: flex-start;
+  border-radius: 22px;
+  padding: 16px 18px;
+  box-shadow: 0 12px 28px rgba(22, 101, 52, 0.07);
+}
+
+.v79-no-mistake-simple .top-picks-panel,
+.v79-no-mistake-simple .results-panel,
+.v79-no-mistake-simple .input-panel {
+  scroll-margin-top: 18px;
+}
+
+.v79-no-mistake-simple .top-picks-controls {
+  max-width: 520px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+}
+
+.v79-no-mistake-simple .top-picks-controls #topPicksCount,
+.v79-no-mistake-simple .top-picks-controls #topSavedCountBadge,
+.v79-no-mistake-simple .top-picks-controls .v79-button-help {
+  grid-column: 1 / -1;
+}
+
+.v79-no-mistake-simple .top-picks-controls #cardCheckBestChoiceBtn {
+  grid-column: 1 / -1;
+  order: 1;
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.v79-no-mistake-simple .top-picks-controls #cardOpenTopPicksBtn { order: 2; }
+.v79-no-mistake-simple .top-picks-controls #topPicksViewAllBtn { order: 3; }
+.v79-no-mistake-simple .top-picks-controls #topPicksNewSearchBtn { order: 4; }
+.v79-no-mistake-simple .top-picks-controls .v79-button-help { order: 5; }
+
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #cardCopyBestChoiceBtn,
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #cardCopyBest3Btn,
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #cardCopyBestReasonsBtn,
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #cardCopyPriceLinksBtn,
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #cardCopyTopPicksBtn,
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #hideWeakPicksBtn,
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #topPicksShowMoreBtn,
+.v79-no-mistake-simple:not(.advanced-mode) .top-picks-controls #cardExportTopPicksBtn {
+  display: none !important;
+}
+
+.v79-simple-path {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 14px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.v79-simple-path strong {
+  color: #14532d;
+  white-space: nowrap;
+}
+
+.v79-no-mistake-simple .plain-label-guide {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.v79-no-mistake-simple .results-action-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.v79-no-mistake-simple .recommended-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  border: 1px solid #dbeafe;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.v79-no-mistake-simple .recommended-actions .action-group-label,
+.v79-no-mistake-simple .recommended-actions .v79-action-help {
+  grid-column: 1 / -1;
+}
+
+.v79-no-mistake-simple .recommended-actions #saveVisibleWorthCheckingBtn {
+  grid-column: 1 / -1;
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.v79-no-mistake-simple .recommended-actions #undoSaveVisibleBtn {
+  grid-column: 1 / -1;
+}
+
+.v79-no-mistake-simple .recommended-actions #copyVisibleWorthReasonsBtn,
+.v79-no-mistake-simple .recommended-actions #editResultsFiltersBtn,
+.v79-no-mistake-simple .recommended-actions #allResultsBackTopPicksBtn {
+  min-height: 42px;
+}
+
+.v79-no-mistake-simple .recommended-actions #allResultsBackTopPicksBtn {
+  grid-column: 1 / -1;
+}
+
+.v79-no-mistake-help {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.v79-no-mistake-help > div {
+  display: grid;
+  gap: 3px;
+  padding: 12px 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.88rem;
+}
+
+.v79-no-mistake-help strong {
+  color: #0f172a;
+}
+
+.v79-no-mistake-simple:not(.advanced-mode) .all-results-dashboard:not(:empty) {
+  margin-top: 12px;
+}
+
+.v79-no-mistake-simple:not(.advanced-mode) .all-results-sort-pills,
+.v79-no-mistake-simple:not(.advanced-mode) .all-results-presets,
+.v79-no-mistake-simple:not(.advanced-mode) .badge-filter-legend {
+  margin-top: 10px;
+}
+
+.v79-no-mistake-simple:not(.advanced-mode):not(.results-filters-open) .all-results-sort-pills,
+.v79-no-mistake-simple:not(.advanced-mode):not(.results-filters-open) .all-results-presets,
+.v79-no-mistake-simple:not(.advanced-mode):not(.results-filters-open) .badge-filter-legend,
+.v79-no-mistake-simple:not(.advanced-mode):not(.results-filters-open) .taken-explanation,
+.v79-no-mistake-simple:not(.advanced-mode):not(.results-filters-open) .v78-safe-note {
+  display: none !important;
+}
+
+.v79-no-mistake-simple .all-results-summary {
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.v79-no-mistake-simple .result-cards {
+  margin-top: 14px;
+}
+
+.v79-no-mistake-simple .compact-result-row {
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+}
+
+.v79-no-mistake-simple .compact-result-row.is-taken,
+.v79-no-mistake-simple .compact-result-row.taken,
+.v79-no-mistake-simple .result-card.taken {
+  opacity: 0.72;
+}
+
+.v79-no-mistake-simple .result-inline-details summary {
+  color: #2563eb;
+  font-weight: 850;
+}
+
+.v79-no-mistake-simple .results-cleaned-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.v79-no-mistake-simple .results-cleaned-notice #showEverythingResultsBtn {
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .v79-no-mistake-simple .top-picks-controls,
+  .v79-no-mistake-simple .recommended-actions,
+  .v79-no-mistake-help {
+    grid-template-columns: 1fr;
+  }
+
+  .v79-simple-path {
+    display: grid;
+  }
+
+  .v79-no-mistake-simple .recommended-actions #saveVisibleWorthCheckingBtn,
+  .v79-no-mistake-simple .recommended-actions #allResultsBackTopPicksBtn {
+    grid-column: auto;
+  }
+}
+
+
+/* v80 — simple-first polish: fewer choices, clearer next step, safer beginner defaults */
+body.v80-simple-first {
+  background:
+    radial-gradient(circle at top left, rgba(219, 234, 254, 0.14), transparent 18rem),
+    linear-gradient(180deg, #fbfdff 0%, #f8fafc 36rem, #f8fafc 100%);
+}
+
+.v80-simple-first .shell {
+  max-width: 940px;
+}
+
+.v80-simple-first .hero-visual {
+  opacity: 0.92;
+}
+
+.v80-simple-first .simple-hero {
+  gap: clamp(18px, 3vw, 30px);
+}
+
+.v80-simple-first .hero-copy h1 {
+  max-width: 680px;
+}
+
+.v80-simple-first .hero-actions #shareAppLinkBtn {
+  display: none;
+}
+
+.v80-simple-first .simple-flow span {
+  background: rgba(255,255,255,.82);
+}
+
+.v80-simple-first .v80-extra-guide {
+  display: none !important;
+}
+
+.v80-simple-first .v78-safety-strip {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.v80-simple-first .simple-onboarding-panel {
+  border-radius: 24px;
+}
+
+.v80-simple-first .input-panel .button-row.wrap,
+.v80-simple-first .template-panel {
+  margin-top: 10px;
+}
+
+.v80-simple-first:not(.advanced-mode) .price-tabs-setting,
+.v80-simple-first:not(.advanced-mode) .large-batch-toggle,
+.v80-simple-first:not(.advanced-mode) .large-batch-help,
+.v80-simple-first:not(.advanced-mode) .affiliate-inline {
+  display: none !important;
+}
+
+.v80-simple-first:not(.advanced-mode) .settings-panel .panel-title-row {
+  align-items: center;
+}
+
+.v80-simple-first:not(.advanced-mode) .settings-panel .advanced-toggle {
+  transform: scale(.94);
+  opacity: .72;
+}
+
+.v80-simple-first:not(.advanced-mode) .primary-actions #showTopPicksBtn,
+.v80-simple-first:not(.advanced-mode) .primary-actions #openTopPicksBtn,
+.v80-simple-first:not(.advanced-mode) .primary-actions #exportTopPicksBtn {
+  display: none !important;
+}
+
+.v80-simple-first .primary-actions #checkBtn {
+  min-height: 48px;
+  font-size: 1.02rem;
+}
+
+.v80-simple-first:not(.advanced-mode) #nextExportTopPicksBtn {
+  display: none !important;
+}
+
+.v80-simple-first .top-picks-title-row {
+  gap: 16px;
+}
+
+.v80-simple-first .top-picks-controls {
+  grid-template-columns: 1fr;
+  max-width: 360px;
+}
+
+.v80-simple-first:not(.advanced-mode) .top-picks-controls #cardOpenTopPicksBtn {
+  display: none !important;
+}
+
+.v80-simple-first .top-picks-controls #cardCheckBestChoiceBtn {
+  min-height: 52px;
+  border-radius: 16px;
+}
+
+.v80-simple-first .top-picks-controls #topPicksViewAllBtn,
+.v80-simple-first .top-picks-controls #topPicksNewSearchBtn {
+  min-height: 40px;
+}
+
+.v80-simple-first .v79-simple-path {
+  max-width: 100%;
+  border-color: #dbeafe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.v80-simple-first .v79-simple-path strong {
+  color: #1d4ed8;
+}
+
+.v80-simple-first .top-picks-price-note,
+.v80-simple-first .buy-ready-reminder {
+  font-size: .88rem;
+}
+
+.v80-simple-first .plain-label-guide {
+  font-size: .86rem;
+  opacity: .9;
+}
+
+.v80-simple-first .results-title-row h2,
+.v80-simple-first .top-picks-title-row h2,
+.v80-simple-first #domain-input h2,
+.v80-simple-first .saved-title-row h2 {
+  letter-spacing: -0.03em;
+}
+
+.v80-simple-first .results-action-groups {
+  gap: 10px;
+}
+
+.v80-simple-first .recommended-actions {
+  grid-template-columns: 1fr 1fr;
+  padding: 12px;
+}
+
+.v80-simple-first:not(.advanced-mode) .recommended-actions #copyVisibleWorthReasonsBtn {
+  display: none !important;
+}
+
+.v80-simple-first .recommended-actions #saveVisibleWorthCheckingBtn {
+  grid-column: 1 / -1;
+  min-height: 52px;
+  border-radius: 16px;
+}
+
+.v80-simple-first .recommended-actions #editResultsFiltersBtn,
+.v80-simple-first .recommended-actions #allResultsBackTopPicksBtn {
+  min-height: 42px;
+}
+
+.v80-simple-first .v78-more-options summary {
+  color: #475569;
+  font-weight: 800;
+}
+
+.v80-simple-first .v79-no-mistake-help {
+  grid-template-columns: 1fr;
+  margin-top: 10px;
+}
+
+.v80-simple-first .v79-no-mistake-help > div {
+  padding: 10px 12px;
+  font-size: .86rem;
+}
+
+.v80-simple-first:not(.advanced-mode):not(.results-filters-open) .all-results-summary {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 2px;
+}
+
+.v80-simple-first .all-results-summary span {
+  white-space: nowrap;
+}
+
+.v80-simple-first .result-card,
+.v80-simple-first .compact-result-row,
+.v80-simple-first .top-pick-card {
+  border-radius: 20px;
+}
+
+.v80-simple-first .result-card-actions,
+.v80-simple-first .compact-result-actions,
+.v80-simple-first .top-pick-actions {
+  gap: 7px;
+}
+
+.v80-simple-first .results-cleaned-notice {
+  border-radius: 16px;
+}
+
+.v80-simple-first:not(.advanced-mode) #resultsTable,
+.v80-simple-first:not(.advanced-mode) .table-wrap {
+  display: none !important;
+}
+
+.v80-simple-first .saved-shortlist-panel {
+  border-radius: 26px;
+}
+
+.v80-simple-first .saved-controls {
+  gap: 8px;
+}
+
+.v80-simple-first:not(.advanced-mode) .saved-controls > button:not(#savedCheckPriceBtn):not(#savedCopyBtn):not(#savedViewOnlyBtn):not(#savedDoneBtn):not(#savedNewSearchAfterDoneBtn) {
+  display: none !important;
+}
+
+.v80-simple-first .saved-controls #savedCheckPriceBtn {
+  min-height: 46px;
+}
+
+.v80-short-help {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.v80-simple-first .public-note {
+  padding: 18px;
+}
+
+.v80-simple-first .public-note-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  font-size: .88rem;
+}
+
+@media (min-width: 880px) {
+  .v80-simple-first .top-picks-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .v80-simple-first .recommended-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .v80-simple-first .top-picks-controls {
+    max-width: none;
+  }
+}
+
+
+/* v81 — final simple polish: fewer choices, clearer next step, no-mistake defaults */
+body.v81-final-simple-polish {
+  background:
+    radial-gradient(circle at top left, rgba(191, 219, 254, 0.11), transparent 17rem),
+    linear-gradient(180deg, #fbfdff 0%, #f8fafc 34rem, #f8fafc 100%);
+}
+
+.v81-final-simple-polish .shell {
+  max-width: 900px;
+}
+
+.v81-final-simple-polish .hero.simple-hero {
+  padding: clamp(26px, 4vw, 42px);
+  border-radius: 30px;
+}
+
+.v81-final-simple-polish .hero-copy h1 {
+  max-width: 640px;
+  letter-spacing: -0.055em;
+}
+
+.v81-final-simple-polish .hero-copy > p {
+  max-width: 600px;
+  font-size: 1.03rem;
+}
+
+.v81-final-simple-polish .hero-actions {
+  gap: 9px;
+}
+
+.v81-final-simple-polish .hero-actions .button-link.primary,
+.v81-final-simple-polish .hero-actions button:not(.advanced-only-inline) {
+  min-height: 46px;
+}
+
+.v81-final-simple-polish .v81-quiet-strip {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.v81-final-simple-polish .simple-trust-strip .trust-card {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.72);
+}
+
+.v81-final-simple-polish .v81-safety-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 20px;
+}
+
+.v81-final-simple-polish .v81-safety-strip strong {
+  white-space: nowrap;
+}
+
+.v81-final-simple-polish .simple-onboarding-panel {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.v81-final-simple-polish .simple-onboarding-panel h2,
+.v81-final-simple-polish .simple-onboarding-panel p {
+  margin-bottom: 4px;
+}
+
+.v81-final-simple-polish .input-panel,
+.v81-final-simple-polish .top-picks-panel,
+.v81-final-simple-polish .results-panel,
+.v81-final-simple-polish .saved-shortlist-panel {
+  border-radius: 28px;
+  box-shadow: 0 16px 44px rgba(15, 23, 42, .055);
+}
+
+.v81-final-simple-polish #domain-input .panel-title-row,
+.v81-final-simple-polish .top-picks-title-row,
+.v81-final-simple-polish .results-title-row,
+.v81-final-simple-polish .saved-title-row {
+  gap: 12px;
+}
+
+.v81-mini-help {
+  margin: 8px 0 0;
+  font-size: .86rem;
+  color: #64748b;
+}
+
+.v81-final-simple-polish .input-preview-actions {
+  gap: 8px;
+}
+
+.v81-final-simple-polish .input-preview-actions #previewCheckBtn {
+  min-height: 50px;
+  border-radius: 16px;
+  font-weight: 900;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) #previewReviewInvalidBtn:not(:disabled) {
+  background: #fff;
+}
+
+.v81-final-simple-polish .v81-collapsed-help {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.v81-final-simple-polish .v81-collapsed-help summary {
+  cursor: pointer;
+  font-weight: 900;
+  color: #1e293b;
+}
+
+.v81-final-simple-polish .v81-collapsed-help-copy {
+  display: grid;
+  gap: 2px;
+  margin: 10px 0;
+  color: #64748b;
+  font-size: .9rem;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .simple-settings-panel {
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.72);
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .simple-settings-panel h2 {
+  font-size: 1rem;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .simple-settings-panel .registrar-flow-card {
+  padding: 10px 0 0;
+  border: 0;
+  background: transparent;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .registrar-flow-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .registrar-flow-main label:first-child {
+  max-width: 300px;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .registrar-flow-note {
+  display: none !important;
+}
+
+.v81-final-simple-polish .summary-grid {
+  display: none !important;
+}
+
+.v81-final-simple-polish #resultPlainSummary:not(.is-hidden) {
+  display: block;
+  padding: 10px 14px;
+  margin: 0 0 12px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-weight: 750;
+}
+
+.v81-final-simple-polish .next-steps-panel {
+  border-radius: 20px;
+  background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+  border-color: #bfdbfe;
+}
+
+.v81-final-simple-polish .next-step-buttons button {
+  min-height: 42px;
+  border-radius: 14px;
+}
+
+.v81-final-simple-polish .top-picks-controls {
+  max-width: 320px;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .top-picks-controls #cardCopyBestChoiceBtn,
+.v81-final-simple-polish:not(.advanced-mode) .top-picks-controls #cardCopyBest3Btn,
+.v81-final-simple-polish:not(.advanced-mode) .top-picks-controls #cardCopyBestReasonsBtn,
+.v81-final-simple-polish:not(.advanced-mode) .top-picks-controls #cardCopyPriceLinksBtn,
+.v81-final-simple-polish:not(.advanced-mode) .top-picks-controls #cardCopyTopPicksBtn,
+.v81-final-simple-polish:not(.advanced-mode) .top-picks-controls #hideWeakPicksBtn,
+.v81-final-simple-polish:not(.advanced-mode) .top-picks-controls #topPicksShowMoreBtn {
+  display: none !important;
+}
+
+.v81-final-simple-polish .top-picks-controls #cardCheckBestChoiceBtn {
+  min-height: 54px;
+  font-size: 1rem;
+  box-shadow: 0 12px 24px rgba(22, 163, 74, .18);
+}
+
+.v81-final-simple-polish .v79-simple-path {
+  padding: 11px 14px;
+  border-radius: 18px;
+}
+
+.v81-final-simple-polish .plain-label-guide {
+  grid-template-columns: 1fr;
+  border-style: dashed;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .feedback-panel {
+  display: none !important;
+}
+
+.v81-final-simple-polish .results-action-groups {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.v81-final-simple-polish .recommended-actions {
+  grid-template-columns: 1fr 1fr;
+  border-radius: 22px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.v81-final-simple-polish .recommended-actions .action-group-label,
+.v81-final-simple-polish .view-actions .action-group-label {
+  grid-column: 1 / -1;
+  font-size: .75rem;
+  letter-spacing: .08em;
+  color: #64748b;
+}
+
+.v81-final-simple-polish .recommended-actions #saveVisibleWorthCheckingBtn {
+  grid-column: 1 / -1;
+}
+
+.v81-final-simple-polish .recommended-actions #editResultsFiltersBtn,
+.v81-final-simple-polish .recommended-actions #allResultsBackTopPicksBtn,
+.v81-final-simple-polish .recommended-actions #copyVisibleWorthReasonsBtn {
+  min-height: 42px;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .recommended-actions #copyVisibleWorthReasonsBtn {
+  display: inline-flex !important;
+}
+
+.v81-final-simple-polish .v78-more-options {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.v81-final-simple-polish .v78-more-options summary {
+  font-size: .9rem;
+}
+
+.v81-final-simple-polish .view-actions {
+  margin-top: 10px;
+}
+
+.v81-final-simple-polish .v79-no-mistake-help {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.v81-final-simple-polish .v79-no-mistake-help > div {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.v81-final-simple-polish .all-results-dashboard {
+  padding: 12px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .all-results-summary span:nth-child(3),
+.v81-final-simple-polish:not(.advanced-mode) .all-results-summary span:nth-child(4) {
+  display: none;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .all-results-sort-pills,
+.v81-final-simple-polish:not(.advanced-mode) .all-results-presets,
+.v81-final-simple-polish:not(.advanced-mode) .badge-filter-legend {
+  font-size: .82rem;
+  gap: 6px;
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .all-results-presets button:nth-child(n+4),
+.v81-final-simple-polish:not(.advanced-mode) .badge-filter-legend button:nth-of-type(n+4) {
+  display: none;
+}
+
+.v81-final-simple-polish .v81-short-help,
+.v81-final-simple-polish .taken-explanation {
+  font-size: .84rem;
+  margin-top: 6px;
+}
+
+.v81-final-simple-polish .result-cards {
+  gap: 10px;
+}
+
+.v81-final-simple-polish .compact-result-row,
+.v81-final-simple-polish .result-card {
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .045);
+}
+
+.v81-final-simple-polish:not(.advanced-mode) .saved-controls > button:not(#savedCheckPriceBtn):not(#savedCopyBtn):not(#savedViewOnlyBtn):not(#savedDoneBtn):not(#savedNewSearchAfterDoneBtn) {
+  display: none !important;
+}
+
+.v81-final-simple-polish .saved-controls #savedCheckPriceBtn {
+  min-height: 50px;
+  border-radius: 16px;
+}
+
+.v81-final-safety-note {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+.v81-final-safety-note strong {
+  color: #0f172a;
+}
+
+.v81-final-simple-polish .public-note {
+  padding: 14px;
+  border-radius: 22px;
+}
+
+@media (max-width: 760px) {
+  .v81-final-simple-polish .simple-onboarding-panel,
+  .v81-final-simple-polish .recommended-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .v81-final-simple-polish .v81-safety-strip {
+    display: grid;
+  }
+
+  .v81-final-simple-polish .v81-safety-strip strong {
+    white-space: normal;
+  }
+}
