@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# After you choose a custom domain, update sitemap.xml and canonical URLs.
+Sitemap: https://noahbsark.github.io/Domain-Bulk-Checker/sitemap.xml

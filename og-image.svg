@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f8fafc"/>
+  <rect x="76" y="72" width="1048" height="486" rx="44" fill="#ffffff" stroke="#dbe3ef" stroke-width="4"/>
+  <text x="120" y="172" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">Domain Shortlist</text>
+  <text x="120" y="228" fill="#475569" font-family="Arial, Helvetica, sans-serif" font-size="30">Find the best domain names from your list.</text>
+  <g transform="translate(120 302)">
+    <rect width="280" height="96" rx="24" fill="#eef2ff" stroke="#c7d2fe"/>
+    <text x="34" y="58" fill="#3730a3" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">Paste ideas</text>
+    <path d="M330 48h94" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <path d="M424 48l-22-18m22 18l-22 18" stroke="#94a3b8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="464" width="280" height="96" rx="24" fill="#ecfdf5" stroke="#bbf7d0"/>
+    <text x="498" y="58" fill="#166534" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">Pick winner</text>
+    <path d="M794 48h94" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <path d="M888 48l-22-18m22 18l-22 18" stroke="#94a3b8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="928" width="220" height="96" rx="24" fill="#fff7ed" stroke="#fed7aa"/>
+    <text x="960" y="58" fill="#9a3412" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">Check price</text>
+  </g>
+  <text x="120" y="492" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="24">v64 · Simple public flow · Advanced archive health tools</text>
+</svg>

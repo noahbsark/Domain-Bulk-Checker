@@ -1,0 +1,26 @@
+{
+  "name": "Domain Shortlist",
+  "short_name": "Domain Shortlist",
+  "description": "Paste domain ideas, get a ranked shortlist, compare finalists, and check price at a registrar.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Domain Shortlist social preview"
+    }
+  ]
+}

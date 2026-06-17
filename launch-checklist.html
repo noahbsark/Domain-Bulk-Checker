@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Launch Checklist — Domain Shortlist</title>
+  <link rel="stylesheet" href="style.css?v=58-archive-manager" />
+</head>
+<body class="launch-checklist-page-body">
+  <main class="launch-checklist-page">
+    <section class="page-hero">
+      <p class="eyebrow">Owner launch checklist</p>
+      <h1>Keep launch simple.</h1>
+      <p>Use this page before sharing the app publicly. It is safe to keep in the repo, marked noindex, and linked from owner mode only.</p>
+      <div class="page-actions">
+        <a class="button-link primary" href="index.html?owner=1">Back to owner mode</a>
+        <a class="button-link" href="LAUNCH_INPUTS_NEEDED.md">Inputs needed</a>
+        <a class="button-link" href="CUSTOM_DOMAIN_SETUP.md">Custom domain setup</a>
+      </div>
+    </section>
+
+    <section class="checklist-grid" aria-label="Launch tasks">
+      <article class="checklist-card">
+        <h2>1. Public basics</h2>
+        <ul>
+          <li>Choose the final public site name and domain.</li>
+          <li>Update canonical URL, Open Graph URL, sitemap, and public constants together.</li>
+          <li>Confirm privacy, terms, and affiliate disclosure pages open.</li>
+          <li>Run owner preflight from <code>index.html?owner=1</code>.</li>
+          <li>Confirm public launch mode is on.</li>
+        </ul>
+      </article>
+
+      <article class="checklist-card">
+        <h2>2. Main user flow</h2>
+        <ul>
+          <li>Paste a short sample list.</li>
+          <li>Confirm Top Picks show simply.</li>
+          <li>Save 2–5 finalists.</li>
+          <li>Pick a winner, mark it checked, and confirm Winner ready appears.</li>
+          <li>Click Done and confirm it copies the winner report.</li>
+        </ul>
+      </article>
+
+      <article class="checklist-card">
+        <h2>3. Price links</h2>
+        <ul>
+          <li>Click Check best choice and saved price links.</li>
+          <li>Test Copy unchecked links and Open unchecked links.</li>
+          <li>Confirm links go to the expected registrar search page.</li>
+          <li>Do not claim live price comparison unless a real pricing API is added.</li>
+        </ul>
+      </article>
+
+      <article class="checklist-card">
+        <h2>4. Archive manager</h2>
+        <ul>
+          <li>Enable Advanced Mode.</li>
+          <li>Click Archive session.</li>
+          <li>Confirm the archive appears under Local archives.</li>
+          <li>Test Restore, Download JSON, Delete, and Clear all archives.</li>
+          <li>Confirm archive data stays local in the browser only.</li>
+        </ul>
+      </article>
+
+      <article class="checklist-card">
+        <h2>5. Privacy and analytics</h2>
+        <ul>
+          <li>Keep analytics disabled unless a safe endpoint is configured.</li>
+          <li>Do not track pasted domains, uploaded files, saved names, notes, or archives.</li>
+          <li>Test on phone and desktop.</li>
+        </ul>
+      </article>
+    </section>
+    <section class="checklist-section">
+    <h2>v63 archive checks</h2>
+    <ul>
+      <li>Archive session still saves locally.</li>
+      <li>Import archive JSON validates before restore.</li>
+      <li>Rename archive updates the local archive label.</li>
+      <li>Start over offers archive-first when saved finalists exist.</li>
+    </ul>
+  </section>
+<section class="check-card"><h2>v63 archive checks</h2><ul><li>Advanced Mode shows pinned/archive count.</li><li>Download all archives exports a JSON bundle.</li><li>Import as new archive saves JSON without replacing the current session.</li></ul></section>
+<section class="check-card"><h2>v64 archive checks</h2><ul><li>Advanced Mode can check archive health.</li><li>Repair labels regenerates blank or generic archive labels.</li><li>Archive limit setting supports 5, 10, or 25 local archives.</li><li>Public workflow remains unchanged.</li></ul></section>
+</main>
+</body>
+</html>
+
+<!-- v63 checks: import preview, archive auto-labels, and current-session summary stay inside Advanced Mode. -->
+
+<!-- v63: archive pin/note/import-safety checklist update -->

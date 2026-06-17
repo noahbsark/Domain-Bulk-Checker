@@ -3,106 +3,324 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Domain Shortlist — Find and Check Domain Ideas</title>
-  <link rel="stylesheet" href="style.css?v=15-public-affiliate" />
+  <title>Domain Shortlist — Simple Domain Shortlisting</title>
+  <meta name="description" content="Paste domain ideas, save finalists, track price checks, and finish with a simple shortlist." />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="application-name" content="Domain Shortlist" />
+  <meta name="author" content="Domain Shortlist" />
+  <meta name="robots" content="index,follow" />
+  <!-- Replace this canonical URL with your custom domain after launch, for example: https://yourdomain.com/ -->
+  <link rel="canonical" href="https://noahbsark.github.io/Domain-Bulk-Checker/" />
+  <meta property="og:title" content="Domain Shortlist — Simple Domain Shortlisting" />
+  <meta property="og:description" content="Paste ideas, save finalists, track checked names, and copy what is left without a complicated dashboard." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://noahbsark.github.io/Domain-Bulk-Checker/" />
+  <meta property="og:image" content="https://noahbsark.github.io/Domain-Bulk-Checker/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Domain Shortlist: Paste, shortlist, compare, and check price for domain names." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Domain Shortlist — Simple Domain Shortlisting" />
+  <meta name="twitter:description" content="Paste domain ideas, save finalists, track checked names, and copy what is left." />
+  <meta name="twitter:image" content="https://noahbsark.github.io/Domain-Bulk-Checker/og-image.png" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Cpath d='M17 23h30M17 33h22M17 43h30' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='47' cy='33' r='7' fill='%230f9f6e' stroke='white' stroke-width='4'/%3E%3C/svg%3E" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Domain Shortlist",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "description": "A simple browser-based tool to clean, rank, compare, and price-check domain name ideas.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+  <link rel="stylesheet" href="style.css?v=51-check-cleanup" />
 </head>
-<body>
+<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit">
+  <a class="skip-link" href="#domain-input">Skip to domain input</a>
   <main class="shell">
-    <header class="hero">
-      <div>
-        <h1>Domain Shortlist</h1>
+    <header class="hero simple-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Simple domain finder</p>
+        <h1>Find the best domain names from your list.</h1>
         <p>
-          Paste domain ideas or URLs, rank the best candidates, and open registrar pages to confirm live price and availability.
+          Paste rough ideas, get a short list, and check prices when you are ready.
         </p>
-        <div class="hero-steps" aria-label="Workflow">
-          <span>1. Paste names</span>
-          <span>2. Rank + filter</span>
-          <span>3. Check price at registrar</span>
+        <div class="hero-actions">
+          <a class="button-link primary" href="#domain-input">Start</a>
+          <button id="heroSampleBtn" type="button" class="ghost">Try sample</button>
+          <button id="shareAppLinkBtn" type="button" class="ghost">Share</button>
+        </div>
+        <div class="hero-steps simple-flow" aria-label="Workflow">
+          <span><b>1</b> Paste</span>
+          <span><b>2</b> Pick finalists</span>
+          <span><b>3</b> Check price</span>
         </div>
       </div>
-      <div class="badge-group"><div class="badge">Public beta</div><div class="badge subtle-badge">Scoring v16 · Large batch v14 · Public v15</div></div>
+      <div class="hero-visual" aria-hidden="true">
+        <svg viewBox="0 0 420 260" role="img" focusable="false">
+          <defs>
+            <linearGradient id="heroCard" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#eff6ff"/>
+            </linearGradient>
+          </defs>
+          <rect x="28" y="24" width="364" height="212" rx="28" fill="url(#heroCard)" stroke="#dbeafe"/>
+          <rect x="58" y="54" width="136" height="22" rx="11" fill="#dbeafe"/>
+          <rect x="58" y="92" width="180" height="20" rx="10" fill="#eef2ff"/>
+          <rect x="58" y="124" width="156" height="20" rx="10" fill="#eef2ff"/>
+          <rect x="58" y="156" width="118" height="20" rx="10" fill="#eef2ff"/>
+          <path d="M238 96l26 26-26 26" fill="none" stroke="#2563eb" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="282" y="76" width="78" height="78" rx="22" fill="#dcfce7" stroke="#86efac"/>
+          <path d="M302 117l14 14 28-35" fill="none" stroke="#0f9f6e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="268" y="174" width="100" height="28" rx="14" fill="#2563eb"/>
+          <circle cx="286" cy="188" r="5" fill="#fff" opacity=".9"/>
+          <rect x="300" y="184" width="45" height="8" rx="4" fill="#fff" opacity=".9"/>
+        </svg>
+      </div>
     </header>
 
-    <section class="trust-grid" aria-label="Privacy and accuracy notes">
-      <div class="trust-card">
-        <strong>Private by design</strong>
-        <span>Your list is processed in your browser. There is no backend database in this static GitHub Pages app.</span>
+    <section class="trust-grid launch-trust-grid simple-trust-strip" aria-label="Privacy, accuracy, and affiliate notes">
+      <div class="trust-card"><strong>Private by default</strong><span>Your list stays in this browser unless you export it.</span></div>
+      <div class="trust-card"><strong>Registrar confirms price</strong><span>Use the app to shortlist. Buy only after the registrar confirms availability and price.</span></div>
+      <div class="trust-card"><strong>No setup required</strong><span>Paste names, review cards, and open price checks.</span></div>
+    </section>
+
+
+
+    <section id="simpleOnboardingPanel" class="panel simple-onboarding-panel" aria-label="Quick start helper">
+      <div>
+        <p class="eyebrow">New here?</p>
+        <h2>Paste names or try the sample.</h2>
+        <p class="muted">The app will clean the list, rank the best options, and help you save finalists.</p>
       </div>
-      <div class="trust-card">
-        <strong>Use as a filter</strong>
-        <span>Availability is estimated from public RDAP/DNS checks. Final price and availability are confirmed by the registrar.</span>
-      </div>
-      <div class="trust-card">
-        <strong>Built for big batches</strong>
-        <span>Large lists render in chunks. For 10,000+ names, use score-only first, then check the shortlist at a registrar.</span>
-      </div>
-      <div class="trust-card affiliate-card">
-        <strong>Affiliate disclosure</strong>
-        <span>Some registrar buttons may be affiliate links. If you register through them, this site may earn a commission at no extra cost to you.</span>
+      <div class="simple-onboarding-actions">
+        <button id="simpleOnboardingSampleBtn" type="button" class="success">Try sample</button>
+        <button id="simpleOnboardingPasteBtn" type="button" class="ghost">Paste my own</button>
+        <button id="simpleOnboardingDismissBtn" type="button" class="ghost small-button">Hide</button>
       </div>
     </section>
 
-    <section class="panel intro-panel">
-      <h2>How to use it</h2>
-      <ol class="steps-list">
-        <li><strong>Paste</strong> generated names, domains, or full URLs.</li>
-        <li><strong>Add target keywords</strong> to tune the quality score for your niche.</li>
-        <li><strong>Review top picks</strong>, then click <strong>Check price</strong> to confirm live availability at a registrar.</li>
+    <section id="returnUserPanel" class="panel return-user-panel is-hidden" aria-live="polite">
+      <div>
+        <p class="eyebrow">Return to your shortlist</p>
+        <h2 id="returnUserHeadline">Welcome back</h2>
+        <p id="returnUserDetails" class="muted">Continue from saved names or a recent run stored in this browser.</p>
+      </div>
+      <div class="return-user-actions">
+        <button id="returnCheckSavedBtn" type="button" class="success">Check prices for saved</button>
+        <button id="returnRestoreRecentBtn" type="button" class="ghost">Restore latest run</button>
+        <button id="returnViewSavedBtn" type="button" class="ghost">View saved shortlist</button>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="panel intro-panel launch-intro simple-guide-panel">
+      <details>
+        <summary>How it works</summary>
+        <ol class="steps-list step-cards">
+          <li><strong>Paste or upload</strong><span>Domains, URLs, TXT files, and CSV files are okay.</span></li>
+          <li><strong>Clean and rank</strong><span>The app removes duplicates, flags messy lines, and ranks the best names.</span></li>
+          <li><strong>Check prices</strong><span>Open the strongest names at your selected registrar before buying.</span></li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="firstRunPanel" class="panel first-run-panel legacy-guide" aria-label="First-time user guide">
+      <div class="first-run-head">
+        <div>
+          <p class="eyebrow">Quick start</p>
+          <h2>The app will guide you from paste to price check</h2>
+          <p class="muted">Follow the highlighted step. If you get lost, return to the Top Picks cards first.</p>
+        </div>
+        <button id="firstRunDismissBtn" type="button" class="ghost">Hide guide</button>
+      </div>
+      <ol class="walkthrough-list">
+        <li data-walkthrough-step="input"><strong>Paste or upload names</strong><span>Add domains, URLs, TXT, or CSV files. Messy input is okay.</span></li>
+        <li data-walkthrough-step="check"><strong>Check domains</strong><span>For small lists, check normally. For huge lists, use fast scoring first.</span></li>
+        <li data-walkthrough-step="review"><strong>Review Top Picks</strong><span>Cards explain why each name is worth checking.</span></li>
+        <li data-walkthrough-step="price"><strong>Check price</strong><span>The registrar confirms final availability and price before checkout.</span></li>
       </ol>
     </section>
 
-    <section class="panel">
+
+    <section id="guidedStartPanel" class="panel guided-start-panel legacy-guide" aria-labelledby="guidedStartHeading">
+      <div class="guided-start-copy">
+        <p class="eyebrow">Start here</p>
+        <h2 id="guidedStartHeading">Use it in one simple path</h2>
+        <p class="muted">You do not need to understand DNS, RDAP, scoring settings, or filters. Paste names, click check, then start with the Top Picks cards.</p>
+      </div>
+      <div class="guided-choice-grid" aria-label="Common starting points">
+        <button id="guidedPasteFocusBtn" type="button" class="guided-choice-card">
+          <strong>I have domain ideas</strong>
+          <span>Paste or upload your list and check it.</span>
+        </button>
+        <button id="guidedSampleBtn" type="button" class="guided-choice-card">
+          <strong>I want to try it first</strong>
+          <span>Load a safe sample list so you can see the workflow.</span>
+        </button>
+        <button id="guidedFastModeBtn" type="button" class="guided-choice-card">
+          <strong>I have a huge list</strong>
+          <span>Turn on fast scoring first, then check only the shortlist.</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="domain-input" class="panel input-panel">
       <div class="panel-title-row">
-        <h2>Links / domains to check</h2>
+        <div>
+          <h2>Paste your ideas</h2>
+          <p class="muted">One per line works best. The app cleans messy URLs and spaced names automatically.</p>
+        </div>
         <span id="inputCount" class="muted">0 lines</span>
       </div>
-      <textarea id="inputBox" spellcheck="false" placeholder="doyourownprobate.com&#10;https://example.com/page&#10;probateprogram.com"></textarea>
+      <label class="sr-only" for="inputBox">Domain ideas or URLs to check</label>
+      <textarea id="inputBox" spellcheck="false" placeholder="brightgarden.com&#10;my startup idea.io&#10;brandpilotapp.com"></textarea>
+      <div id="inputCoachPanel" class="input-coach-panel" aria-live="polite">
+        <div>
+          <strong id="inputCoachTitle">Paste at least one name to begin.</strong>
+          <span id="inputCoachText">The app will clean the list before checking.</span>
+        </div>
+        <ul class="input-format-list" aria-label="Accepted input examples">
+          <li><code>brandname.com</code></li>
+          <li><code>https://example.com/page</code></li>
+          <li><code>best startup idea.io</code></li>
+        </ul>
+      </div>
+      <div id="inputPreviewPanel" class="input-preview-panel is-empty" aria-live="polite">
+        <div class="input-preview-head">
+          <div>
+            <strong id="inputPreviewHeadline">Input preview appears here.</strong>
+            <span id="inputPreviewDetails">Paste names above to see what will be checked before a long run starts.</span>
+          </div>
+          <div class="input-preview-actions">
+            <button id="previewCheckBtn" type="button" class="primary" disabled>Check valid domains</button>
+            <button id="previewReviewInvalidBtn" type="button" class="ghost" disabled>Review invalid lines</button>
+            <button id="previewCopyCleanBtn" type="button" class="ghost" disabled>Copy clean input</button>
+          </div>
+        </div>
+        <div class="input-preview-stats" aria-label="Input cleanup summary">
+          <div><span id="previewValidCount">0</span><label>valid domains</label></div>
+          <div><span id="previewDuplicateCount">0</span><label>duplicates</label></div>
+          <div><span id="previewInvalidCount">0</span><label>invalid lines</label></div>
+          <div><span id="previewMissingCount">0</span><label>missing extension</label></div>
+        </div>
+        <div id="invalidReviewList" class="invalid-review-list is-hidden" aria-live="polite"></div>
+      </div>
+      <div id="largeListPanel" class="large-list-panel is-hidden" aria-live="polite">
+        <div>
+          <strong id="largeListHeadline">Large list detected.</strong>
+          <span id="largeListDetails">For faster results, score the list first and check live availability only for the shortlist.</span>
+        </div>
+        <div class="large-list-actions">
+          <button id="largeListScoreOnlyBtn" type="button" class="primary">Use fast scoring</button>
+          <button id="largeListDismissBtn" type="button" class="ghost">Keep normal checks</button>
+        </div>
+      </div>
+      <div class="keyword-helper launch-keyword-helper">
+        <label for="keywordsInput">
+          <span>Target keywords / niche <small>Optional, but improves ranking</small></span>
+          <input id="keywordsInput" type="text" placeholder="roofing, quote, repair" />
+        </label>
+        <p class="muted">Examples: <strong>fitness, coach, app</strong> or <strong>rent, buy, calculator</strong>. These tune scoring; they do not affect registrar availability.</p>
+      </div>
       <div class="button-row wrap">
         <button id="loadTxtBtn" type="button">Load TXT/CSV</button>
         <input id="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" hidden />
         <button id="clearInputBtn" type="button">Clear input</button>
         <button id="pasteDemoBtn" type="button" class="ghost">Load sample domains</button>
       </div>
-    </section>
-
-    <section class="panel compact">
-      <h2>Options</h2>
-      <div class="options-grid">
-        <label>Workers
-          <input id="workersInput" type="number" min="1" max="10" value="2" />
-        </label>
-        <label>Delay ms
-          <input id="delayInput" type="number" min="0" max="10000" value="250" />
-        </label>
-        <label>Timeout ms
-          <input id="timeoutInput" type="number" min="1000" max="60000" value="12000" />
-        </label>
-        <label class="wide">Target keywords / phrases
-          <input id="keywordsInput" type="text" placeholder="rent, buy, calculator" />
-        </label>
-        <label>Registrar for price checks
-          <select id="registrarInput">
-            <option value="namecheap">Namecheap</option>
-            <option value="porkbun">Porkbun</option>
-            <option value="godaddy">GoDaddy</option>
-            <option value="dynadot">Dynadot</option>
-            <option value="namesilo">NameSilo</option>
-          </select>
-        </label>
-        <p class="muted affiliate-inline">Registrar buttons open a new tab to confirm live availability and price. Some links may be affiliate links.</p>
-        <label class="check"><input id="useRdapInput" type="checkbox" checked /> Try RDAP first</label>
-        <label class="check"><input id="useDnsInput" type="checkbox" checked /> Use DNS fallback</label>
-        <label class="check"><input id="scoreOnlyInput" type="checkbox" /> Score only / skip availability</label>
-        <label class="check"><input id="dedupeInput" type="checkbox" checked /> De-dupe domains</label>
+      <div class="template-panel" aria-label="Quick-start templates">
+        <div>
+          <strong>Not sure what to paste?</strong>
+          <span>Start with a template, then replace the examples with your own ideas.</span>
+        </div>
+        <div class="template-grid">
+          <button type="button" class="template-chip" data-template-kind="startup">Startup names</button>
+          <button type="button" class="template-chip" data-template-kind="local">Local business</button>
+          <button type="button" class="template-chip" data-template-kind="content">Blog/content</button>
+          <button type="button" class="template-chip" data-template-kind="aiapp">AI/app names</button>
+          <button type="button" class="template-chip" data-template-kind="store">Product/store</button>
+          <button type="button" class="template-chip" data-template-kind="seo">SEO domains</button>
+        </div>
       </div>
-      <p class="muted large-batch-help"><strong>Large batch tip:</strong> For 10,000+ names, turn on <strong>Score only / skip availability</strong> first. Then shortlist the best names and run availability checks on that smaller list.</p>
     </section>
 
-    <section class="panel compact advanced-panel">
+    <section class="panel compact settings-panel simple-settings-panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Price-check settings</h2>
+          <p class="muted">Choose where price buttons open. Everything else can stay on the safe default.</p>
+        </div>
+        <label class="advanced-toggle">
+          <input id="advancedModeInput" type="checkbox" />
+          <span>Advanced mode</span>
+        </label>
+      </div>
+      <div class="registrar-flow-card" aria-label="Registrar and price-check settings">
+        <div class="registrar-flow-main">
+          <label>Preferred registrar
+            <select id="registrarInput">
+              <option value="namecheap">Namecheap</option>
+              <option value="porkbun">Porkbun</option>
+              <option value="godaddy">GoDaddy</option>
+              <option value="dynadot">Dynadot</option>
+              <option value="namesilo">NameSilo</option>
+            </select>
+          </label>
+          <label>Top-pick price tabs
+            <select id="priceOpenLimitInput">
+              <option value="1">Open 1 at a time</option>
+              <option value="3" selected>Open first 3</option>
+              <option value="5">Open first 5</option>
+              <option value="10">Open first 10</option>
+              <option value="all">Open all top picks</option>
+            </select>
+          </label>
+          <label class="check large-batch-toggle"><input id="scoreOnlyInput" type="checkbox" /> Score only / skip availability for huge lists</label>
+        </div>
+        <div class="registrar-flow-note">
+          <strong>Safer price checks:</strong>
+          <span>Use each card's <strong>Check price</strong> button for one domain, or open only the first few top picks at once. Final price and availability are confirmed by the registrar.</span>
+        </div>
+        <p class="muted affiliate-inline">Some registrar links may be affiliate links. If you register after clicking, this site may earn a commission at no extra cost to you.</p>
+      </div>
+      <p class="muted large-batch-help"><strong>Large batch tip:</strong> For 10,000+ names, use <strong>Score only</strong> first. Then review the top cards and check availability only on the shortlist.</p>
+    </section>
+
+    <section class="panel compact advanced-panel advanced-only" id="advancedControlsPanel">
+      <details id="advancedCheckDetails">
+        <summary>
+          <span>Advanced check controls</span>
+          <small>Workers, delay, timeout, RDAP/DNS, and de-dupe</small>
+        </summary>
+        <div class="options-grid advanced-grid">
+          <label>Workers
+            <input id="workersInput" type="number" min="1" max="10" value="2" />
+          </label>
+          <label>Delay ms
+            <input id="delayInput" type="number" min="0" max="10000" value="250" />
+          </label>
+          <label>Timeout ms
+            <input id="timeoutInput" type="number" min="1000" max="60000" value="12000" />
+          </label>
+          <label class="check"><input id="useRdapInput" type="checkbox" checked /> Try RDAP first</label>
+          <label class="check"><input id="useDnsInput" type="checkbox" checked /> Use DNS fallback</label>
+          <label class="check"><input id="dedupeInput" type="checkbox" checked /> De-dupe domains</label>
+        </div>
+      </details>
       <details id="advancedScoringDetails">
         <summary>
           <span>Advanced scoring</span>
-          <small>Optional — default works fine for most batches</small>
+          <small>Optional scoring style, top-pick count, and custom word tuning</small>
         </summary>
         <div class="options-grid advanced-grid">
           <label>Scoring style
@@ -129,35 +347,112 @@
           Positive and negative words tune the score for the niche you are checking. They do not affect availability checks.
         </p>
       </details>
+      <details id="advancedAffiliateDetails">
+        <summary>
+          <span>Affiliate link tester</span>
+          <small>Preview registrar links before launch</small>
+        </summary>
+        <div class="affiliate-test-grid">
+          <label>Test domain
+            <input id="affiliateTestDomainInput" type="text" value="example.com" placeholder="example.com" />
+          </label>
+          <div class="affiliate-test-actions">
+            <button id="affiliateTestBtn" type="button" class="ghost">Open test link</button>
+            <button id="affiliateCopyTestBtn" type="button" class="ghost">Copy test link</button>
+          </div>
+        </div>
+        <p id="affiliateConfigStatus" class="muted affiliate-config-status">Affiliate links are disabled by default. Direct registrar links are active until you add real templates.</p>
+      </details>
     </section>
 
     <section class="panel actions-panel">
-      <div class="workflow-callout">
-        <strong>Recommended public workflow:</strong>
-        Check the batch → click <strong>Show top picks</strong> → star your shortlist → click <strong>Check price</strong> at your chosen registrar.
+      <div class="workflow-callout simple-workflow-callout">
+        <strong>Next:</strong> Check the clean list, then start with the Top Picks cards.
       </div>
-      <div class="button-row wrap">
-        <button id="checkBtn" type="button" class="primary">Check domains</button>
+      <div id="bestNextActionPanel" class="best-next-action-panel" aria-live="polite">
+        <div>
+          <strong id="bestNextActionTitle">Next best step: paste or upload names</strong>
+          <span id="bestNextActionText">Add domains, URLs, or a TXT/CSV file. The preview will show what will be checked.</span>
+        </div>
+        <div class="best-next-action-buttons">
+          <button id="bestNextPrimaryBtn" type="button" class="primary">Paste names</button>
+          <button id="bestNextSecondaryBtn" type="button" class="ghost">Try sample</button>
+        </div>
+      </div>
+      <div class="button-row wrap primary-actions">
+        <button id="checkBtn" type="button" class="primary">Find best domains</button>
         <button id="stopBtn" type="button" class="ghost" disabled>Stop</button>
-        <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
-        <button id="keepAvailableBtn" type="button" class="success ghost">Keep available only</button>
-        <button id="openAllBtn" type="button" class="success">Open visible price checks</button>
-        <button id="openAvailableBtn" type="button" class="success ghost">Open available price checks</button>
-        <button id="openFavoritesBtn" type="button" class="success ghost">Open favorites price checks</button>
-      </div>
-      <div class="button-row wrap secondary-actions">
-        <button id="copyAvailableBtn" type="button">Copy available domains</button>
-        <button id="copyFavoritesBtn" type="button">Copy favorites</button>
-        <button id="copyVisibleBtn" type="button">Copy visible domains</button>
-        <button id="copyLinksBtn" type="button">Copy visible price-check links</button>
-        <button id="showTopPicksBtn" type="button">Show top picks</button>
-        <button id="copyTopPicksBtn" type="button">Copy top picks</button>
-        <button id="openTopPicksBtn" type="button">Check price for top picks</button>
-        <button id="exportBtn" type="button">Export CSV</button>
-        <button id="exportFavoritesBtn" type="button">Export favorites</button>
+        <button id="startOverBtn" type="button" class="ghost start-over-button">Start over</button>
+        <button id="showTopPicksBtn" type="button">Shortlist best names</button>
+        <button id="openTopPicksBtn" type="button" class="success">Check prices</button>
         <button id="exportTopPicksBtn" type="button">Export top picks</button>
-        <button id="clearSessionBtn" type="button" class="ghost">Clear saved session</button>
       </div>
+      <div id="undoStartOverPanel" class="undo-start-over-panel is-hidden" aria-live="polite">
+        <span>Started over by mistake?</span>
+        <button id="undoStartOverBtn" type="button" class="ghost small-button">Undo</button>
+        <button id="dismissStartOverUndoBtn" type="button" class="ghost small-button">Dismiss</button>
+      </div>
+      <details class="action-group advanced-only">
+        <summary>More batch actions</summary>
+        <div class="button-row wrap">
+          <button id="removeTakenBtn" type="button" class="danger">Remove taken / registered URLs</button>
+          <button id="keepAvailableBtn" type="button" class="success ghost">Keep available only</button>
+          <button id="openAllBtn" type="button" class="success ghost">Open visible price checks</button>
+          <button id="openAvailableBtn" type="button" class="success ghost">Open available price checks</button>
+          <button id="openFavoritesBtn" type="button" class="success ghost">Open saved price checks</button>
+          <button id="openAllTopPicksBtn" type="button" class="success ghost">Open all top-pick price checks</button>
+          <button id="removeUnsavedBtn" type="button" class="danger ghost">Remove unsaved results</button>
+        </div>
+      </details>
+      <details class="action-group advanced-only">
+        <summary>Copy, export, and session tools</summary>
+        <div class="button-row wrap">
+          <button id="copyAvailableBtn" type="button">Copy available domains</button>
+          <button id="copyFavoritesBtn" type="button">Copy saved</button>
+          <button id="copyVisibleBtn" type="button">Copy visible domains</button>
+          <button id="copyLinksBtn" type="button">Copy visible price-check links</button>
+          <button id="copyTopPicksBtn" type="button">Copy top picks</button>
+          <button id="exportBtn" type="button">Export all CSV</button>
+          <button id="exportFavoritesBtn" type="button">Export saved</button>
+          <button id="archiveSessionBtn" type="button" class="ghost">Archive session</button>
+          <button id="archiveDownloadCurrentBtn" type="button" class="ghost">Download current JSON</button>
+          <button id="archiveImportBtn" type="button" class="ghost">Import and restore JSON</button>
+          <button id="archiveImportSaveBtn" type="button" class="ghost">Import as new archive</button>
+          <button id="archiveDownloadAllBtn" type="button" class="ghost">Download all archives</button>
+          <button id="archiveHealthBtn" type="button" class="ghost">Check archives</button>
+          <button id="archiveRepairLabelsBtn" type="button" class="ghost">Repair labels</button>
+          <label class="archive-limit-label" for="archiveLimitSelect">Keep
+            <select id="archiveLimitSelect" aria-label="Archive limit">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+            </select>
+            archives
+          </label>
+          <input id="archiveImportInput" class="sr-only" type="file" accept="application/json,.json" aria-label="Import archive JSON file">
+          <button id="clearSessionBtn" type="button" class="ghost">Clear saved session</button>
+        </div>
+        <div id="archiveCurrentSummary" class="archive-current-summary muted">Current session: nothing saved yet.</div>
+        <div id="archiveHealthSummary" class="archive-health-summary muted is-hidden">Archives not checked yet.</div>
+        <div class="archive-manager" aria-live="polite">
+          <div class="archive-manager-head">
+            <div>
+              <strong>Local archives</strong>
+              <span id="archiveCountSummary" class="archive-count-summary is-hidden"></span>
+              <span>Pin, note, restore, preview, search, duplicate, rename, download, import, check, repair, or delete sessions saved in this browser.</span>
+            </div>
+            <button id="archiveClearAllBtn" type="button" class="ghost small-button">Clear all archives</button>
+          </div>
+          <div class="archive-search-row">
+            <label class="sr-only" for="archiveSearchInput">Search local archives</label>
+            <input id="archiveSearchInput" type="search" placeholder="Search archives" autocomplete="off">
+            <button id="archiveSearchClearBtn" type="button" class="ghost small-button">Clear search</button>
+          </div>
+          <div id="archiveListEmpty" class="muted archive-empty">No archives saved yet.</div>
+          <div id="archiveList" class="archive-list"></div>
+        </div>
+      </details>
+      <p class="muted registrar-reminder">Price-check buttons open an external registrar. Final price and availability are confirmed there.</p>
       <div class="status-row">
         <div id="statusText">Ready.</div>
         <progress id="progress" value="0" max="1"></progress>
@@ -166,27 +461,208 @@
 
     <section class="summary-grid" aria-label="Summary">
       <div class="summary-card"><span id="summaryChecked">0</span><label>Checked</label></div>
-      <div class="summary-card green"><span id="summaryAvailable">0</span><label>Possibly available</label></div>
+      <div class="summary-card green"><span id="summaryAvailable">0</span><label>Worth checking</label></div>
       <div class="summary-card red"><span id="summaryTaken">0</span><label>Taken</label></div>
       <div class="summary-card yellow"><span id="summaryUnknown">0</span><label>Unknown</label></div>
-      <div class="summary-card purple"><span id="summaryFavorites">0</span><label>Favorites</label></div>
+      <div class="summary-card purple"><span id="summaryFavorites">0</span><label>Saved</label></div>
       <div class="summary-card gray"><span id="summaryInvalid">0</span><label>Invalid</label></div>
     </section>
 
-    <section class="panel compact filters-panel">
+    <section id="nextStepsPanel" class="next-steps-panel is-hidden" aria-live="polite">
+      <div>
+        <strong id="nextStepsHeadline">Batch checked.</strong>
+        <span id="nextStepsDetails">Review Top Picks, save finalists, then check price at a registrar.</span>
+      </div>
+      <div class="next-step-buttons">
+        <button id="nextShowTopPicksBtn" type="button">Review top picks</button>
+        <button id="nextOpenTopPicksBtn" type="button" class="success ghost">Check price for top 3</button>
+        <button id="nextViewAllBtn" type="button" class="ghost">View all results</button>
+        <button id="nextExportTopPicksBtn" type="button" class="ghost">Export top picks</button>
+      </div>
+    </section>
+
+    <section class="panel top-picks-panel" aria-labelledby="topPicksHeading">
+      <div class="top-picks-title-row">
+        <div>
+          <h2 id="topPicksHeading">Top Picks</h2>
+          <p class="muted">Start here. Each card explains why it made the shortlist.</p>
+        </div>
+        <div class="top-picks-controls">
+          <span id="topPicksCount" class="muted">No picks yet</span>
+          <span id="topSavedCountBadge" class="saved-count-badge is-hidden">0 saved</span>
+          <button id="cardOpenTopPicksBtn" type="button" class="success ghost">Check price for top 3</button>
+          <button id="cardCheckBestChoiceBtn" type="button" class="success ghost">Check best choice</button>
+          <button id="cardCopyBestChoiceBtn" type="button" class="ghost">Copy best choice</button>
+          <button id="cardCopyBest3Btn" type="button" class="ghost">Copy best 3</button>
+          <button id="cardCopyBestReasonsBtn" type="button" class="ghost">Copy best with reasons</button>
+          <button id="cardCopyPriceLinksBtn" type="button" class="ghost">Copy price-check links</button>
+          <button id="cardCopyTopPicksBtn" type="button" class="ghost">Copy Top Picks</button>
+          <button id="hideWeakPicksBtn" type="button" class="ghost" aria-pressed="false">Hide weak picks</button>
+          <button id="topPicksShowMoreBtn" type="button" class="ghost is-hidden" aria-expanded="false">Show more picks</button>
+          <button id="cardExportTopPicksBtn" type="button" class="ghost advanced-only-inline">Export top picks</button>
+          <button id="topPicksViewAllBtn" type="button" class="ghost">View all results</button>
+        </div>
+      </div>
+      <p id="topPicksPriceLimitNote" class="muted top-picks-price-note">Bulk price checks open only the first 3 top picks by default. You can change this in Simple check settings.</p>
+      <p class="muted buy-ready-reminder">Before buying: check spelling, price, renewal cost, and trademark risk.</p>
+      <div id="topPicksEmpty" class="top-picks-empty">
+        <strong>Your Top Picks will appear here.</strong>
+        <span>Paste ideas above, then click Find best domains. The strongest names will appear as simple cards with reasons and next steps.</span>
+      </div>
+      <div class="plain-label-guide" aria-label="What result labels mean">
+        <span><strong>Worth checking</strong> means the name scored well and is not known to be taken.</span>
+        <span><strong>Check price</strong> opens your selected registrar; the registrar confirms final availability and price.</span>
+        <span><strong>Possible concern</strong> means review the name before buying.</span>
+      </div>
+      <div id="topPicksCards" class="top-picks-grid" aria-live="polite"></div>
+    </section>
+
+    <section id="compareTray" class="panel compare-tray is-hidden" aria-labelledby="compareHeading">
+      <div class="compare-title-row">
+        <div>
+          <h2 id="compareHeading">Compare your finalists</h2>
+          <p id="compareHint" class="muted">Add up to 5 names from Top Picks, All Results, or the detail drawer.</p>
+        </div>
+        <span id="compareCount" class="muted">0 selected</span>
+      </div>
+      <div id="compareItems" class="compare-grid" aria-live="polite"></div>
+      <div class="compare-controls">
+        <button id="compareOpenBtn" type="button" class="success">Check prices for selected</button>
+        <button id="compareCopyBtn" type="button" class="ghost">Copy comparison</button>
+        <button id="compareClearBtn" type="button" class="ghost">Clear comparison</button>
+      </div>
+    </section>
+
+    <section class="panel feedback-panel">
+      <div>
+        <h2>Help improve the shortlist</h2>
+        <p class="muted">Each Top Pick card now has quick feedback links. Report bad scores, wrong availability, or broken registrar links with score details prefilled.</p>
+      </div>
+      <div class="feedback-actions">
+        <a class="button-link ghost" href="https://github.com/noahbsark/Domain-Bulk-Checker/issues/new?title=Domain%20Shortlist%20feedback&body=What%20happened%3F%0A%0ADomain%20or%20batch%3A%0A%0AWhat%20did%20you%20expect%3F" target="_blank" rel="noopener noreferrer" data-analytics-event="feedback_link_clicked" data-analytics-source="global-feedback">Report bad result</a>
+        <a class="button-link ghost" href="https://github.com/noahbsark/Domain-Bulk-Checker" target="_blank" rel="noopener noreferrer" data-analytics-event="github_clicked" data-analytics-source="global-feedback">View on GitHub</a>
+      </div>
+    </section>
+
+    <section class="panel analytics-panel">
+      <div>
+        <h2>Privacy-friendly improvement tracking</h2>
+        <p class="muted">Analytics are disabled by default. If enabled later, this app is designed to track product actions only — not pasted domains, uploaded lists, saved domain names, or notes.</p>
+      </div>
+      <ul class="analytics-list">
+        <li><strong>Safe to track:</strong> check started, check completed, top picks reviewed, compare used, check price clicked, saved shortlist actions.</li>
+        <li><strong>Do not track:</strong> pasted domain text, uploaded file contents, raw domain lists, saved names, or personal notes.</li>
+      </ul>
+    </section>
+
+    <section id="analyticsOwnerPanel" class="panel analytics-owner-panel advanced-only">
       <div class="panel-title-row">
-        <h2>Filters and sorting</h2>
+        <div>
+          <h2>Owner analytics safety check</h2>
+          <p class="muted">Use this before launch to verify event payloads are safe. Nothing is sent unless you enable analytics in <code>app.js</code>.</p>
+        </div>
+        <a class="button-link ghost" href="ANALYTICS_SETUP.md">Analytics setup</a>
+      </div>
+      <div class="analytics-owner-grid">
+        <div class="analytics-status-card">
+          <strong>Status</strong>
+          <span id="analyticsStatus">Off</span>
+          <small id="analyticsEndpointStatus">No analytics are sent unless enabled in app.js.</small>
+        </div>
+        <div class="analytics-status-card">
+          <strong>Local debug log</strong>
+          <span id="analyticsDebugCount">0 local debug events</span>
+          <small>Set <code>ANALYTICS_CONFIG.localDebug = true</code> to inspect local payloads before using a real endpoint.</small>
+        </div>
+      </div>
+      <div class="button-row wrap analytics-owner-actions">
+        <button id="analyticsTestBtn" type="button" class="ghost">Send safe test event</button>
+        <button id="analyticsCopyBtn" type="button" class="ghost">Copy local debug log</button>
+        <button id="analyticsClearBtn" type="button" class="ghost">Clear local debug log</button>
+      </div>
+      <ul id="analyticsDebugPreview" class="analytics-debug-preview" aria-live="polite">
+        <li><span>No local debug events yet.</span></li>
+      </ul>
+    </section>
+
+    <section id="ownerChecklistPanel" class="panel owner-checklist-panel is-hidden owner-only" aria-label="Owner launch checklist">
+      <div class="panel-title-row">
+        <div>
+          <p class="eyebrow">Owner only</p>
+          <h2>Launch checklist</h2>
+          <p class="muted">This panel only appears when the URL includes <code>?owner=1</code>. It is a public-safe reminder list, not a private planning file.</p>
+        </div>
+        <div class="owner-link-row"><a class="button-link ghost" href="CUSTOM_DOMAIN_SETUP.md">Custom domain setup</a><a class="button-link ghost" href="launch-checklist.html">Launch checklist page</a></div>
+      </div>
+      <ul id="ownerChecklistList" class="owner-checklist-list" aria-live="polite"></ul>
+    </section>
+
+    <section id="ownerPreflightPanel" class="panel owner-preflight-panel owner-only is-hidden" aria-label="Owner preflight checks">
+      <div class="panel-title-row">
+        <div>
+          <p class="eyebrow">Owner preflight</p>
+          <h2>Public launch test</h2>
+          <p class="muted">Run this before publishing or sharing. It checks public files, metadata, affiliate/analytics safety, and custom-domain readiness.</p>
+        </div>
+        <span id="preflightStatus" class="status-chip">Not run yet</span>
+      </div>
+      <div class="button-row wrap preflight-actions">
+        <button id="runPreflightBtn" type="button" class="success">Run preflight</button>
+        <button id="copyPreflightReportBtn" type="button" class="ghost">Copy preflight report</button>
+        <button id="copyLaunchNeedsBtn" type="button" class="ghost">Copy launch needs list</button>
+      </div>
+      <ul id="preflightResults" class="preflight-results" aria-live="polite">
+        <li class="preflight-pending"><strong>Ready</strong><span>Click Run preflight to check files and launch settings.</span></li>
+      </ul>
+      <p class="muted preflight-note">A warning is not always a blocker. For example, GitHub Pages is fine for testing, but a custom domain should be added before a polished public launch.</p>
+    </section>
+
+    <section id="ownerLaunchInputsPanel" class="panel owner-launch-inputs-panel owner-only is-hidden" aria-label="Launch inputs needed from owner">
+      <div class="panel-title-row">
+        <div>
+          <p class="eyebrow">Owner only</p>
+          <h2>Inputs needed before going live</h2>
+          <p class="muted">This is the short list to send later when you are ready to make the site public.</p>
+        </div>
+        <button id="copyLaunchInputsRequestBtn" type="button" class="ghost">Copy request</button>
+      </div>
+      <div class="launch-input-grid">
+        <div><strong>Site name</strong><span>Final public name and short tagline.</span></div>
+        <div><strong>Domain</strong><span>Final custom domain and DNS/registrar access.</span></div>
+        <div><strong>Registrar links</strong><span>Preferred registrar order and affiliate templates, if any.</span></div>
+        <div><strong>Contact</strong><span>Support email or feedback destination.</span></div>
+        <div><strong>Analytics</strong><span>Disabled, privacy-friendly analytics, or Google tag.</span></div>
+        <div><strong>Approval</strong><span>Final review of privacy, disclosure, and terms pages.</span></div>
+      </div>
+    </section>
+
+
+    <section id="ownerFinalReplacePanel" class="panel owner-final-replace-panel owner-only is-hidden" aria-label="Final launch replacement checklist">
+      <div class="panel-title-row">
+        <div>
+          <p class="eyebrow">Owner only</p>
+          <h2>Final launch replacement</h2>
+          <p class="muted">When you give me the final site name and domain later, these are the places to update. Public visitors never see this panel.</p>
+        </div>
+        <button id="copyFinalLaunchChecklistBtn" type="button" class="ghost">Copy replacement checklist</button>
+      </div>
+      <ul id="ownerFinalReplaceList" class="owner-replace-list" aria-live="polite"></ul>
+    </section>
+
+    <section class="panel compact filters-panel advanced-only">
+      <div class="panel-title-row">
+        <h2>Advanced filters and sorting</h2>
         <span id="visibleCount" class="muted">0 visible</span>
       </div>
       <div class="filters-grid">
         <label>Status
           <select id="filterStatus">
             <option value="all">All rows</option>
-            <option value="available">Possibly available</option>
+            <option value="available">Worth checking</option>
             <option value="taken">Taken / registered</option>
             <option value="unknown">Unknown</option>
             <option value="invalid">Invalid</option>
-            <option value="favorites">Favorites only</option>
+            <option value="favorites">Saved only</option>
             <option value="top_picks">Top picks</option>
           </select>
         </label>
@@ -206,7 +682,7 @@
             <option value="domain_asc">Domain A-Z</option>
             <option value="length_asc">Shortest first</option>
             <option value="status_asc">Status</option>
-            <option value="favorites_first">Favorites first</option>
+            <option value="favorites_first">Saved first</option>
           </select>
         </label>
         <label class="check"><input id="filterNoHyphen" type="checkbox" /> Hide hyphens</label>
@@ -216,14 +692,35 @@
 
     <section class="panel results-panel">
       <div class="panel-title-row results-title-row">
-        <h2>Results</h2>
+        <h2>All checked names</h2>
         <div class="results-actions">
-          <span class="muted">Scores are for triage, not guarantees. Star favorites, filter top picks, then check price at a registrar.</span>
+          <span class="muted">Optional detailed view. Top Picks is the simpler place to start.</span>
           <span id="renderedCount" class="muted">0 rendered</span>
+          <button id="allResultsBackTopPicksBtn" type="button" class="ghost">Back to Top Picks</button>
           <button id="showMoreBtn" type="button" class="ghost" disabled>Show more rows</button>
           <button id="showAllRowsBtn" type="button" class="ghost" disabled>Show all rows</button>
         </div>
       </div>
+      <div class="all-results-dashboard" aria-label="All results controls">
+        <div class="all-results-summary" id="allResultsSummary">
+          <span><strong id="allResultsTotal">0</strong> total</span>
+          <span><strong id="allResultsWorth">0</strong> worth checking</span>
+          <span><strong id="allResultsStrong">0</strong> strong</span>
+          <span><strong id="allResultsCom">0</strong> .com</span>
+          <span><strong id="allResultsSaved">0</strong> saved</span>
+        </div>
+        <div class="all-results-presets" aria-label="Quick result filters">
+          <button type="button" class="result-preset is-active" data-results-preset="all">All</button>
+          <button type="button" class="result-preset" data-results-preset="worth">Worth checking</button>
+          <button type="button" class="result-preset" data-results-preset="strong">Strong names</button>
+          <button type="button" class="result-preset" data-results-preset="com">.com only</button>
+          <button type="button" class="result-preset" data-results-preset="saved">Saved</button>
+          <button type="button" class="result-preset advanced-only" data-results-preset="checked_saved">Checked saved</button>
+          <button type="button" class="result-preset" data-results-preset="review">Needs review</button>
+        </div>
+        <p id="allResultsHelper" class="muted all-results-helper">Use Top Picks for the fastest shortlist, or review every checked domain here. Quick filters do not delete anything.</p>
+      </div>
+      <div id="resultCards" class="result-cards" aria-live="polite"></div>
       <div class="table-wrap">
         <table id="resultsTable">
           <thead>
@@ -244,24 +741,158 @@
             </tr>
           </thead>
           <tbody id="resultsBody">
-            <tr class="empty"><td colspan="13">No results yet.</td></tr>
+            <tr class="empty"><td colspan="13"><strong>No results yet.</strong><br />Paste domains above, then click <strong>Check domains</strong>. Your best ideas will appear as cards above this table.</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
-    <section class="panel note public-note">
-      <h2>Important limitations</h2>
-      <p>
-        This is a static browser app with no registrar API key and no backend. RDAP/DNS results are useful for filtering, but
-        <strong>possibly available</strong> means “worth checking,” not “guaranteed purchasable.” Use the price-check buttons to confirm availability and price at a registrar before buying.
-      </p>
-      <p>
-        Privacy: pasted lists and saved sessions stay in this browser's local storage. Availability checks still contact public RDAP/DNS services, and price-check buttons open external registrar sites.
-      </p>
-      <p>
-        Affiliate disclosure: some registrar links may be affiliate links. If you register a domain after clicking one, this site may earn a commission at no extra cost to you.
-      </p>
+    <div id="domainDetailOverlay" class="detail-overlay is-hidden" aria-hidden="true">
+      <aside id="domainDetailDrawer" class="domain-detail-drawer" role="dialog" aria-modal="true" aria-labelledby="domainDetailTitle" tabindex="-1">
+        <div class="drawer-head">
+          <div>
+            <p class="eyebrow">Domain detail</p>
+            <h2 id="domainDetailTitle">Domain details</h2>
+          </div>
+          <button id="domainDetailCloseBtn" type="button" class="ghost small-button" aria-label="Close domain details">Close</button>
+        </div>
+        <div id="domainDetailContent" class="domain-detail-content">
+          Select a domain card to see why it ranked well.
+        </div>
+      </aside>
+    </div>
+
+    <div id="stickyPriceBar" class="sticky-price-bar is-hidden" aria-live="polite">
+      <div>
+        <strong id="stickyPriceHeadline">Top picks ready</strong>
+        <span id="stickyPriceDetails">Check prices for the best few names or view the full list.</span>
+      </div>
+      <div class="sticky-price-actions">
+        <button id="stickyOpenTopPicksBtn" type="button" class="success">Check top 3</button>
+        <button id="stickyViewAllBtn" type="button" class="ghost">View all</button>
+      </div>
+    </div>
+
+    <section id="savedShortlistPanel" class="panel saved-shortlist-panel">
+      <div class="saved-title-row">
+        <div>
+          <h2>Saved finalists</h2>
+          <p class="muted">Star 2–5 names you like. Add tiny notes if helpful; the app turns them into a simple decision table.</p>
+        </div>
+        <div class="saved-count-stack"><span id="savedShortlistCount" class="muted saved-progress-summary">0 saved</span><span id="savedCheckedCount" class="saved-count-badge is-hidden">0 left</span></div>
+      </div>
+      <div class="saved-controls">
+        <button id="savedCheckPriceBtn" type="button" class="success">Check prices for saved</button>
+        <button id="savedCopyBtn" type="button" class="ghost copy-finalists-button">Copy finalists</button>
+        <button id="savedCopyWinnerBtn" type="button" class="ghost">Copy winner</button>
+        <button id="savedOpenWinnerBtn" type="button" class="ghost">Open winner</button>
+        <button id="savedCopyWinnerLinkBtn" type="button" class="ghost">Copy winner with link</button>
+        <button id="savedCopyWinnerReportBtn" type="button" class="ghost">Copy winner report</button>
+        <button id="savedDoneBtn" type="button" class="success is-hidden">Done</button>
+        <button id="savedNewSearchAfterDoneBtn" type="button" class="ghost is-hidden">Start a new search</button>
+        <button id="savedCopyLinksBtn" type="button" class="ghost">Copy saved with links</button>
+        <button id="savedCopyUncheckedLinksBtn" type="button" class="ghost">Copy unchecked links</button>
+        <button id="savedCopyUncheckedNamesBtn" type="button" class="ghost">Copy unchecked names</button>
+        <button id="savedOpenUncheckedBtn" type="button" class="ghost">Open unchecked links</button>
+        <button id="savedViewOnlyBtn" type="button" class="ghost">View saved only</button>
+        <button id="savedShowUncheckedBtn" type="button" class="ghost" aria-pressed="false">Show unchecked only</button>
+        <button id="savedReportBtn" type="button" class="ghost">Copy report</button>
+        <button id="savedClearNotesBtn" type="button" class="ghost">Clear notes</button>
+        <button id="savedClearCheckedBtn" type="button" class="ghost">Clear checked marks</button>
+        <button id="savedClearWinnerBtn" type="button" class="ghost">Clear winner</button>
+        <button id="savedClearCompletedBtn" type="button" class="ghost advanced-only">Clear completed checked</button>
+        <button id="savedExportBtn" type="button" class="ghost advanced-only">Export CSV</button>
+        <button id="savedClearBtn" type="button" class="ghost">Clear saved</button>
+      </div>
+      <div id="savedFinishHint" class="saved-finish-helper is-hidden" aria-live="polite">
+        <span id="savedFinishText">0 left to check.</span>
+        <button id="savedOpenRemainingBtn" type="button" class="ghost small-button">Open remaining</button>
+      </div>
+      <div id="savedWinnerHint" class="saved-finish-helper winner-check-helper is-hidden" aria-live="polite">
+        <span id="savedWinnerHintText">Winner not checked yet.</span>
+      </div>
+      <div id="savedShortlistEmpty" class="saved-empty">
+        <strong>No saved names yet.</strong>
+        <span>Click the star on a Top Pick or All Results card to save it here.</span>
+      </div>
+      <div id="savedShortlistItems" class="saved-shortlist-grid" aria-live="polite"></div>
+      <div id="savedDecisionPanel" class="saved-decision-panel is-hidden" aria-live="polite">
+        <div class="saved-decision-head">
+          <div>
+            <h3>Compare saved finalists</h3>
+            <p class="muted">A one-screen decision table appears after you save at least two names.</p>
+          </div>
+          <span id="savedDecisionCount" class="muted">0 compared</span>
+        </div>
+        <div id="savedDecisionContent"></div>
+      </div>
+      <div id="finalReportPanel" class="final-report-panel is-hidden" aria-live="polite">
+        <div class="final-report-head">
+          <div>
+            <h3>Final report</h3>
+            <p class="muted">A simple summary you can copy before buying.</p>
+          </div>
+          <span id="finalReportCount" class="muted">0 names</span>
+        </div>
+        <pre id="finalReportText" class="final-report-text"></pre>
+        <div class="button-row wrap final-report-actions">
+          <button id="finalReportCopyBtn" type="button" class="success">Copy report</button>
+          <button id="finalReportCleanBtn" type="button" class="ghost">Copy clean report</button>
+          <button id="finalReportDownloadCleanBtn" type="button" class="ghost">Download clean report</button>
+          <button id="finalReportShareBtn" type="button" class="ghost">Copy share summary</button>
+          <button id="finalReportDownloadBtn" type="button" class="ghost">Download full report</button>
+          <button id="finalReportPriceBtn" type="button" class="ghost">Check saved prices</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="recentRunsPanel" class="panel recent-runs-panel">
+      <div class="saved-title-row">
+        <div>
+          <h2>Recently checked</h2>
+          <p class="muted">Recent runs are stored locally in this browser. Restore a run if you want to review or check prices later.</p>
+        </div>
+        <span id="recentRunsCount" class="muted">0 recent runs</span>
+      </div>
+      <div class="saved-controls">
+        <button id="recentRunsClearBtn" type="button" class="ghost">Clear recent runs</button>
+      </div>
+      <div id="recentRunsEmpty" class="saved-empty">
+        <strong>No recent runs yet.</strong>
+        <span>After a check completes, your best recent rows will be saved locally here.</span>
+      </div>
+      <div id="recentRunsItems" class="recent-runs-list" aria-live="polite"></div>
+    </section>
+
+    <section id="privacy-limits" class="panel note public-note">
+      <h2>Privacy, limits, and affiliate disclosure</h2>
+      <p class="muted launch-page-links">Need the full launch pages? Read the <a href="privacy.html">Privacy Policy</a>, <a href="affiliate-disclosure.html">Affiliate Disclosure</a>, and <a href="terms.html">Terms & Limitations</a>.</p>
+      <div class="public-note-grid">
+        <p>
+          <strong>Availability is not guaranteed.</strong> This app is a fast triage tool. <strong>Worth checking</strong> means “worth checking,” not “guaranteed purchasable.” Registrars may mark names as premium, reserved, blocked, or unavailable.
+        </p>
+        <p>
+          <strong>Your list stays local by default.</strong> This static app has no backend database. Pasted lists and saved sessions stay in this browser's local storage. Availability checks may still contact public RDAP/DNS services.
+        </p>
+        <p>
+          <strong>Some links may be affiliate links.</strong> If you register after clicking a registrar button, this site may earn a commission at no extra cost to you. The registrar controls final price, checkout, availability, renewals, and refunds.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel launch-checklist-panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Launching on a custom domain?</h2>
+          <p class="muted">This package includes template files so you can point a real domain at the app without changing the core tool.</p>
+        </div>
+        <div class="owner-link-row"><a class="button-link ghost" href="CUSTOM_DOMAIN_SETUP.md">Setup checklist</a><a class="button-link ghost" href="launch-checklist.html">Launch checklist page</a></div>
+      </div>
+      <div class="launch-mini-grid">
+        <div><strong>Included</strong><span>Privacy, affiliate disclosure, terms, manifest, robots file, and CNAME template.</span></div>
+        <div><strong>After you choose a domain</strong><span>Replace the canonical URL, rename <code>CNAME.example</code> to <code>CNAME</code>, and update the setup checklist.</span></div>
+        <div><strong>Before sharing</strong><span>Test on mobile, click a few registrar links, and confirm all footer pages open correctly.</span></div>
+      </div>
     </section>
 
     <section class="panel faq-panel">
@@ -280,11 +911,37 @@
       </details>
       <details>
         <summary>Can I check thousands of domains?</summary>
-        <p>Yes, but go slowly. Public RDAP/DNS services may rate-limit requests. The table renders in chunks to reduce browser lag.</p>
+        <p>Yes, but go slowly. Public RDAP/DNS services may rate-limit requests. For very large lists, use score-only mode first and check availability only for the shortlist.</p>
+      </details>
+      <details>
+        <summary>Do you store my domain list?</summary>
+        <p>No backend database is used in this static app. Saved sessions are stored in your browser local storage unless you clear them.</p>
+      </details>
+      <details>
+        <summary>Are registrar links affiliate links?</summary>
+        <p>Some may be. If affiliate links are enabled, the site may earn a commission at no extra cost to you. The registrar still controls final checkout, price, and availability.</p>
       </details>
     </section>
+
+    <footer class="site-footer">
+      <div>
+        <strong>Domain Shortlist</strong>
+        <p>Rank domain ideas, review top picks, and check final price at a registrar. Scores are estimates, not valuations or purchase guarantees.</p>
+      </div>
+      <nav aria-label="Footer links">
+        <a href="#domain-input">Paste domains</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="affiliate-disclosure.html">Affiliate disclosure</a>
+        <a href="terms.html">Terms</a>
+        <a href="https://github.com/noahbsark/Domain-Bulk-Checker/issues/new?title=Domain%20Shortlist%20feedback" target="_blank" rel="noopener noreferrer" data-analytics-event="feedback_link_clicked" data-analytics-source="footer">Feedback</a>
+        <a href="https://github.com/noahbsark/Domain-Bulk-Checker" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </footer>
   </main>
 
-  <script src="app.js?v=16-public-buyer-calibration"></script>
+  <script src="app.js?v=51-check-cleanup"></script>
+  <noscript>
+    <div class="noscript-warning">Domain Shortlist needs JavaScript to score domains and build registrar links.</div>
+  </noscript>
 </body>
 </html>
