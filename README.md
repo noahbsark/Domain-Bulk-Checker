@@ -1,4 +1,26 @@
-# Domain Shortlist — v96 Final Polish
+# Domain Shortlist — v97 Upgrade
+
+## v97 screenshot upgrades
+
+- Removes the visible skip-link text from the DOM and restores it only on keyboard focus, which should stop the top-left clipped text from appearing.
+- Adds clearer launch-page input tips under the paste box, then hides them once a clean list is loaded.
+- Improves placeholder visibility and makes the sample-ready state slightly tighter.
+- Adds visible score chips to Best Picks cards so users can understand the ranking without opening details.
+- Polishes Best Picks spacing and card shadows while keeping the #1 featured layout.
+- Renames the trust/compliance panel to **Before you buy** and keeps the notes compact.
+
+## Local test commands
+
+```bash
+node --check app.js
+node scripts/smoke-test.mjs
+python3 -m http.server 4173
+```
+
+After pushing, hard refresh the live site with Ctrl+F5.
+
+---
+
 
 ## v96 screenshot fixes
 

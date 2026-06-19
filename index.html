@@ -58,16 +58,16 @@
       pointer-events: none !important;
     }
   </style>
-  <link rel="stylesheet" href="style.css?v=96-final-polish" />
+  <link rel="stylesheet" href="style.css?v=97-upgrade" />
 </head>
-<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit v66-clean-results v67-compact-results v68-filter-polish v69-results-view-polish v70-inline-results v71-keyboard-summary v72-results-sort v73-visible-worth-reasons v74-scan-badges v76-result-undo-legend v77-guided-simple v78-simple-polish v79-no-mistake-simple v80-simple-first v81-final-simple-polish v82-tool-first v83-ui-audit v84-tool-first-final v85-guided-result v86-decision-mode v87-premium-decision v88-ready-mobile v89-ultra-simple v90-final-decision v91-launch-polish v92-scale-layout-fix v93-cache-layout-tune v94-results-focus v95-clean-launch-flow v96-final-polish">
-  <a class="skip-link" href="#domain-input" style="position:fixed;left:-100000px;top:-100000px;width:1px;height:1px;overflow:hidden;clip-path:inset(100%);">Skip to domain input</a>
+<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit v66-clean-results v67-compact-results v68-filter-polish v69-results-view-polish v70-inline-results v71-keyboard-summary v72-results-sort v73-visible-worth-reasons v74-scan-badges v76-result-undo-legend v77-guided-simple v78-simple-polish v79-no-mistake-simple v80-simple-first v81-final-simple-polish v82-tool-first v83-ui-audit v84-tool-first-final v85-guided-result v86-decision-mode v87-premium-decision v88-ready-mobile v89-ultra-simple v90-final-decision v91-launch-polish v92-scale-layout-fix v93-cache-layout-tune v94-results-focus v95-clean-launch-flow v96-final-polish v97-upgrade">
+  <a class="skip-link" href="#domain-input" aria-label="Skip to domain input" style="position:fixed;left:-100000px;top:-100000px;width:1px;height:1px;overflow:hidden;clip-path:inset(100%);"></a>
   <main class="shell">
     <header class="hero simple-hero">
       <div class="hero-copy">
         <p class="eyebrow">Simple domain finder</p>
         <h1>Paste domains. Pick the best one.</h1>
-        <p>Private shortlist scoring for messy lists, bulk ideas, and quick registrar checks.</p>
+        <p>Private domain ranking for messy lists — no signup, no checkout, no backend.</p>
         <div class="hero-actions">
           <a class="button-link primary" href="#domain-input">Paste names</a>
           <button id="heroSampleBtn" type="button" class="ghost">Try sample</button>
@@ -196,7 +196,7 @@
       <div class="panel-title-row">
         <div>
           <h2>Paste your list</h2>
-          <p class="muted">Paste domains, URLs, or rough ideas. The app cleans them.</p>
+          <p class="muted">Paste domains, URLs, comma-separated names, or rough ideas. The app cleans them.</p>
         </div>
         <div class="input-title-actions">
           <span id="inputCount" class="muted">0 lines</span>
@@ -204,7 +204,12 @@
         </div>
       </div>
       <label class="sr-only" for="inputBox">Domain ideas or URLs to check</label>
-      <textarea id="inputBox" spellcheck="false" placeholder="brandname.com&#10;secondidea.io&#10;https://example.com/page&#10;rough startup name.app"></textarea>
+      <textarea id="inputBox" spellcheck="false" placeholder="brandname.com&#10;secondidea.io&#10;https://example.com/page&#10;rough startup idea.app"></textarea>
+      <div class="input-helper-strip" aria-label="Input tips">
+        <span>Paste one per line or separated by spaces</span>
+        <span>URLs are cleaned automatically</span>
+        <span>Registrar checkout opens only when you click it</span>
+      </div>
       <div class="v89-first-action-row" aria-label="Start checking">
         <button id="simpleCheckBtn" type="button" class="primary v89-main-check">Check my list</button>
         <span class="v89-first-help">Checks and ranks only. No buying happens here.</span>
@@ -516,7 +521,7 @@
       <div class="top-picks-title-row">
         <div>
           <h2 id="topPicksHeading">Best picks</h2>
-          <p class="muted">Start with the top pick, then use the backups only if the first name is too expensive or unavailable.</p>
+          <p class="muted">Start with the top pick. Use backups only if the first name is too expensive or unavailable.</p>
         </div>
         <div class="top-picks-controls">
           <span id="topPicksCount" class="muted">No picks yet</span>
@@ -973,8 +978,8 @@
     </section>
 
     <section id="privacy-limits" class="panel note public-note">
-      <h2>Important notes</h2>
-      <p class="muted launch-page-links">Read the full <a href="privacy.html">Privacy Policy</a>, <a href="affiliate-disclosure.html">Affiliate Disclosure</a>, and <a href="terms.html">Terms & Limitations</a>.</p>
+      <h2>Before you buy</h2>
+      <p class="muted launch-page-links">Quick trust notes. Read the full <a href="privacy.html">Privacy Policy</a>, <a href="affiliate-disclosure.html">Affiliate Disclosure</a>, and <a href="terms.html">Terms & Limitations</a>.</p>
       <div class="public-note-grid">
         <p>
           <strong>Availability is not guaranteed.</strong> This app is a fast triage tool. <strong>Worth checking</strong> means “worth checking,” not “guaranteed purchasable.” Registrars may mark names as premium, reserved, blocked, or unavailable.
@@ -1047,7 +1052,7 @@
     </footer>
   </main>
 
-  <script src="app.js?v=96-final-polish"></script>
+  <script src="app.js?v=97-upgrade"></script>
   <noscript>
     <div class="noscript-warning">Domain Shortlist needs JavaScript to score domains and build registrar links.</div>
   </noscript>

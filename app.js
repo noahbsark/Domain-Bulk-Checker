@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v96-final-polish-2026-06-19";
+const UI_VERSION = "v97-upgrade-2026-06-19";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -6586,7 +6586,7 @@ function renderResults() {
   document.body.classList.toggle("has-saved", savedShortlist.size > 0);
   updateAllResultsDensity();
   if (!hasAnyResults) document.body.classList.remove("editing-input");
-  // v96: keep the secondary All Results section collapsed until the user explicitly opens it.
+  // v97: keep the secondary All Results section collapsed until the user explicitly opens it.
   // The Best Picks cards are the recommended public path; other controls still add show-all-results when needed.
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
@@ -7784,6 +7784,7 @@ function renderTopPickCards() {
     return `<article class="top-pick-card simple-pick-card premium-decision-card ${index === 0 ? "is-best-choice decision-primary-card" : "decision-backup-card"} score-${scoreClass(row.domain_score)}" data-domain="${escapeAttr(domain)}">
       <div class="top-pick-card-head decision-card-head">
         <span class="top-pick-card-labels"><span class="top-pick-rank">${escapeHtml(index === 0 ? "#1 Start here" : `${rank} ${index === 1 ? "Runner-up" : "Backup"}`)}</span>${bestChoiceBadge}</span>
+        <span class="top-pick-score-chip score-${scoreClass(row.domain_score)}" title="Heuristic score, not a valuation">${escapeHtml(row.domain_score ?? "")}<span>${escapeHtml(row.score_label || "")}</span></span>
       </div>
       <div class="top-pick-domain decision-domain">${escapeHtml(domain)}</div>
       <p class="simple-reason-pill decision-reason"><strong>${escapeHtml(recommendation)}</strong> · ${escapeHtml(explanation)}</p>
