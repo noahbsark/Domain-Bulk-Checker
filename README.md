@@ -351,3 +351,20 @@ This version is a visual/usability cleanup. It puts the paste box immediately af
 - Made the #1 recommendation card more visually dominant.
 - Kept public card actions focused on Check price now, Save this, and Show another pick.
 - Hid duplicate/details-heavy controls from the normal public flow.
+
+
+## v93 cache/layout tune
+
+- Updated homepage asset cache busters so browsers fetch the latest `style.css` and `app.js` after deployment.
+- Added a stronger hidden state for the keyboard skip link to prevent clipped text at the top-left of the page.
+- Tuned Best Picks card widths and domain-name wrapping for Windows scaling, browser zoom, and narrower desktop layouts.
+- Cleaned the secondary All Results view so actions, details, and registrar notes stack in non-overlapping rows.
+- Renamed the secondary view copy from repeated “All checked names” wording to “All results.”
+
+Quick verification:
+
+```bash
+node --check app.js
+node scripts/smoke-test.mjs
+python3 -m http.server 4173
+```

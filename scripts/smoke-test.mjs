@@ -32,9 +32,9 @@ const missingIds = [...new Set([...app.matchAll(getIdRegex)].map(match => match[
   .filter(id => !ids.has(id));
 pass(missingIds.length === 0, `Missing IDs referenced by app.js: ${missingIds.join(", ")}`);
 
-pass(/body\.v92-scale-layout-fix \.skip-link:not\(:focus\):not\(:focus-visible\)[\s\S]*left:\s*-10000px !important[\s\S]*clip-path:\s*inset\(100%\)/.test(css),
+pass(/body\.v93-cache-layout-tune \.skip-link:not\(:focus\):not\(:focus-visible\)[\s\S]*clip-path:\s*inset\(100%\)[\s\S]*transform:\s*translateY\(-200%\)/.test(css),
   "Skip link should be fully offscreen until keyboard focus.");
-pass(index.includes("<h2>Important notes</h2>") && /body\.v92-scale-layout-fix #privacy-limits[\s\S]*display:\s*block !important/.test(css),
+pass(index.includes("<h2>Important notes</h2>") && /body\.v93-cache-layout-tune #privacy-limits[\s\S]*display:\s*block !important/.test(css),
   "Important notes should be restored as a normal static panel.");
 pass(index.includes("Registrar links may be affiliate links") && app.includes("registrarLinkDisclosureText"),
   "Affiliate disclosure should appear near registrar actions.");
@@ -50,8 +50,18 @@ const robotSitemap = robots.match(/Sitemap:\s*(https:\/\/[^\s]+\/sitemap\.xml)/)
 const sitemapBase = sitemap.match(/<loc>(https:\/\/[^<]+\/)[^/<]*<\/loc>/)?.[1] || "";
 pass(robotSitemap.startsWith(sitemapBase),
   `robots.txt sitemap URL should match sitemap.xml base. robots=${robotSitemap}, sitemapBase=${sitemapBase}`);
-pass(index.includes("v92-scale-layout-fix") && app.includes("v92-scale-layout-fix"),
-  "Index and app version should include v92 scale/layout fix.");
+pass(index.includes("v93-cache-layout-tune") && app.includes("v93-cache-layout-tune"),
+  "Index and app version should include v93 cache/layout tune.");
+
+pass(index.includes('style.css?v=93-cache-layout-tune') && index.includes('app.js?v=93-cache-layout-tune'),
+  "CSS and JS asset URLs should use the v93 cache buster so browsers fetch the new layout.");
+pass(index.includes('View all results') && index.includes('<h2>All results</h2>'),
+  "All Results copy should avoid repeated 'All checked names' labels.");
+pass(/body\.v93-cache-layout-tune \.result-card\.compact-result-row[\s\S]*grid-template-areas:[\s\S]*"main status"[\s\S]*"actions actions"[\s\S]*"details details"[\s\S]*"disclosure disclosure"/.test(css),
+  "All Results cards should stack actions/details/disclosure in non-overlapping rows.");
+pass(/result-inline-details:not\(\[open\]\) \.result-inline-details-grid[\s\S]*display:\s*none !important/.test(css),
+  "Closed result details should not leak columns into the row.");
+
 
 if (failures.length) {
   console.error("Smoke test failed:");

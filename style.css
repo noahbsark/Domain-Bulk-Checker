@@ -10076,3 +10076,285 @@ body.v92-scale-layout-fix .site-footer {
     grid-template-columns: 1fr;
   }
 }
+
+
+
+/* v93 cache/layout tune: fixes stale assets, skip-link bleed, and dense results at zoom/scaling. */
+body.v93-cache-layout-tune {
+  --v93-max: 1180px;
+  --v93-gutter: clamp(18px, 4vw, 72px);
+}
+
+/* Stronger hidden state for the accessibility skip link. It should never show as clipped text. */
+body.v93-cache-layout-tune .skip-link,
+body.v93-cache-layout-tune .skip-link:not(:focus):not(:focus-visible) {
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(100%) !important;
+  transform: translateY(-200%) !important;
+  color: transparent !important;
+  background: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  white-space: nowrap !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.v93-cache-layout-tune .skip-link:focus,
+body.v93-cache-layout-tune .skip-link:focus-visible {
+  position: fixed !important;
+  left: 16px !important;
+  top: 16px !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 10px 12px !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  transform: none !important;
+  color: #ffffff !important;
+  background: #111827 !important;
+  font-size: .95rem !important;
+  line-height: 1.2 !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 10000 !important;
+}
+
+/* Use a little more desktop width without becoming a billboard at 150% Windows scaling. */
+body.v93-cache-layout-tune .shell {
+  width: min(var(--v93-max), calc(100vw - var(--v93-gutter))) !important;
+  max-width: var(--v93-max) !important;
+}
+
+body.v93-cache-layout-tune:not(.has-results) .hero.simple-hero {
+  padding: clamp(22px, 2.6vw, 34px);
+}
+
+body.v93-cache-layout-tune:not(.has-results) .hero-copy h1 {
+  font-size: clamp(2.2rem, 3vw, 3.25rem);
+  max-width: 760px;
+}
+
+/* Make Best Picks readable at common zoom/scaling widths. */
+body.v93-cache-layout-tune .top-picks-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 285px), 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch;
+}
+
+body.v93-cache-layout-tune .top-pick-card {
+  min-width: 0;
+}
+
+body.v93-cache-layout-tune .decision-domain {
+  font-size: clamp(1.28rem, 1.45vw, 1.58rem) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.045em;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+body.v93-cache-layout-tune .decision-reason {
+  min-height: auto;
+}
+
+body.v93-cache-layout-tune .decision-step-line,
+body.v93-cache-layout-tune .card-disclosure {
+  font-size: .82rem;
+}
+
+@media (min-width: 1040px) {
+  body.v93-cache-layout-tune .top-picks-grid {
+    grid-template-columns: minmax(300px, 1.12fr) repeat(2, minmax(250px, .94fr)) !important;
+  }
+}
+
+@media (max-width: 920px) {
+  body.v93-cache-layout-tune .top-picks-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.v93-cache-layout-tune .decision-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* All Results is secondary: make it clean, not a competing dashboard. */
+body.v93-cache-layout-tune .results-panel {
+  background: #ffffff !important;
+}
+
+body.v93-cache-layout-tune .results-title-row h2::after {
+  content: "Secondary view";
+  display: inline-flex;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .02em;
+  vertical-align: middle;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-areas:
+    "main status"
+    "actions actions"
+    "details details"
+    "disclosure disclosure" !important;
+  gap: 10px 16px !important;
+  padding: 16px 18px !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-main {
+  grid-area: main !important;
+  min-width: 0 !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-name-block {
+  min-width: 0;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-name-block strong {
+  font-size: clamp(1rem, 1vw, 1.12rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-name-block > span {
+  font-size: .84rem;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-status-line {
+  grid-area: status !important;
+  justify-self: end !important;
+  align-self: start !important;
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  max-width: 320px !important;
+  font-size: .82rem !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-worth-reason {
+  margin-top: 6px !important;
+  border-radius: 999px !important;
+  font-size: .82rem !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-card-actions.compact-actions {
+  grid-area: actions !important;
+  display: grid !important;
+  grid-template-columns: minmax(180px, 280px) auto !important;
+  justify-content: start !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-card-actions .top-pick-cta {
+  min-height: 38px !important;
+  width: 100% !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-inline-details {
+  grid-area: details !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding-top: 2px !important;
+  border-top: 0 !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-inline-details:not([open]) .result-inline-details-grid {
+  display: none !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-inline-details[open] {
+  padding-top: 8px !important;
+  border-top: 1px solid #eef2f7 !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-inline-details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px 14px !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .result-inline-details-grid .wide {
+  grid-column: 1 / -1 !important;
+}
+
+body.v93-cache-layout-tune .result-card.compact-result-row .compact-disclosure {
+  grid-area: disclosure !important;
+  justify-self: start !important;
+  max-width: none !important;
+  text-align: left !important;
+  font-size: .76rem !important;
+  color: #64748b !important;
+  margin: 0 !important;
+}
+
+/* Keep important notes stable and footer-only legal links from floating. */
+body.v93-cache-layout-tune #privacy-limits {
+  position: static !important;
+  display: block !important;
+  inset: auto !important;
+  transform: none !important;
+  max-width: none !important;
+}
+
+body.v93-cache-layout-tune .site-footer {
+  position: static !important;
+  margin-top: 26px !important;
+}
+
+@media (max-width: 760px) {
+  body.v93-cache-layout-tune {
+    --v93-gutter: 20px;
+  }
+
+  body.v93-cache-layout-tune .shell {
+    width: min(100% - 20px, var(--v93-max)) !important;
+  }
+
+  body.v93-cache-layout-tune .hero-copy h1 {
+    font-size: clamp(1.9rem, 10vw, 2.6rem) !important;
+  }
+
+  body.v93-cache-layout-tune .result-card.compact-result-row {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "main"
+      "status"
+      "actions"
+      "details"
+      "disclosure" !important;
+  }
+
+  body.v93-cache-layout-tune .result-card.compact-result-row .result-status-line {
+    justify-self: start !important;
+    justify-content: flex-start !important;
+    max-width: none !important;
+  }
+
+  body.v93-cache-layout-tune .result-card.compact-result-row .result-card-actions.compact-actions,
+  body.v93-cache-layout-tune .result-card.compact-result-row .result-inline-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
