@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v84-tool-first-final-2026-06-17";
+const UI_VERSION = "v91-launch-polish-2026-06-19";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -59,6 +59,7 @@ const PUBLIC_SITE_URL = "https://noahbsark.github.io/Domain-Bulk-Checker/";
 
 const el = {
   inputBox: document.getElementById("inputBox"),
+  simpleCheckBtn: document.getElementById("simpleCheckBtn"),
   inputCount: document.getElementById("inputCount"),
   fileInput: document.getElementById("fileInput"),
   loadTxtBtn: document.getElementById("loadTxtBtn"),
@@ -116,6 +117,7 @@ const el = {
   topPicksCount: document.getElementById("topPicksCount"),
   topSavedCountBadge: document.getElementById("topSavedCountBadge"),
   topPicksShowMoreBtn: document.getElementById("topPicksShowMoreBtn"),
+  showNextPickBtn: document.getElementById("showNextPickBtn"),
   topPicksViewAllBtn: document.getElementById("topPicksViewAllBtn"),
   topPicksNewSearchBtn: document.getElementById("topPicksNewSearchBtn"),
   topPicksPriceLimitNote: document.getElementById("topPicksPriceLimitNote"),
@@ -152,6 +154,12 @@ const el = {
   savedFinishText: document.getElementById("savedFinishText"),
   savedWinnerHint: document.getElementById("savedWinnerHint"),
   savedWinnerHintText: document.getElementById("savedWinnerHintText"),
+  savedDoneSummary: document.getElementById("savedDoneSummary"),
+  savedReadyCard: document.getElementById("savedReadyCard"),
+  savedReadyTitle: document.getElementById("savedReadyTitle"),
+  savedReadyText: document.getElementById("savedReadyText"),
+  savedReadyPriceBtn: document.getElementById("savedReadyPriceBtn"),
+  savedReadyNewSearchBtn: document.getElementById("savedReadyNewSearchBtn"),
   savedViewOnlyBtn: document.getElementById("savedViewOnlyBtn"),
   savedShowUncheckedBtn: document.getElementById("savedShowUncheckedBtn"),
   savedClearNotesBtn: document.getElementById("savedClearNotesBtn"),
@@ -333,6 +341,7 @@ let stopRequested = false;
 let isChecking = false;
 let renderRowLimit = INITIAL_RENDER_LIMIT;
 let topPicksExpanded = false;
+let guidedPickCount = 3;
 let pendingRenderTimer = null;
 let lastRenderAt = 0;
 let resultQuickPreset = "all";
@@ -657,6 +666,20 @@ function applyAffiliateTemplate(registrarKey, domain, destinationUrl) {
   return expanded;
 }
 
+function registrarLinkRel(registrarKey = selectedRegistrarKey(), domain = "") {
+  const registrar = REGISTRARS[registrarKey] || REGISTRARS[selectedRegistrarKey()];
+  const directUrl = registrar?.urlDirect ? registrar.urlDirect(domain || AFFILIATE_CONFIG.testDomain || "example.com") : "";
+  const finalUrl = registrar?.url ? registrar.url(domain || AFFILIATE_CONFIG.testDomain || "example.com") : directUrl;
+  const isAffiliate = Boolean(AFFILIATE_CONFIG.enabled && finalUrl && directUrl && finalUrl !== directUrl);
+  return isAffiliate ? "nofollow sponsored noopener noreferrer" : "noopener noreferrer";
+}
+
+function registrarLinkDisclosureText() {
+  return AFFILIATE_CONFIG.enabled
+    ? "May be an affiliate link. Registrar confirms final price and availability."
+    : "Registrar confirms final price and availability. No purchase happens here.";
+}
+
 function namecheapUrl(domain) {
   return applyAffiliateTemplate("namecheap", domain, `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`);
 }
@@ -715,7 +738,7 @@ function updatePriceLimitNote() {
   if (!el.topPicksPriceLimitNote) return;
   const total = topPickRows().length;
   const label = topPickPriceOpenLimitLabel(total);
-  el.topPicksPriceLimitNote.textContent = `Default bulk action: check the ${label} top pick${label === "first 1" ? "" : "s"} at ${selectedRegistrarLabel()}. Use each card's Check price button for one domain at a time, or use View all results for the full list.`;
+  el.topPicksPriceLimitNote.textContent = `Start with the top pick at ${selectedRegistrarLabel()}. Use backups only if the first option is too expensive or unavailable.`;
 }
 
 function registrarUrl(domain) {
@@ -811,6 +834,7 @@ function registrarComparisonLinks(domain) {
     key,
     label: REGISTRARS[key].label,
     url: REGISTRARS[key].url(domain),
+    rel: registrarLinkRel(key, domain),
     primary: key === selected
   }));
 }
@@ -820,7 +844,7 @@ function registrarComparisonHtml(domain) {
   if (!links.length) return "";
   return `<div class="registrar-compare-row" aria-label="Registrar options for ${escapeAttr(domain)}">
     <span>Check at</span>
-    ${links.map(link => `<a class="registrar-pill ${link.primary ? "is-primary" : ""}" href="${escapeAttr(link.url)}" target="_blank" rel="sponsored noopener noreferrer">${escapeHtml(link.label)}</a>`).join("")}
+    ${links.map(link => `<a class="registrar-pill ${link.primary ? "is-primary" : ""}" href="${escapeAttr(link.url)}" target="_blank" rel="${escapeAttr(link.rel)}">${escapeHtml(link.label)}</a>`).join("")}
   </div>`;
 }
 
@@ -3839,6 +3863,7 @@ async function runChecks() {
   }
 
   topPicksExpanded = false;
+  guidedPickCount = 3;
   results = new Array(rows.length);
   resetRenderLimit();
   renderResults();
@@ -3885,7 +3910,7 @@ async function runChecks() {
     setChecking(false);
     const endText = stopRequested ? `Stopped. Checked ${results.length}/${rows.length} rows.` : `Done. Checked ${results.length} rows.`;
     trackEvent(stopRequested ? "check_stopped" : "check_completed", { row_count: rows.length, result_count: results.filter(Boolean).length, top_pick_count: topPickRows().length });
-    setStatus(`${endText} Next: start with the Top Picks cards, compare finalists if needed, then click Check price.`);
+    setStatus(`${endText} Next: start with the #1 pick, then show another pick only if needed.`);
     if (!stopRequested) recordRecentRun();
     saveState();
   }
@@ -4314,8 +4339,8 @@ function renderCompareTray() {
       <div class="compare-tag-row"><span>Strengths</span><div class="top-pick-tags">${strengths}</div></div>
       <div class="compare-tag-row"><span>Concerns</span><div class="top-pick-tags">${concerns}</div></div>
       <div class="compare-card-actions">
-        ${lookupUrl ? `<a class="top-pick-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>` : ""}
-        <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Details</button>
+        ${lookupUrl ? `<a class="top-pick-cta secondary-registrar-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">Check registrar</a>` : ""}
+        <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Why?</button>
         <button type="button" class="ghost" data-copy-domain="${escapeAttr(domain)}">Copy</button>
       </div>
     </article>`;
@@ -5535,8 +5560,8 @@ function savedShortlistItemHtml(row) {
     <label class="saved-note-label" for="note-${escapeAttr(domain)}">Note</label>
     <textarea id="note-${escapeAttr(domain)}" class="saved-note-input" data-saved-note-domain="${escapeAttr(domain)}" maxlength="160" rows="2" placeholder="Optional note, e.g. best for app name">${escapeHtml(savedNoteFor(domain))}</textarea>
     <div class="saved-domain-actions">
-      ${lookupUrl ? `<a class="top-pick-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>` : ""}
-      <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Details</button>
+      ${lookupUrl ? `<a class="top-pick-cta secondary-registrar-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">Check registrar</a>` : ""}
+      <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Why?</button>
       ${compareButtonHtml(domain)}
       <button type="button" class="ghost" data-copy-domain="${escapeAttr(domain)}">Copy</button>
     </div>
@@ -5617,7 +5642,7 @@ function savedCleanReportText() {
   const best = savedRows[0] || topRows[0];
   const bestThree = uniqueDomains(savedRows.length ? savedRows.slice(0, 3) : topRows);
   const savedDomains = uniqueDomains(savedRows);
-  if (!best && !bestThree.length && !savedDomains.length) return "No report yet. Paste names and click Find best domains first.";
+  if (!best && !bestThree.length && !savedDomains.length) return "No report yet. Paste names and click Check my list first.";
   const lines = [
     `${PUBLIC_SITE_NAME} clean report`,
     "",
@@ -5642,7 +5667,7 @@ function copyCleanReport() {
   const hasSaved = savedDecisionRows().length > 0;
   const hasPicks = topPickRows().length > 0;
   if (!hasSaved && !hasPicks) {
-    setStatus("No clean report to copy yet. Paste a list and click Find best domains first.");
+    setStatus("No clean report to copy yet. Paste a list and click Check my list first.");
     return;
   }
   copyText(savedCleanReportText(), "clean report");
@@ -5706,7 +5731,7 @@ function downloadCleanReport() {
   const hasSaved = savedDecisionRows().length > 0;
   const hasPicks = topPickRows().length > 0;
   if (!hasSaved && !hasPicks) {
-    setStatus("No clean report to download yet. Paste a list and click Find best domains first.");
+    setStatus("No clean report to download yet. Paste a list and click Check my list first.");
     return;
   }
   downloadTextFile(`domain-shortlist-clean-report-${new Date().toISOString().slice(0, 10)}.txt`, savedCleanReportText());
@@ -5756,7 +5781,7 @@ function renderSavedComparison() {
       <td>${escapeHtml(bestUseForRow(row))}</td>
       <td>${escapeHtml(strengthForRow(row))}</td>
       <td>${escapeHtml(watchOutForRow(row))}</td>
-      <td>${lookupUrl ? `<a class="link-pill" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>` : ""}</td>
+      <td>${lookupUrl ? `<a class="link-pill" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), result.normalized_domain))}">Check registrar</a>` : ""}</td>
       <td>${isSavedWinner(domain) ? "Winner · " : ""}${isSavedChecked(domain) ? "✓ Checked" : "Not checked"}</td>
     </tr>`;
   }).join("");
@@ -5814,6 +5839,29 @@ function renderSavedShortlist() {
     el.savedWinnerHint.classList.toggle("is-complete", Boolean(text && checked));
     el.savedWinnerHintText.textContent = text;
   }
+  if (el.savedDoneSummary) {
+    el.savedDoneSummary.classList.toggle("is-hidden", !hasRows);
+    if (hasRows) {
+      const plural = rows.length === 1 ? "finalist" : "finalists";
+      const checkedPhrase = checkedCount > 0 ? `${checkedCount} checked` : "none checked yet";
+      const winner = savedWinnerRow();
+      const winnerText = winner ? ` Best current choice: ${winner.normalized_domain}.` : "";
+      const doneLead = winnerDoneShown ? "You are done for now." : `You saved ${rows.length} ${plural}.`;
+      el.savedDoneSummary.innerHTML = `<strong>${escapeHtml(doneLead)}</strong><span>${escapeHtml(`Next: confirm price, spelling, and availability at the registrar. ${checkedPhrase}.${winnerText}`)}</span>`;
+    } else {
+      el.savedDoneSummary.innerHTML = "";
+    }
+  }
+  if (el.savedReadyCard) {
+    el.savedReadyCard.classList.toggle("is-hidden", !hasRows);
+    if (hasRows) {
+      const plural = rows.length === 1 ? "finalist" : "finalists";
+      const winner = savedWinnerRow();
+      const bestText = winner ? `Best current choice: ${winner.normalized_domain}. ` : "";
+      if (el.savedReadyTitle) el.savedReadyTitle.textContent = `You saved ${rows.length} ${plural}.`;
+      if (el.savedReadyText) el.savedReadyText.textContent = `${bestText}Next: check saved prices, then confirm spelling and availability at the registrar.`;
+    }
+  }
   // saved_progress_summary_updated
   if (!hasRows) savedShowUncheckedOnly = false;
   if (el.savedShortlistEmpty) el.savedShortlistEmpty.classList.toggle("is-hidden", hasRows);
@@ -5828,6 +5876,7 @@ function renderSavedShortlist() {
   if (!winnerReady) winnerDoneShown = false;
   if (el.savedDoneBtn) {
     el.savedDoneBtn.disabled = !winnerReady;
+    el.savedDoneBtn.textContent = "Done for now";
     el.savedDoneBtn.classList.toggle("is-hidden", !winnerReady);
   }
   if (el.savedNewSearchAfterDoneBtn) {
@@ -6299,7 +6348,7 @@ function resultCardHtml(result) {
   const favorite = favorites.has(domain) || savedShortlist.has(normalizeSavedDomain(domain));
   const lookupUrl = resultRegistrarUrl(result);
   const linkHtml = lookupUrl
-    ? `<a class="top-pick-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>`
+    ? `<a class="top-pick-cta secondary-registrar-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">Check registrar</a>`
     : "";
   const statusLabel = availabilityText(result);
   const scoreLabel = result.score_label || "";
@@ -6339,8 +6388,9 @@ function resultCardHtml(result) {
     </details>
     <div class="result-card-actions compact-actions">
       ${linkHtml}
-      <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Full details</button>
+      <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Details</button>
     </div>
+    ${lookupUrl ? `<p class="registrar-disclosure compact-disclosure">${escapeHtml(registrarLinkDisclosureText())}</p>` : ""}
   </article>`;
 }
 
@@ -6590,7 +6640,7 @@ function renderResults() {
     const starTitle = favorite ? "Remove from saved" : "Save";
     const lookupUrl = resultRegistrarUrl(result);
     const linkHtml = lookupUrl
-      ? `<a class="link-pill" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>`
+      ? `<a class="link-pill" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), result.normalized_domain))}">Check registrar</a>`
       : "";
     return `<tr class="${cls}" data-domain="${escapeAttr(result.normalized_domain)}">
       <td><button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(result.normalized_domain)}" title="${starTitle}">${favorite ? "★" : "☆"}</button></td>
@@ -7077,12 +7127,13 @@ function updateSummary() {
 
   if (el.resultPlainSummary) {
     if (checked) {
-      const pieces = [`Checked ${checked.toLocaleString()} domain${checked === 1 ? "" : "s"}`];
-      pieces.push(`${available.toLocaleString()} worth checking`);
-      pieces.push(`${taken.toLocaleString()} taken`);
-      if (unknown) pieces.push(`${unknown.toLocaleString()} unknown`);
-      if (favoriteCount) pieces.push(`${favoriteCount.toLocaleString()} saved`);
-      el.resultPlainSummary.textContent = pieces.join(" · ") + ".";
+      const worthText = available ? `${available.toLocaleString()} worth checking` : "0 worth checking yet";
+      const nextText = available ? "Start with the top pick." : "Try a broader list or more .com options.";
+      const extra = [];
+      if (taken) extra.push(`${taken.toLocaleString()} likely unavailable`);
+      if (unknown) extra.push(`${unknown.toLocaleString()} unconfirmed`);
+      if (favoriteCount) extra.push(`${favoriteCount.toLocaleString()} saved`);
+      el.resultPlainSummary.textContent = `${checked.toLocaleString()} checked · ${worthText}${extra.length ? ` · ${extra.join(" · ")}` : ""}. ${nextText}`;
       el.resultPlainSummary.classList.remove("is-hidden");
     } else {
       el.resultPlainSummary.textContent = "No domains checked yet.";
@@ -7111,12 +7162,12 @@ function updateNextStepsPanel(summary) {
   if (el.nextStepsDetails) {
     const parts = [
       `${summary.available} worth checking`,
-      `${summary.taken} taken`,
-      `${summary.unknown} unknown`,
+      `${summary.taken} likely unavailable`,
+      `${summary.unknown} unconfirmed`,
       `${summary.topPickCount} top pick${summary.topPickCount === 1 ? "" : "s"}`,
       `${summary.favoriteCount} saved`
     ];
-    el.nextStepsDetails.textContent = `${parts.join(" · ")}. Next: review the Top Picks cards, compare finalists if needed, then click Check price.`;
+    el.nextStepsDetails.textContent = `${parts.join(" · ")}. Next: review Best Picks, save finalists, then confirm price and availability at a registrar.`;
   }
 }
 
@@ -7345,13 +7396,13 @@ function topPickRows() {
 
 function topPickCardRows() {
   const rows = topPickRows();
-  const simpleLimit = Math.min(5, topPickLimit());
+  const simpleLimit = Math.max(1, Math.min(guidedPickCount || 1, 5, topPickLimit()));
   return topPicksExpanded ? rows : rows.slice(0, simpleLimit);
 }
 
 function availabilityText(row) {
   if (row.available === true) return "Worth checking";
-  if (row.available === false) return "Taken";
+  if (row.available === false) return "Likely unavailable";
   if (row.availability_status === "not_checked_score_only") return "Not checked yet";
   if (row.availability_status === "invalid_input") return "Invalid";
   return "Unknown";
@@ -7366,13 +7417,13 @@ function publicRecommendationType(row) {
   const raw = String(row.recommendation_type || row.score_label || "").toLowerCase();
   const domain = String(row.normalized_domain || "").toLowerCase();
   const tld = effectiveSuffix(domain);
-  if (raw.includes("seo") || Number(row.seo_utility_score || 0) >= 7) return "Good search-intent name";
+  if (raw.includes("seo") || Number(row.seo_utility_score || 0) >= 7) return "Clear search intent";
   if (raw.includes("exact") || /(?:forms|guide|kit|checklist|calculator|planner|quote|help)$/.test(secondLevelName(domain))) return "Clear utility name";
   if (raw.includes("brand") || Number(row.brandability_score || 0) >= 7) return "Brandable shortlist candidate";
   if (tld && tld !== "com") return "Strong fallback extension";
-  if (Number(row.domain_score || 0) >= 85) return "Strong shortlist candidate";
-  if (Number(row.domain_score || 0) >= 70) return "Worth reviewing";
-  return "Review candidate";
+  if (Number(row.domain_score || 0) >= 85) return "Strong option";
+  if (Number(row.domain_score || 0) >= 70) return "Needs review";
+  return "Review carefully";
 }
 
 function domainHasCleanShape(domain) {
@@ -7391,9 +7442,9 @@ function plainReasonForRow(row) {
   const phrase = String(row.phrase_naturalness || "").toLowerCase();
   const clean = domainHasCleanShape(domain);
 
-  if (tld === "com" && clean && score >= 80) return "Good because it is clean, easy to read, and uses the trusted .com extension.";
-  if (buyerIntent >= 7) return "Good because it clearly describes what a buyer or visitor is looking for.";
-  if (seo >= 7) return "Good because it reads like a useful search phrase people may understand quickly.";
+  if (tld === "com" && clean && score >= 80) return "Clean, easy to read, and on .com."
+  if (buyerIntent >= 7) return "Clearly describes what a visitor is looking for."
+  if (seo >= 7) return "Reads like a useful search phrase."
   if (brand >= 7 || publicRecommendationType(row).toLowerCase().includes("brand")) return "Good because it sounds brandable and could work as a product or company name.";
   if (tld === "com") return "Good because it uses the trusted .com extension and ranked well in this batch.";
   if (clean) return "Good because it avoids numbers and hyphens and is easy to scan.";
@@ -7617,11 +7668,11 @@ function renderDomainDetail(row) {
   const relatedHtml = related.length
     ? `<div class="drawer-related-list">${related.map(item => {
         const url = resultRegistrarUrl(item);
-        return `<div class="drawer-related-row"><span>${escapeHtml(item.normalized_domain || "")}</span><span>${escapeHtml(item.domain_score ?? "")}</span>${url ? `<a href="${escapeAttr(url)}" target="_blank" rel="sponsored noopener noreferrer">Check</a>` : ""}</div>`;
+        return `<div class="drawer-related-row"><span>${escapeHtml(item.normalized_domain || "")}</span><span>${escapeHtml(item.domain_score ?? "")}</span>${url ? `<a href="${escapeAttr(url)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), item.normalized_domain))}">Check</a>` : ""}</div>`;
       }).join("")}</div>`
     : `<p class="muted">No close extension variants are currently visible in this batch.</p>`;
   const checkButton = lookupUrl
-    ? `<a class="top-pick-cta drawer-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price at ${escapeHtml(selectedRegistrarLabel())}</a>`
+    ? `<a class="top-pick-cta drawer-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">Check availability at ${escapeHtml(selectedRegistrarLabel())}</a>`
     : "";
   el.domainDetailTitle.textContent = domain || "Domain details";
   el.domainDetailContent.innerHTML = `
@@ -7689,12 +7740,18 @@ function renderTopPickCards() {
   }
 
   el.topPicksEmpty.classList.add("is-hidden");
-  el.topPicksCount.textContent = `${picks.length} shown${totalPicks > picks.length ? ` of ${totalPicks}` : ""}`;
+  el.topPicksCount.textContent = totalPicks > 1 ? `${picks.length} of ${totalPicks} picks` : `${picks.length} pick`;
   if (el.topPicksShowMoreBtn) {
     const canExpand = totalPicks > Math.min(5, topPickLimit());
     el.topPicksShowMoreBtn.classList.toggle("is-hidden", !canExpand);
     el.topPicksShowMoreBtn.textContent = topPicksExpanded ? "Show fewer" : "Show more picks";
     el.topPicksShowMoreBtn.setAttribute("aria-expanded", topPicksExpanded ? "true" : "false");
+  }
+  if (el.showNextPickBtn) {
+    const canShowNext = !topPicksExpanded && totalPicks > picks.length;
+    el.showNextPickBtn.classList.toggle("is-hidden", !canShowNext);
+    el.showNextPickBtn.textContent = picks.length <= 1 ? "Show another pick" : `Show pick #${picks.length + 1}`;
+    el.showNextPickBtn.setAttribute("aria-label", `Show another backup pick. ${picks.length} of ${totalPicks} picks are visible.`);
   }
 
   el.topPicksCards.innerHTML = picks.map((row, index) => {
@@ -7709,21 +7766,26 @@ function renderTopPickCards() {
     const concernsHtml = topPickConcernTags(row).map(tag => cardTagHtml(tag.label, tag.kind)).join("");
     const tld = row.effective_tld || effectiveSuffix(domain);
     const availability = availabilityText(row);
+    const checkButtonLabel = index === 0 ? `Check availability at ${selectedRegistrarLabel()}` : "Check registrar";
     const checkButton = lookupUrl
-      ? `<a class="top-pick-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="sponsored noopener noreferrer">Check price</a>`
+      ? `<a class="top-pick-cta ${index === 0 ? "primary-registrar-cta" : "secondary-registrar-cta"}" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">${escapeHtml(checkButtonLabel)}</a>`
       : "";
 
-    const bestChoiceBadge = index === 0 ? `<span class="best-choice-badge">Best choice</span>` : "";
+    const bestChoiceBadge = index === 0 ? `<span class="best-choice-badge">Best choice</span>` : `<span class="best-choice-badge is-backup">${index === 1 ? "Runner-up" : "Backup"}</span>`;
+    const stepLine = index === 0
+      ? "Check this one first, then save backups if needed."
+      : "Backup option. Confirm it only if earlier picks do not work.";
+    const saveButton = `<button type="button" class="star-button finalist-button decision-save-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(domain)}" title="${favorite ? "Remove from saved finalists" : "Save as finalist"}">${favorite ? "Saved" : "Save this"}</button>`;
 
-    return `<article class="top-pick-card simple-pick-card ${index === 0 ? "is-best-choice" : ""} score-${scoreClass(row.domain_score)}" data-domain="${escapeAttr(domain)}">
-      <div class="top-pick-card-head">
-        <span class="top-pick-card-labels"><span class="top-pick-rank">${escapeHtml(rank)} Worth checking</span>${bestChoiceBadge}</span>
-        <button type="button" class="star-button ${favorite ? "is-favorite" : ""}" data-favorite="${escapeAttr(domain)}" title="${favorite ? "Remove from saved finalists" : "Save as finalist"}">${favorite ? "★" : "☆"}</button>
+    return `<article class="top-pick-card simple-pick-card premium-decision-card ${index === 0 ? "is-best-choice decision-primary-card" : "decision-backup-card"} score-${scoreClass(row.domain_score)}" data-domain="${escapeAttr(domain)}">
+      <div class="top-pick-card-head decision-card-head">
+        <span class="top-pick-card-labels"><span class="top-pick-rank">${escapeHtml(index === 0 ? "#1 Start here" : `${rank} ${index === 1 ? "Runner-up" : "Backup"}`)}</span>${bestChoiceBadge}</span>
       </div>
-      <div class="top-pick-domain">${escapeHtml(domain)}</div>
-      <p class="simple-reason-pill"><strong>${escapeHtml(recommendation)}</strong> · ${escapeHtml(explanation)}</p>
+      <div class="top-pick-domain decision-domain">${escapeHtml(domain)}</div>
+      <p class="simple-reason-pill decision-reason"><strong>${escapeHtml(recommendation)}</strong> · ${escapeHtml(explanation)}</p>
+      <p class="decision-step-line">${escapeHtml(stepLine)}</p>
       <details class="top-pick-why-details">
-        <summary>Why?</summary>
+        <summary>Why it ranked here</summary>
         <div class="top-pick-mini-meta">
           <span class="score-badge score-${scoreClass(row.domain_score)}">${escapeHtml(row.domain_score ?? "")}</span>
           <span>${escapeHtml(row.score_label || "")}</span>
@@ -7734,12 +7796,14 @@ function renderTopPickCards() {
         <div class="top-pick-card-section"><span>Watch out</span><div class="top-pick-tags">${concernsHtml}</div></div>
         ${scoreNotes ? `<p class="why-score-note">${escapeHtml(scoreNotes)}</p>` : ""}
       </details>
-      <div class="top-pick-actions">
+      <div class="top-pick-actions decision-actions">
         ${checkButton}
-        <button type="button" class="ghost" data-detail-domain="${escapeAttr(domain)}">Details</button>
-        ${compareButtonHtml(domain)}
-        <button type="button" class="ghost" data-copy-domain="${escapeAttr(domain)}">Copy</button>
+        ${saveButton}
+        <button type="button" class="ghost decision-secondary" data-detail-domain="${escapeAttr(domain)}">Details</button>
+        <span class="advanced-only-inline">${compareButtonHtml(domain)}</span>
+        <button type="button" class="ghost advanced-only-inline" data-copy-domain="${escapeAttr(domain)}">Copy</button>
       </div>
+      <p class="registrar-disclosure card-disclosure">${escapeHtml(registrarLinkDisclosureText())}</p>
       <div class="top-pick-quiet-more">
         ${alternativesHtml(domain, 4)}
         ${registrarComparisonHtml(domain)}
@@ -7766,7 +7830,7 @@ function copyTopPicks() {
   const rows = topPickRows().slice(0, 10);
   const domains = uniqueDomains(rows);
   if (!domains.length) {
-    setStatus("No Top Picks to copy yet. Paste a list and click Find best domains first.");
+    setStatus("No Top Picks to copy yet. Paste a list and click Check my list first.");
     return;
   }
   copyText(domains.join("\n"), `top ${domains.length} pick${domains.length === 1 ? "" : "s"}`);
@@ -7776,7 +7840,7 @@ function copyBestChoiceTopPick() {
   const row = topPickRows()[0];
   const domain = row?.normalized_domain || "";
   if (!domain) {
-    setStatus("No best choice to copy yet. Paste a list and click Find best domains first.");
+    setStatus("No best choice to copy yet. Paste a list and click Check my list first.");
     return;
   }
   copyText(domain, "best choice");
@@ -7786,7 +7850,7 @@ function copyBestChoiceTopPick() {
 function openBestChoiceTopPick() {
   const row = topPickRows()[0];
   if (!row?.normalized_domain) {
-    setStatus("No best choice to check yet. Paste a list and click Find best domains first.");
+    setStatus("No best choice to check yet. Paste a list and click Check my list first.");
     return;
   }
   setStatus(`Opening the best choice: ${row.normalized_domain}. Confirm final price and availability at the registrar.`);
@@ -7798,7 +7862,7 @@ function copyBestThreeTopPicks() {
   const rows = topPickRows().slice(0, 3);
   const domains = uniqueDomains(rows);
   if (!domains.length) {
-    setStatus("No picks to copy yet. Paste a list and click Find best domains first.");
+    setStatus("No picks to copy yet. Paste a list and click Check my list first.");
     return;
   }
   copyText(domains.join("\n"), `best ${domains.length} pick${domains.length === 1 ? "" : "s"}`);
@@ -7808,7 +7872,7 @@ function copyBestThreeTopPicks() {
 function copyBestThreeWithReasons() {
   const rows = topPickRows().slice(0, 3);
   if (!rows.length) {
-    setStatus("No picks to copy yet. Paste a list and click Find best domains first.");
+    setStatus("No picks to copy yet. Paste a list and click Check my list first.");
     return;
   }
   const lines = ["Best domain picks:", ""];
@@ -7826,6 +7890,20 @@ function toggleTopPicksExpanded() {
   renderTopPickCards();
   setStatus(topPicksExpanded ? "Showing more Top Picks." : "Showing the simplest Top Picks view.");
   trackEvent("top_picks_show_more_toggled", { expanded: topPicksExpanded });
+}
+
+function showNextGuidedPick() {
+  const total = topPickRows().length;
+  if (!total) {
+    setStatus("No backup pick yet. Paste names and check the list first.");
+    return;
+  }
+  topPicksExpanded = false;
+  guidedPickCount = Math.min(total, Math.max(1, guidedPickCount || 1) + 1);
+  renderResults();
+  setStatus(guidedPickCount >= total ? "Showing all Best Picks." : `Showing ${guidedPickCount} picks. Start with the highest-ranked name you like.`);
+  trackEvent("guided_next_pick_clicked", { visible_count: guidedPickCount, total });
+  saveState();
 }
 
 function openTopPicks() {
@@ -7953,6 +8031,7 @@ function setChecking(checking) {
   isChecking = checking;
   document.body.classList.toggle("is-checking", Boolean(checking));
   el.checkBtn.disabled = checking;
+  if (el.simpleCheckBtn) el.simpleCheckBtn.disabled = checking;
   el.stopBtn.disabled = !checking;
   const otherButtons = [
     el.removeTakenBtn, el.keepAvailableBtn, el.openAllBtn, el.openAvailableBtn, el.openFavoritesBtn, el.openAllTopPicksBtn,
@@ -8215,6 +8294,7 @@ function clearSession() {
   if (!confirm("Clear saved input, results, filters, and saved names from this browser?")) return;
   localStorage.removeItem(STATE_KEY);
   topPicksExpanded = false;
+  guidedPickCount = 3;
   winnerDoneShown = false;
   results = [];
   favorites = new Set();
@@ -8334,6 +8414,7 @@ function startOverSimple() {
   const canUndo = saveStartOverUndoSnapshot();
   stopRequested = true;
   topPicksExpanded = false;
+  guidedPickCount = 3;
   winnerDoneShown = false;
   results = [];
   favorites = new Set();
@@ -8541,6 +8622,7 @@ function bindEvents() {
   }
 
   el.checkBtn.addEventListener("click", runChecks);
+  if (el.simpleCheckBtn) el.simpleCheckBtn.addEventListener("click", runChecks);
   el.stopBtn.addEventListener("click", () => {
     stopRequested = true;
     setStatus("Stopping after current checks finish...");
@@ -8596,6 +8678,7 @@ function bindEvents() {
   if (el.cardCopyPriceLinksBtn) el.cardCopyPriceLinksBtn.addEventListener("click", copyTopThreePriceLinks);
   if (el.hideWeakPicksBtn) el.hideWeakPicksBtn.addEventListener("click", toggleHideWeakPicks);
   if (el.topPicksShowMoreBtn) el.topPicksShowMoreBtn.addEventListener("click", toggleTopPicksExpanded);
+  if (el.showNextPickBtn) el.showNextPickBtn.addEventListener("click", showNextGuidedPick);
   if (el.cardExportTopPicksBtn) el.cardExportTopPicksBtn.addEventListener("click", () => exportCsv("top_picks"));
   if (el.topPicksViewAllBtn) el.topPicksViewAllBtn.addEventListener("click", showAllResultsSection);
   if (el.topPicksNewSearchBtn) el.topPicksNewSearchBtn.addEventListener("click", startOverSimple);
@@ -8676,6 +8759,8 @@ function bindEvents() {
     setStatus("Local analytics debug events cleared from this browser.");
   });
   if (el.savedCheckPriceBtn) el.savedCheckPriceBtn.addEventListener("click", openSavedShortlistPrices);
+  if (el.savedReadyPriceBtn) el.savedReadyPriceBtn.addEventListener("click", openSavedShortlistPrices);
+  if (el.savedReadyNewSearchBtn) el.savedReadyNewSearchBtn.addEventListener("click", startOverSimple);
   if (el.savedReportBtn) el.savedReportBtn.addEventListener("click", copySavedDecisionReport);
   if (el.finalReportCopyBtn) el.finalReportCopyBtn.addEventListener("click", copySavedDecisionReport);
   if (el.finalReportCleanBtn) el.finalReportCleanBtn.addEventListener("click", copyCleanReport);

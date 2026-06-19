@@ -1,3 +1,25 @@
+# Domain Shortlist — v91 Launch Polish
+
+## v91 screenshot-driven polish
+
+- Widens the desktop layout so the app does not feel cramped when users zoom out or use Windows display scaling.
+- Fixes the offscreen skip link and the lower-page privacy/notes panel so neither appears as clipped or floating text.
+- Makes Best Picks the primary output and All Checked Names the secondary review area.
+- Changes registrar CTAs from pushy “Check price now” copy to honest availability/registrar checks.
+- Adds visible registrar/affiliate disclosure close to result CTAs while keeping affiliate mode off by default.
+- Adds `scripts/smoke-test.mjs` for static launch checks: duplicate IDs, missing DOM IDs, rel attributes, disclosure placement, privacy panel positioning, analytics sanitizer presence, and sitemap/robots consistency.
+
+Run locally:
+
+```bash
+node --check app.js
+node scripts/smoke-test.mjs
+python3 -m http.server 4173
+```
+
+Then open `http://localhost:4173/`, load the sample list, check names, save finalists, and verify registrar links open without buying anything.
+
+
 # Domain Shortlist — v84 Tool-First Final Layout
 
 ## v80 no-mistake simple layout
@@ -280,3 +302,43 @@ What changed:
 ## v84 Tool-First Final Layout
 
 This version is a visual/usability cleanup. It puts the paste box immediately after a compact header, hides empty zero-states, hides registrar/settings clutter until Advanced Mode, renames the full list to “All checked names,” and keeps one obvious next action visible at each step.
+
+
+## v86 decision mode updates
+
+- Uses a single-card decision flow so users start with #1 instead of scanning a grid.
+- Gives the top card explicit actions: Check price, Save finalist, Why this name, and Show another pick.
+- Improves the paste box visual treatment and keeps help short and close to the action.
+- Adds a tiny three-step result checklist after checking.
+
+
+## v87 premium decision + finish updates
+
+- Makes the #1 recommendation feel more like a premium decision card.
+- Keeps only the most useful public actions visible on Top Picks.
+- Moves copy/compare/export-style actions behind Advanced Mode.
+- Adds a saved-finalists finish summary so users know what to do next.
+- Uses clearer “done for now” language after a winner is checked.
+
+
+## v90 Ultra Simple Decision UI
+- Mobile-first final polish: tighter header, paste box above the fold, and hidden workflow pills on small screens.
+- Added a simple saved-finalists ready card with Check saved prices and Start new search.
+- Public #1 pick card is quieter: Check price + Save finalist are the main actions; deeper details stay tucked away.
+
+
+## v90 Ultra Simple Decision UI
+
+- First screen is now textarea-first: paste box, Check my list, upload/sample, then optional extras.
+- Target keywords are hidden under Improve ranking until needed.
+- Empty preview stats stay hidden until text is entered.
+- #1 recommendation card has stronger visual emphasis and simpler actions.
+- Public flow remains: paste names, check list, check price, save finalist.
+
+
+## V90 update — Final Decision Focus UI
+
+- Tightened the first screen so the paste box and Check my list button appear faster.
+- Made the #1 recommendation card more visually dominant.
+- Kept public card actions focused on Check price now, Save this, and Show another pick.
+- Hid duplicate/details-heavy controls from the normal public flow.

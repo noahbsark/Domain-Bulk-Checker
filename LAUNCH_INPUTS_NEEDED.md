@@ -173,3 +173,33 @@ UI audit pass complete. Before launch, visually test the page at desktop and mob
 - Public controls feel simple and self-explanatory.
 
 <!-- v84 Tool-First Final Layout: compact header, cleaner empty paste state, calmer results controls. -->
+
+
+## v86 launch note
+
+This version focuses on decision-mode UI polish: one obvious #1 recommendation, clearer paste area, and short in-context help.
+
+
+## v87 update
+
+No new launch inputs are required. This is a UI polish pass that improves the recommendation card, reduces public controls, and adds a clearer finish state for saved finalists.
+
+
+## v90 Ultra Simple Decision UI
+- Mobile-first final polish: tighter header, paste box above the fold, and hidden workflow pills on small screens.
+- Added a simple saved-finalists ready card with Check saved prices and Start new search.
+- Public #1 pick card is quieter: Check price + Save finalist are the main actions; deeper details stay tucked away.
+
+
+## v90 Ultra Simple Decision UI
+
+- First screen is now textarea-first: paste box, Check my list, upload/sample, then optional extras.
+- Target keywords are hidden under Improve ranking until needed.
+- Empty preview stats stay hidden until text is entered.
+- #1 recommendation card has stronger visual emphasis and simpler actions.
+- Public flow remains: paste names, check list, check price, save finalist.
+
+
+## V90 launch note
+
+This version is optimized for a simple public flow: paste names, check the list, start with the #1 card, and only show backups when needed.

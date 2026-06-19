@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Domain Shortlist — Simple Domain Finder</title>
-  <meta name="description" content="A simple, safe domain shortlisting tool that guides you from pasted ideas to best picks and registrar price checks." />
+  <title>Domain Shortlist — Pick the Best Domain Name</title>
+  <meta name="description" content="Paste a list of domain names, rank the strongest options, save finalists, and open a registrar to confirm final availability and price." />
   <meta name="theme-color" content="#2563eb" />
   <meta name="application-name" content="Domain Shortlist" />
   <meta name="author" content="Domain Shortlist" />
   <meta name="robots" content="index,follow" />
   <!-- Replace this canonical URL with your custom domain after launch, for example: https://yourdomain.com/ -->
   <link rel="canonical" href="https://noahbsark.github.io/Domain-Bulk-Checker/" />
-  <meta property="og:title" content="Domain Shortlist — Simple Domain Finder" />
-  <meta property="og:description" content="Paste names, check your list, and start with the best domain pick. Private, simple, and safe." />
+  <meta property="og:title" content="Domain Shortlist — Pick the Best Domain Name" />
+  <meta property="og:description" content="Paste domain ideas, review the top picks, save finalists, and confirm final price at a registrar." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://noahbsark.github.io/Domain-Bulk-Checker/" />
   <meta property="og:image" content="https://noahbsark.github.io/Domain-Bulk-Checker/og-image.png" />
@@ -20,8 +20,8 @@
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Domain Shortlist: Paste, shortlist, compare, and check price for domain names." />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Domain Shortlist — Simple Domain Finder" />
-  <meta name="twitter:description" content="Paste names, check your list, and start with the best pick." />
+  <meta name="twitter:title" content="Domain Shortlist — Pick the Best Domain Name" />
+  <meta name="twitter:description" content="Paste domain ideas, rank the best options, and confirm the winner at a registrar." />
   <meta name="twitter:image" content="https://noahbsark.github.io/Domain-Bulk-Checker/og-image.png" />
   <link rel="manifest" href="site.webmanifest" />
   <link rel="apple-touch-icon" href="favicon.svg" />
@@ -43,27 +43,25 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="style.css?v=84-tool-first-final" />
+  <link rel="stylesheet" href="style.css?v=90-final-decision" />
 </head>
-<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit v66-clean-results v67-compact-results v68-filter-polish v69-results-view-polish v70-inline-results v71-keyboard-summary v72-results-sort v73-visible-worth-reasons v74-scan-badges v76-result-undo-legend v77-guided-simple v78-simple-polish v79-no-mistake-simple v80-simple-first v81-final-simple-polish v82-tool-first v83-ui-audit v84-tool-first-final">
+<body class="v34-simple v35-beginner v37-launch-ready v38-simple-report v39-simple-copy v40-simple-reset v41-undo-share v42-simple-top-picks v44-simple-notes v47-clean-report v51-check-cleanup v55-winner-actions v57-done-archive v58-archive-manager v59-archive-import v60-archive-preview v61-session-summary v62-archive-pin-note v63-archive-bulk-import v64-archive-health-limit v66-clean-results v67-compact-results v68-filter-polish v69-results-view-polish v70-inline-results v71-keyboard-summary v72-results-sort v73-visible-worth-reasons v74-scan-badges v76-result-undo-legend v77-guided-simple v78-simple-polish v79-no-mistake-simple v80-simple-first v81-final-simple-polish v82-tool-first v83-ui-audit v84-tool-first-final v85-guided-result v86-decision-mode v87-premium-decision v88-ready-mobile v89-ultra-simple v90-final-decision v91-launch-polish">
   <a class="skip-link" href="#domain-input">Skip to domain input</a>
   <main class="shell">
     <header class="hero simple-hero">
       <div class="hero-copy">
         <p class="eyebrow">Simple domain finder</p>
         <h1>Paste domain names. Pick the best one.</h1>
-        <p>
-          Paste a list, click check, then start with the #1 pick.
-        </p>
+        <p>Private shortlist scoring for messy lists, bulk ideas, and quick registrar checks.</p>
         <div class="hero-actions">
-          <a class="button-link primary" href="#domain-input">Start</a>
+          <a class="button-link primary" href="#domain-input">Paste names</a>
           <button id="heroSampleBtn" type="button" class="ghost">Try sample</button>
           <button id="shareAppLinkBtn" type="button" class="ghost advanced-only-inline">Share app</button>
         </div>
         <div class="hero-steps simple-flow" aria-label="Workflow">
-          <span><b>1</b> Paste</span>
-          <span><b>2</b> Check</span>
-          <span><b>3</b> Start with #1</span>
+          <span><b>1</b> Paste names</span>
+          <span><b>2</b> Review top picks</span>
+          <span><b>3</b> Confirm at registrar</span>
         </div>
       </div>
       <div class="hero-visual" aria-hidden="true">
@@ -183,7 +181,7 @@
       <div class="panel-title-row">
         <div>
           <h2>Paste your list</h2>
-          <p class="muted">One domain per line is best. URLs and messy text are okay.</p>
+          <p class="muted">Paste domains, URLs, or rough ideas. The app cleans them.</p>
         </div>
         <div class="input-title-actions">
           <span id="inputCount" class="muted">0 lines</span>
@@ -191,7 +189,11 @@
         </div>
       </div>
       <label class="sr-only" for="inputBox">Domain ideas or URLs to check</label>
-      <textarea id="inputBox" spellcheck="false" placeholder="rentorbuyguide.com&#10;probate-helper-247.com&#10;diyprobatekit.com"></textarea>
+      <textarea id="inputBox" spellcheck="false" placeholder="brandname.com&#10;secondidea.io&#10;another good name"></textarea>
+      <div class="v89-first-action-row" aria-label="Start checking">
+        <button id="simpleCheckBtn" type="button" class="primary v89-main-check">Check my list</button>
+        <span class="v89-first-help">Checks and ranks only. No buying happens here.</span>
+      </div>
       <div id="inputCoachPanel" class="input-coach-panel" aria-live="polite">
         <div>
           <strong id="inputCoachTitle">Paste names here to begin.</strong>
@@ -233,23 +235,25 @@
           <button id="largeListDismissBtn" type="button" class="ghost">Keep normal checks</button>
         </div>
       </div>
-      <div class="keyword-helper launch-keyword-helper">
+      <div class="button-row wrap v89-input-links">
+        <button id="loadTxtBtn" type="button" class="ghost">Upload list</button>
+        <input id="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" hidden />
+        <button id="pasteDemoBtn" type="button" class="ghost">Try sample</button>
+        <button id="clearInputBtn" type="button" class="ghost v89-clear-input">Clear</button>
+      </div>
+      <details class="keyword-helper launch-keyword-helper v89-keyword-details">
+        <summary>Improve ranking <span>optional</span></summary>
         <label for="keywordsInput">
-          <span>Target keywords / niche <small>Optional, but improves ranking</small></span>
+          <span>Target keywords or niche <small>Optional</small></span>
           <input id="keywordsInput" type="text" placeholder="roofing, quote, repair" />
         </label>
         <p class="muted">Examples: <strong>fitness, coach, app</strong> or <strong>rent, buy, calculator</strong>. These tune scoring; they do not affect registrar availability.</p>
-      </div>
-      <div class="button-row wrap">
-        <button id="loadTxtBtn" type="button">Upload list</button>
-        <input id="fileInput" type="file" accept=".txt,.csv,text/plain,text/csv" hidden />
-        <button id="clearInputBtn" type="button">Clear</button>
-        <button id="pasteDemoBtn" type="button" class="ghost">Try sample</button>
-      </div>
-      <div class="template-panel" aria-label="Quick-start templates">
+      </details>
+      <details class="template-panel v89-template-details" aria-label="Quick-start templates">
+        <summary>Need examples?</summary>
         <div>
-          <strong>Not sure what to paste?</strong>
-          <span>Start with a template, then replace the examples with your own ideas.</span>
+          <strong>Load a starter list.</strong>
+          <span>Use a template, then replace the examples with your own ideas.</span>
         </div>
         <div class="template-grid">
           <button type="button" class="template-chip" data-template-kind="startup">Startup names</button>
@@ -259,7 +263,7 @@
           <button type="button" class="template-chip" data-template-kind="store">Product/store</button>
           <button type="button" class="template-chip" data-template-kind="seo">SEO domains</button>
         </div>
-      </div>
+      </details>
     </section>
 
     <section class="panel compact settings-panel simple-settings-panel">
@@ -487,7 +491,7 @@
       </div>
       <div class="next-step-buttons">
         <button id="nextShowTopPicksBtn" type="button">Review top picks</button>
-        <button id="nextOpenTopPicksBtn" type="button" class="success ghost">Check #1 price</button>
+        <button id="nextOpenTopPicksBtn" type="button" class="success ghost">Check top pick</button>
         <button id="nextViewAllBtn" type="button" class="ghost">View all checked names</button>
         <button id="nextExportTopPicksBtn" type="button" class="ghost advanced-only-inline">Export top picks</button>
       </div>
@@ -497,39 +501,45 @@
       <div class="top-picks-title-row">
         <div>
           <h2 id="topPicksHeading">Best picks</h2>
-          <p class="muted">Start with #1. Start with #1. Open all checked names only if you want to review everything.</p>
+          <p class="muted">Start with the top pick, then use the backups only if the first name is too expensive or unavailable.</p>
         </div>
         <div class="top-picks-controls">
           <span id="topPicksCount" class="muted">No picks yet</span>
           <span id="topSavedCountBadge" class="saved-count-badge is-hidden">0 saved</span>
-          <button id="cardOpenTopPicksBtn" type="button" class="ghost">Check top 3</button>
-          <button id="cardCheckBestChoiceBtn" type="button" class="success ghost">Check #1 price</button>
-          <button id="cardCopyBestChoiceBtn" type="button" class="ghost">Copy best choice</button>
-          <button id="cardCopyBest3Btn" type="button" class="ghost">Copy best 3</button>
-          <button id="cardCopyBestReasonsBtn" type="button" class="ghost">Copy best with reasons</button>
-          <button id="cardCopyPriceLinksBtn" type="button" class="ghost">Copy price-check links</button>
-          <button id="cardCopyTopPicksBtn" type="button" class="ghost">Copy Top Picks</button>
-          <button id="hideWeakPicksBtn" type="button" class="ghost" aria-pressed="false">Hide weak picks</button>
-          <button id="topPicksShowMoreBtn" type="button" class="ghost is-hidden" aria-expanded="false">Show more picks</button>
-          <button id="cardExportTopPicksBtn" type="button" class="ghost advanced-only-inline">Export top picks</button>
+          <button id="cardOpenTopPicksBtn" type="button" class="ghost v87-secondary-control">Check backup options</button>
+          <button id="cardCheckBestChoiceBtn" type="button" class="success ghost">Check top pick</button>
+          <button id="showNextPickBtn" type="button" class="ghost is-hidden">Show another pick</button>
+          <button id="cardCopyBestChoiceBtn" type="button" class="ghost v87-secondary-control">Copy top pick</button>
+          <button id="cardCopyBest3Btn" type="button" class="ghost v87-secondary-control">Copy top 3</button>
+          <button id="cardCopyBestReasonsBtn" type="button" class="ghost v87-secondary-control">Copy top 3 with reasons</button>
+          <button id="cardCopyPriceLinksBtn" type="button" class="ghost v87-secondary-control">Copy registrar links</button>
+          <button id="cardCopyTopPicksBtn" type="button" class="ghost v87-secondary-control">Copy Top Picks</button>
+          <button id="hideWeakPicksBtn" type="button" class="ghost v87-secondary-control" aria-pressed="false">Hide weak picks</button>
+          <button id="topPicksShowMoreBtn" type="button" class="ghost is-hidden v87-secondary-control" aria-expanded="false">Show more picks</button>
+          <button id="cardExportTopPicksBtn" type="button" class="ghost advanced-only-inline v87-secondary-control">Export top picks</button>
           <button id="topPicksViewAllBtn" type="button" class="ghost">All checked names</button>
           <button id="topPicksNewSearchBtn" type="button" class="ghost">New search</button>
-          <span class="v78-button-help v79-button-help">Recommended: click <strong>Check #1 price</strong>. It opens one registrar tab; nothing is purchased here.</span>
+          <span class="v78-button-help v79-button-help">Recommended: check the top pick first. Registrar tabs open separately; nothing is bought here.</span>
         </div>
       </div>
       <div class="v79-simple-path" aria-label="Recommended simple path">
         <strong>Simple path:</strong>
-        <span>Check #1 price → star finalists → decide at the registrar.</span>
+        <span>Check the top pick → save finalists → decide at the registrar.</span>
       </div>
-      <p id="topPicksPriceLimitNote" class="muted top-picks-price-note">Tip: start with one price check. Use top 3 only if you already like several names.</p>
-      <p class="muted buy-ready-reminder">Before buying: check spelling, price, renewal cost, and trademark risk.</p>
+      <ol class="v86-result-checklist" aria-label="What to do next">
+        <li><span>1</span><strong>Check top pick</strong></li>
+        <li><span>2</span><strong>Save finalists</strong></li>
+        <li><span>3</span><strong>Confirm at registrar</strong></li>
+      </ol>
+      <p id="topPicksPriceLimitNote" class="muted top-picks-price-note">Start with one registrar check. Use backups only if the first option does not work.</p>
+      <p class="muted buy-ready-reminder registrar-disclosure">Registrar links may be affiliate links. We may earn a commission at no extra cost to you. Final availability and price are confirmed at the registrar.</p>
       <div id="topPicksEmpty" class="top-picks-empty">
         <strong>Your best picks will appear here.</strong>
-        <span>Paste names above, then click Check my list. Start with the first card.</span>
+        <span>Paste names above, then check your list. The strongest three picks will appear here.</span>
       </div>
       <div class="plain-label-guide" aria-label="What result labels mean">
-        <span><strong>Worth checking</strong> means the name scored well and is not known to be taken.</span>
-        <span><strong>Check price</strong> opens your selected registrar; the registrar confirms final availability and price.</span>
+        <span><strong>Worth checking</strong> means the name scored well and still needs registrar confirmation.</span>
+        <span><strong>Check registrar</strong> opens your selected registrar; it does not reserve or buy the domain.</span>
         <span><strong>Possible concern</strong> means review the name before buying.</span>
       </div>
       <div id="topPicksCards" class="top-picks-grid" aria-live="polite"></div>
@@ -719,18 +729,18 @@
       </div>
       <div class="results-action-groups v78-results-actions" aria-label="All Results actions">
         <div class="results-action-group recommended-actions">
-          <span class="action-group-label">Main actions</span>
+          <span class="action-group-label">Recommended actions</span>
           <button id="saveVisibleWorthCheckingBtn" type="button" class="success" title="Marks visible good names as saved finalists. You can undo the last bulk save.">Save good names</button>
           <button id="undoSaveVisibleBtn" type="button" class="ghost is-hidden" title="Undo only the last bulk save.">Undo save</button>
-          <button id="editResultsFiltersBtn" type="button" class="ghost" aria-expanded="false" title="Search and filter. Filters only hide rows temporarily.">Search list</button>
+          <button id="editResultsFiltersBtn" type="button" class="ghost" aria-expanded="false" title="Search and filter. Filters only hide rows temporarily.">Search / filter</button>
           <button id="allResultsBackTopPicksBtn" type="button" class="ghost" title="Return to the recommended shortlist.">Back to best picks</button>
-          <span class="v78-action-help v79-action-help">Save only stars names. Search only filters this page.</span>
+          <span class="v78-action-help v79-action-help">Save only marks finalists. Search only filters this page.</span>
         </div>
         <details class="v78-more-options">
           <summary>More view options</summary>
           <div class="results-action-group view-actions">
             <span class="action-group-label">Optional</span>
-            <button id="copyVisibleWorthReasonsBtn" type="button" class="ghost" title="Copies visible good names with a short reason for each.">Copy names</button>
+            <button id="copyVisibleWorthReasonsBtn" type="button" class="ghost" title="Copies visible good names with a short reason for each.">Copy names + reasons</button>
             <button id="copyWorthCheckingBtn" type="button" class="ghost" title="Copies only visible good domains, one per line.">Copy names only</button>
             <button id="hideWeakNamesBtn" type="button" class="ghost" aria-pressed="false" title="Temporarily hides lower-score names. Nothing is deleted.">Hide weak</button>
             <button id="takenToggleBtn" type="button" class="ghost is-hidden" aria-pressed="false" title="Show or hide taken names. Nothing is deleted.">Show taken</button>
@@ -746,7 +756,7 @@
         </div>
       </div>
       <div class="v79-no-mistake-help" aria-label="Short help for result actions">
-        <div><strong>Recommended:</strong><span>Start with the #1 pick, then save any backups you like.</span></div>
+        <div><strong>Recommended:</strong><span>Start with the top pick, then save any backups you like.</span></div>
         <div><strong>Safe:</strong><span>No button here buys a domain or changes a registrar account.</span></div>
       </div>
       <div class="all-results-dashboard" aria-label="All results controls">
@@ -781,13 +791,13 @@
           <button type="button" data-result-badge-filter="taken">Taken</button>
         </div>
         <p id="allResultsHelper" class="muted all-results-helper">Every checked name is here. Hidden rows are not deleted.</p>
-        <p class="v77-safe-note v78-safe-note">Short help: use green buttons first. Gray buttons are optional. Registrar buttons open a new tab before any purchase.</p>
+        <p class="v77-safe-note v78-safe-note">Short help: use green buttons first. Gray buttons are optional. Registrar links open a new tab before any purchase.</p>
         <p id="takenCollapseNote" class="taken-collapse-note is-hidden" aria-live="polite"></p>
         <div id="resultsCleanedNotice" class="results-cleaned-notice is-hidden" aria-live="polite">
           <span id="resultsCleanedText">Results cleaned up. Nothing was deleted.</span>
           <button id="showEverythingResultsBtn" type="button" class="ghost small-button">Reset view</button>
         </div>
-        <p class="muted taken-explanation">Taken means already registered or likely unavailable. Check registrar results before making a final decision.</p>
+        <p class="muted taken-explanation">Likely unavailable means public checks found a registered or conflicting result. Check registrar results before making a final decision.</p>
       </div>
       <div id="resultCards" class="result-cards" aria-live="polite"></div>
       <div class="table-wrap">
@@ -882,6 +892,18 @@
       <div id="savedWinnerHint" class="saved-finish-helper winner-check-helper is-hidden" aria-live="polite">
         <span id="savedWinnerHintText">Winner not checked yet.</span>
       </div>
+      <div id="savedDoneSummary" class="saved-done-summary is-hidden" aria-live="polite"></div>
+      <div id="savedReadyCard" class="saved-ready-card is-hidden" aria-live="polite">
+        <div>
+          <p class="eyebrow">You’re ready</p>
+          <h3 id="savedReadyTitle">You saved finalists.</h3>
+          <p id="savedReadyText" class="muted">Next: check saved prices, then confirm spelling and availability at the registrar.</p>
+        </div>
+        <div class="saved-ready-actions">
+          <button id="savedReadyPriceBtn" type="button" class="success">Check saved prices</button>
+          <button id="savedReadyNewSearchBtn" type="button" class="ghost">Start new search</button>
+        </div>
+      </div>
       <div id="savedShortlistEmpty" class="saved-empty">
         <strong>No saved names yet.</strong>
         <span>Click the star on a Top Pick or All Results card to save it here.</span>
@@ -936,8 +958,8 @@
     </section>
 
     <section id="privacy-limits" class="panel note public-note">
-      <h2>Privacy</h2>
-      <p class="muted launch-page-links">Need the full launch pages? Read the <a href="privacy.html">Privacy Policy</a>, <a href="affiliate-disclosure.html">Affiliate Disclosure</a>, and <a href="terms.html">Terms & Limitations</a>.</p>
+      <h2>Important notes</h2>
+      <p class="muted launch-page-links">Read the full <a href="privacy.html">Privacy Policy</a>, <a href="affiliate-disclosure.html">Affiliate Disclosure</a>, and <a href="terms.html">Terms & Limitations</a>.</p>
       <div class="public-note-grid">
         <p>
           <strong>Availability is not guaranteed.</strong> This app is a fast triage tool. <strong>Worth checking</strong> means “worth checking,” not “guaranteed purchasable.” Registrars may mark names as premium, reserved, blocked, or unavailable.
@@ -1010,7 +1032,7 @@
     </footer>
   </main>
 
-  <script src="app.js?v=51-check-cleanup"></script>
+  <script src="app.js?v=91-launch-polish"></script>
   <noscript>
     <div class="noscript-warning">Domain Shortlist needs JavaScript to score domains and build registrar links.</div>
   </noscript>
