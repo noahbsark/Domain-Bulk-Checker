@@ -10895,3 +10895,203 @@ body.v95-clean-launch-flow .result-card.compact-result-row .compact-disclosure {
   }
 }
 
+
+
+/* v96 final polish: compact launch, cleaner ready state, no skip-link flash, and steadier footer at 125%-150% scaling. */
+body.v96-final-polish {
+  --v96-max: 1100px;
+}
+
+/* Global hardening: old .skip-link rules placed it just above the viewport, which could peek at high scaling. */
+.skip-link:not(:focus):not(:focus-visible),
+body.v96-final-polish .skip-link:not(:focus):not(:focus-visible) {
+  position: fixed !important;
+  left: -100000px !important;
+  top: -100000px !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  min-height: 1px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(100%) !important;
+  white-space: nowrap !important;
+  opacity: 0 !important;
+  transform: translate(-200vw, -200vh) !important;
+  pointer-events: none !important;
+}
+
+body.v96-final-polish .skip-link:focus,
+body.v96-final-polish .skip-link:focus-visible {
+  position: fixed !important;
+  left: 18px !important;
+  top: 18px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 10px 12px !important;
+  margin: 0 !important;
+  clip: auto !important;
+  clip-path: none !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+body.v96-final-polish .shell {
+  max-width: var(--v96-max) !important;
+}
+
+/* Launch page should show the whole task without a giant empty box. */
+body.v96-final-polish:not(.has-results) .hero.simple-hero {
+  padding-top: clamp(20px, 2.1vw, 28px) !important;
+  padding-bottom: clamp(20px, 2.1vw, 28px) !important;
+}
+
+body.v96-final-polish .hero-copy h1 {
+  font-size: clamp(2rem, 2.35vw, 2.7rem) !important;
+  line-height: 1.03 !important;
+  max-width: 980px !important;
+}
+
+body.v96-final-polish #inputBox {
+  min-height: clamp(108px, 8.5vw, 132px) !important;
+  max-height: 164px !important;
+  padding: 14px 16px !important;
+  tab-size: 2;
+}
+
+body.v96-final-polish.has-clean-input:not(.has-results) #inputBox {
+  min-height: 74px !important;
+  max-height: 92px !important;
+}
+
+body.v96-final-polish #inputBox::placeholder {
+  color: #94a3b8;
+}
+
+/* The ready panel should be the main thing after sample/paste, not a second wall of UI. */
+body.v96-final-polish.has-clean-input:not(.has-results) #inputCoachPanel {
+  display: none !important;
+}
+
+body.v96-final-polish.has-clean-input:not(.has-results) #inputPreviewPanel {
+  margin-top: 12px !important;
+  padding: 14px 16px !important;
+}
+
+body.v96-final-polish.has-clean-input:not(.has-results) .input-preview-head {
+  align-items: center !important;
+}
+
+body.v96-final-polish.has-clean-input:not(.has-results) .input-preview-stats {
+  gap: 8px !important;
+}
+
+body.v96-final-polish.has-clean-input:not(.has-results) .input-preview-stats > div {
+  min-height: 58px !important;
+  padding: 10px 12px !important;
+}
+
+/* Make the final Best Picks view strong without feeling stretched. */
+body.v96-final-polish .top-picks-grid {
+  max-width: 860px !important;
+  gap: 16px !important;
+}
+
+body.v96-final-polish .top-pick-card:first-child,
+body.v96-final-polish .decision-primary-card:first-child {
+  width: min(100%, 600px) !important;
+}
+
+body.v96-final-polish .top-pick-card,
+body.v96-final-polish .premium-decision-card {
+  padding: clamp(15px, 1.8vw, 20px) !important;
+}
+
+body.v96-final-polish .top-pick-card:first-child .decision-domain,
+body.v96-final-polish .decision-primary-card:first-child .decision-domain {
+  font-size: clamp(1.55rem, 2.35vw, 2.05rem) !important;
+}
+
+body.v96-final-polish .decision-domain {
+  font-size: clamp(1.25rem, 1.8vw, 1.55rem) !important;
+}
+
+body.v96-final-polish .decision-reason {
+  max-width: 100% !important;
+}
+
+/* Important notes stay visible for trust, but should not dominate the launch page. */
+body.v96-final-polish #privacy-limits {
+  padding: clamp(16px, 1.8vw, 20px) !important;
+}
+
+body.v96-final-polish .public-note-grid {
+  gap: 10px !important;
+}
+
+body.v96-final-polish .public-note-grid .trust-card,
+body.v96-final-polish .public-note-grid > * {
+  padding: 14px 16px !important;
+  font-size: .92rem !important;
+  line-height: 1.42 !important;
+}
+
+body.v96-final-polish .public-note-grid p {
+  line-height: 1.42 !important;
+}
+
+/* Keep footer links on one line at the desktop widths shown in screenshots. */
+body.v96-final-polish .site-footer {
+  align-items: flex-start !important;
+}
+
+body.v96-final-polish .site-footer nav {
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+  min-width: max-content !important;
+}
+
+body.v96-final-polish .site-footer nav a {
+  white-space: nowrap !important;
+}
+
+@media (max-width: 900px) {
+  body.v96-final-polish .site-footer {
+    flex-direction: column !important;
+  }
+
+  body.v96-final-polish .site-footer nav {
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.v96-final-polish .hero-copy h1 {
+    font-size: clamp(1.75rem, 8vw, 2.25rem) !important;
+  }
+
+  body.v96-final-polish #inputBox,
+  body.v96-final-polish.has-clean-input:not(.has-results) #inputBox {
+    min-height: 118px !important;
+    max-height: 180px !important;
+  }
+
+  body.v96-final-polish.has-clean-input:not(.has-results) .input-preview-head {
+    align-items: flex-start !important;
+  }
+
+  body.v96-final-polish .top-picks-grid {
+    max-width: 100% !important;
+  }
+}

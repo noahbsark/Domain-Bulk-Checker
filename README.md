@@ -1,4 +1,27 @@
-# Domain Shortlist — v95 Clean Launch Flow
+# Domain Shortlist — v96 Final Polish
+
+## v96 screenshot fixes
+
+- Adds a harder no-flash skip-link fix so clipped top-left text should not appear even before the full stylesheet finishes loading.
+- Updates cache-busters and body class to `v96-final-polish`.
+- Makes the empty paste box and clean sample state more compact at Windows 125%-150% display scaling.
+- Keeps the ready/check preview prominent after sample paste without showing duplicate coaching text.
+- Tightens Best Picks card sizing slightly while keeping the #1 pick featured.
+- Keeps the footer links on one desktop line when space allows.
+- Keeps Important Notes visible for trust/compliance, but makes the note cards slightly calmer and more compact.
+
+## Local test commands
+
+```bash
+node --check app.js
+node scripts/smoke-test.mjs
+python3 -m http.server 4173
+```
+
+After pushing, hard refresh the live site with Ctrl+F5.
+
+---
+
 
 ## v95 screenshot fixes
 

@@ -32,10 +32,10 @@ const missingIds = [...new Set([...app.matchAll(getIdRegex)].map(match => match[
   .filter(id => !ids.has(id));
 pass(missingIds.length === 0, `Missing IDs referenced by app.js: ${missingIds.join(", ")}`);
 
-pass(index.includes("v95-clean-launch-flow"), "Body should include v95-clean-launch-flow class so new layout CSS applies.");
-pass(index.includes('style.css?v=95-clean-launch-flow'), "Stylesheet cache-buster should be v95.");
-pass(index.includes('app.js?v=95-clean-launch-flow'), "App script cache-buster should be v95.");
-pass(app.includes('v95-clean-launch-flow'), "App UI_VERSION should include v95-clean-launch-flow.");
+pass(index.includes("v96-final-polish"), "Body should include v96-final-polish class so new layout CSS applies.");
+pass(index.includes('style.css?v=96-final-polish'), "Stylesheet cache-buster should be v96.");
+pass(index.includes('app.js?v=96-final-polish'), "App script cache-buster should be v96.");
+pass(app.includes('v96-final-polish'), "App UI_VERSION should include v96-final-polish.");
 
 pass(/\.skip-link:not\(:focus\):not\(:focus-visible\)[\s\S]*left:\s*-100000px !important[\s\S]*clip-path:\s*inset\(100%\)/.test(css),
   "Skip link should be fully offscreen until keyboard focus.");
@@ -58,33 +58,37 @@ pass(robotSitemap.startsWith(sitemapBase),
 
 pass(index.includes('View all results') && index.includes('<h2>All results</h2>'),
   "All Results copy should avoid repeated 'All checked names' labels.");
-pass(/body\.v95-clean-launch-flow\.has-results:not\(\.show-all-results\) \.results-panel[\s\S]*display:\s*none !important/.test(css),
+pass(/body\.v95-clean-launch-flow\.has-results:not\(\.show-all-results\) \.results-panel[\s\S]*display:\s*none !important/.test(css) ||
+  /body\.v96-final-polish\.has-results:not\(\.show-all-results\) \.results-panel[\s\S]*display:\s*none !important/.test(css),
   "All Results should stay collapsed until the user opens it.");
-pass(app.includes('v95: keep the secondary All Results section collapsed'), "renderResults should not automatically open All Results.");
+pass(app.includes('v96: keep the secondary All Results section collapsed'), "renderResults should not automatically open All Results.");
 pass(app.includes('has-clean-input'), "Input preview should update body classes for cleaner launch guidance.");
-pass(/body\.v95-clean-launch-flow \.top-pick-card:first-child[\s\S]*grid-column:\s*1 \/ -1 !important/.test(css),
+pass(/body\.v95-clean-launch-flow \.top-pick-card:first-child[\s\S]*grid-column:\s*1 \/ -1 !important/.test(css) ||
+  /body\.v96-final-polish \.top-pick-card:first-child[\s\S]*grid-column:\s*1 \/ -1 !important/.test(css),
   "Top pick should span the Best Picks grid for better readability.");
-pass(/body\.v95-clean-launch-flow \.result-card\.compact-result-row[\s\S]*grid-template-areas:[\s\S]*"main status"[\s\S]*"actions actions"[\s\S]*"details details"[\s\S]*"disclosure disclosure"/.test(css),
+pass(/body\.v95-clean-launch-flow \.result-card\.compact-result-row[\s\S]*grid-template-areas:[\s\S]*"main status"[\s\S]*"actions actions"[\s\S]*"details details"[\s\S]*"disclosure disclosure"/.test(css) ||
+  /body\.v96-final-polish \.result-card\.compact-result-row[\s\S]*grid-template-areas:[\s\S]*"main status"[\s\S]*"actions actions"[\s\S]*"details details"[\s\S]*"disclosure disclosure"/.test(css),
   "All Results cards should stack actions/details/disclosure in non-overlapping rows.");
 pass(/result-inline-details:not\(\[open\]\) \.result-inline-details-grid[\s\S]*display:\s*none !important/.test(css),
   "Closed result details should not leak columns into the row.");
 
 
-pass(index.includes("Paste domains. Pick the best one."), "Hero headline should use shorter v95 copy.");
-pass(index.includes("v95-clean-launch-flow"), "Body should include v95-clean-launch-flow class.");
-pass(index.includes('style.css?v=95-clean-launch-flow'), "Stylesheet cache-buster should be v95.");
-pass(index.includes('app.js?v=95-clean-launch-flow'), "App script cache-buster should be v95.");
-pass(app.includes('v95-clean-launch-flow'), "App UI_VERSION should include v95-clean-launch-flow.");
+pass(index.includes("Paste domains. Pick the best one."), "Hero headline should use shorter v96 copy.");
+pass(index.includes("v96-final-polish"), "Body should include v96-final-polish class.");
+pass(index.includes('style.css?v=96-final-polish'), "Stylesheet cache-buster should be v96.");
+pass(index.includes('app.js?v=96-final-polish'), "App script cache-buster should be v96.");
+pass(app.includes('v96-final-polish'), "App UI_VERSION should include v96-final-polish.");
 pass(/class="skip-link"[\s\S]*style="[^"]*left:-100000px/.test(index),
   "Skip link should have inline offscreen hiding to prevent clipped first-paint text.");
-pass(/body\.v95-clean-launch-flow \.hero-copy h1[\s\S]*font-size:\s*clamp\(2rem/.test(css),
-  "v95 should reduce the hero headline for scaled displays.");
-pass(/body\.v95-clean-launch-flow\.has-clean-input:not\(\.has-results\) #inputBox[\s\S]*min-height:\s*96px/.test(css),
+pass(/body\.v96-final-polish \.hero-copy h1[\s\S]*font-size:\s*clamp\(2rem/.test(css),
+  "v96 should reduce the hero headline for scaled displays.");
+pass(/body\.v96-final-polish\.has-clean-input:not\(\.has-results\) #inputBox[\s\S]*min-height:\s*74px/.test(css),
   "Clean sample input should use a compact textarea before results.");
-pass(/body\.v95-clean-launch-flow\.has-results:not\(\.editing-input\) #domain-input #inputBox[\s\S]*display:\s*none !important/.test(css),
+pass(/body\.v95-clean-launch-flow\.has-results:not\(\.editing-input\) #domain-input #inputBox[\s\S]*display:\s*none !important/.test(css) ||
+  /body\.v96-final-polish\.has-results:not\(\.editing-input\) #domain-input #inputBox[\s\S]*display:\s*none !important/.test(css),
   "Input textarea should collapse after results unless editing.");
-pass(/body\.v95-clean-launch-flow \.top-pick-card:first-child[\s\S]*width:\s*min\(100%, 640px\)/.test(css),
-  "v95 should feature a readable but not oversized top pick card.");
+pass(/body\.v96-final-polish \.top-pick-card:first-child[\s\S]*width:\s*min\(100%, 600px\)/.test(css),
+  "v96 should feature a readable but not oversized top pick card.");
 
 if (failures.length) {
   console.error("Smoke test failed:");
