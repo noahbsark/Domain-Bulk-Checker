@@ -10358,3 +10358,275 @@ body.v93-cache-layout-tune .site-footer {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* v94 results-focus: apply the cache/layout tune, remove duplicate CTAs, and keep All Results secondary. */
+body.v94-results-focus {
+  --v94-max: 1120px;
+  --v94-gutter: clamp(22px, 5vw, 88px);
+}
+
+/* Universal skip-link hidden state. This fixes the clipped top-left text even if older body classes or cached rules load. */
+.skip-link:not(:focus):not(:focus-visible),
+body.v94-results-focus .skip-link:not(:focus):not(:focus-visible) {
+  position: fixed !important;
+  left: -100000px !important;
+  top: -100000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(100%) !important;
+  transform: none !important;
+  color: transparent !important;
+  background: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  white-space: nowrap !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.v94-results-focus .skip-link:focus,
+body.v94-results-focus .skip-link:focus-visible {
+  position: fixed !important;
+  left: 16px !important;
+  top: 16px !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 10px 12px !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  color: #fff !important;
+  background: #111827 !important;
+  font-size: .95rem !important;
+  line-height: 1.2 !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 10000 !important;
+}
+
+body.v94-results-focus .shell {
+  width: min(var(--v94-max), calc(100vw - var(--v94-gutter))) !important;
+  max-width: var(--v94-max) !important;
+  margin-top: clamp(18px, 2.2vw, 28px) !important;
+}
+
+body.v94-results-focus:not(.has-results) .hero.simple-hero {
+  padding: clamp(24px, 3vw, 34px) !important;
+}
+
+body.v94-results-focus:not(.has-results) .hero-copy h1 {
+  font-size: clamp(2.15rem, 3vw, 3.05rem) !important;
+  max-width: 760px;
+}
+
+body.v94-results-focus #inputBox {
+  min-height: clamp(140px, 14vw, 180px) !important;
+  line-height: 1.55 !important;
+}
+
+/* Once clean input is ready, remove duplicate guidance and keep one obvious Check my list button. */
+body.v94-results-focus.has-clean-input:not(.has-results) #inputCoachPanel {
+  display: none !important;
+}
+
+body.v94-results-focus:not(.advanced-mode) #previewCheckBtn {
+  display: none !important;
+}
+
+body.v94-results-focus .input-preview-panel:not(.is-empty) {
+  margin-top: 12px !important;
+}
+
+body.v94-results-focus .input-preview-head {
+  gap: 14px !important;
+}
+
+body.v94-results-focus .input-preview-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+/* Best Picks should be the main product surface: the winner gets the full row, backups are wide enough to read. */
+body.v94-results-focus .top-picks-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+body.v94-results-focus .top-pick-card:first-child,
+body.v94-results-focus .decision-primary-card:first-child {
+  grid-column: 1 / -1 !important;
+}
+
+body.v94-results-focus .top-pick-card:first-child .decision-domain,
+body.v94-results-focus .decision-primary-card:first-child .decision-domain {
+  font-size: clamp(1.55rem, 2.3vw, 2.1rem) !important;
+  overflow-wrap: break-word !important;
+}
+
+body.v94-results-focus .decision-domain {
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  hyphens: none !important;
+}
+
+body.v94-results-focus .decision-actions {
+  grid-template-columns: 1fr !important;
+}
+
+body.v94-results-focus .top-pick-card:first-child .decision-actions,
+body.v94-results-focus .decision-primary-card:first-child .decision-actions {
+  grid-template-columns: minmax(210px, 1fr) minmax(140px, auto) !important;
+}
+
+body.v94-results-focus .top-picks-controls #topPicksViewAllBtn {
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+  background: #eff6ff !important;
+}
+
+/* All Results is intentionally collapsed after checking. Open it with View all results. */
+body.v94-results-focus.has-results:not(.show-all-results) .results-panel {
+  display: none !important;
+}
+
+body.v94-results-focus.show-all-results .results-panel {
+  display: block !important;
+}
+
+body.v94-results-focus .results-panel {
+  margin-top: 18px !important;
+}
+
+body.v94-results-focus .results-title-row .eyebrow {
+  font-size: .72rem !important;
+}
+
+body.v94-results-focus .results-title-row h2::after {
+  content: "Secondary view" !important;
+}
+
+/* When All Results is opened, make each row compact and non-overlapping. */
+body.v94-results-focus .result-card.compact-result-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-areas:
+    "main status"
+    "actions actions"
+    "details details"
+    "disclosure disclosure" !important;
+  gap: 10px 16px !important;
+  padding: 16px 18px !important;
+  overflow: visible !important;
+}
+
+body.v94-results-focus .result-card.compact-result-row .result-main {
+  grid-area: main !important;
+  min-width: 0 !important;
+}
+
+body.v94-results-focus .result-card.compact-result-row .result-status-line {
+  grid-area: status !important;
+  justify-self: end !important;
+  align-self: start !important;
+  max-width: 320px !important;
+}
+
+body.v94-results-focus .result-card.compact-result-row .result-card-actions.compact-actions {
+  grid-area: actions !important;
+  display: grid !important;
+  grid-template-columns: minmax(180px, 280px) auto !important;
+  justify-content: start !important;
+  gap: 8px !important;
+}
+
+body.v94-results-focus .result-card.compact-result-row .result-inline-details {
+  grid-area: details !important;
+  margin: 0 !important;
+}
+
+body.v94-results-focus .result-card.compact-result-row .result-inline-details:not([open]) .result-inline-details-grid {
+  display: none !important;
+}
+
+body.v94-results-focus .result-card.compact-result-row .compact-disclosure {
+  grid-area: disclosure !important;
+  justify-self: start !important;
+  text-align: left !important;
+  max-width: none !important;
+  margin: 0 !important;
+  color: #64748b !important;
+}
+
+@media (max-width: 920px) {
+  body.v94-results-focus .top-picks-grid {
+    grid-template-columns: 1fr !important;
+    max-width: none;
+  }
+
+  body.v94-results-focus .top-pick-card:first-child,
+  body.v94-results-focus .decision-primary-card:first-child {
+    grid-column: auto !important;
+  }
+
+  body.v94-results-focus .top-pick-card:first-child .decision-actions,
+  body.v94-results-focus .decision-primary-card:first-child .decision-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.v94-results-focus {
+    --v94-gutter: 20px;
+  }
+
+  body.v94-results-focus .shell {
+    width: min(100% - 20px, var(--v94-max)) !important;
+  }
+
+  body.v94-results-focus .hero-copy h1 {
+    font-size: clamp(1.85rem, 10vw, 2.45rem) !important;
+  }
+
+  body.v94-results-focus .input-preview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.v94-results-focus .result-card.compact-result-row {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "main"
+      "status"
+      "actions"
+      "details"
+      "disclosure" !important;
+  }
+
+  body.v94-results-focus .result-card.compact-result-row .result-status-line {
+    justify-self: start !important;
+  }
+
+  body.v94-results-focus .result-card.compact-result-row .result-card-actions.compact-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+body.v94-results-focus #privacy-limits {
+  position: static !important;
+  display: block !important;
+  inset: auto !important;
+  transform: none !important;
+  max-width: none !important;
+}
+body.v94-results-focus .site-footer {
+  position: static !important;
+}

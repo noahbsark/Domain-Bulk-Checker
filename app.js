@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v93-cache-layout-tune-2026-06-19";
+const UI_VERSION = "v94-results-focus-2026-06-19";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -3753,6 +3753,9 @@ function updateInputPreview() {
   const issueCount = invalidCount + missingCount;
   const hasInput = analysis.rawCount > 0;
 
+  document.body.classList.toggle("has-pasted-input", hasInput);
+  document.body.classList.toggle("has-clean-input", validCount > 0 && issueCount === 0 && duplicateCount === 0);
+
   el.inputPreviewPanel.classList.toggle("is-empty", !hasInput);
   el.inputPreviewPanel.classList.toggle("has-issues", issueCount > 0 || duplicateCount > 0);
   el.inputPreviewPanel.classList.toggle("is-ready", validCount > 0 && issueCount === 0 && duplicateCount === 0);
@@ -6247,7 +6250,7 @@ function updateTakenToggle(rowsShown = null) {
   if (hasActiveAllResultFilters()) {
     el.allResultsHelper.textContent = "Filtered results are shown. Use Show everything to return to the full checked list.";
   } else {
-    el.allResultsHelper.textContent = "All checked names are here. Filters only hide rows temporarily; nothing is deleted.";
+    el.allResultsHelper.textContent = "All results are here. Filters only hide rows temporarily; nothing is deleted.";
   }
 }
 
@@ -6583,12 +6586,13 @@ function renderResults() {
   document.body.classList.toggle("has-saved", savedShortlist.size > 0);
   updateAllResultsDensity();
   if (!hasAnyResults) document.body.classList.remove("editing-input");
-  if (hasAnyResults) document.body.classList.add("show-all-results");
+  // v94: keep the secondary All Results section collapsed until the user explicitly opens it.
+  // The Best Picks cards are the recommended public path; other controls still add show-all-results when needed.
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
     el.resultsBody.innerHTML = '<tr class="empty"><td colspan="13"><strong>No results yet.</strong><br />Paste names above, then click <strong>Check my list</strong>.</td></tr>';
     el.visibleCount.textContent = "0 visible";
-    if (el.resultCards) el.resultCards.innerHTML = '<div class="result-card-empty">All checked names will appear here after you check your list.</div>';
+    if (el.resultCards) el.resultCards.innerHTML = '<div class="result-card-empty">All results will appear here after you check your list.</div>';
     updateAllResultsSummary();
     updateResultsFiltersPanelState();
     updateHideWeakPicksButton();
@@ -8554,7 +8558,7 @@ function bindEvents() {
     el.keywordsInput.value = "rent, buy, probate";
     rescoreResults();
     updateInputCount();
-    setStatus("Loaded sample domains. Click Check domains, then review the Top Picks cards.");
+    setStatus("Loaded sample domains. Click Check my list, then review the Best Picks cards.");
   });
   if (el.heroSampleBtn) el.heroSampleBtn.addEventListener("click", () => el.pasteDemoBtn.click());
   if (el.simpleOnboardingSampleBtn) el.simpleOnboardingSampleBtn.addEventListener("click", () => {
