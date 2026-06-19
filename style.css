@@ -10630,3 +10630,268 @@ body.v94-results-focus #privacy-limits {
 body.v94-results-focus .site-footer {
   position: static !important;
 }
+
+
+/* v95 clean launch flow: screenshot-driven polish for scaled Windows displays and focused results. */
+body.v95-clean-launch-flow {
+  --v95-max: 1100px;
+  --v95-gutter: clamp(24px, 6vw, 96px);
+}
+
+/* Hide the accessibility skip link even before the external stylesheet has fully cascaded. */
+body.v95-clean-launch-flow .skip-link:not(:focus):not(:focus-visible) {
+  position: fixed !important;
+  left: -100000px !important;
+  top: -100000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  min-height: 1px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(100%) !important;
+  white-space: nowrap !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.v95-clean-launch-flow .skip-link:focus,
+body.v95-clean-launch-flow .skip-link:focus-visible {
+  position: fixed !important;
+  left: 18px !important;
+  top: 18px !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 10px 12px !important;
+  clip: auto !important;
+  clip-path: none !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Match the visual width to common 125%-150% Windows scaling without making the app feel tiny. */
+body.v95-clean-launch-flow .shell {
+  width: min(var(--v95-max), calc(100vw - var(--v95-gutter))) !important;
+  max-width: var(--v95-max) !important;
+  margin-top: clamp(18px, 2vw, 28px) !important;
+}
+
+body.v95-clean-launch-flow .hero.simple-hero {
+  padding: clamp(22px, 2.4vw, 32px) clamp(24px, 3vw, 36px) !important;
+}
+
+body.v95-clean-launch-flow:not(.has-results) .hero.simple-hero {
+  min-height: 0 !important;
+}
+
+body.v95-clean-launch-flow .hero-copy {
+  max-width: 940px !important;
+}
+
+body.v95-clean-launch-flow .hero-copy h1 {
+  max-width: 980px !important;
+  font-size: clamp(2rem, 2.55vw, 2.85rem) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.058em !important;
+  text-wrap: balance;
+}
+
+body.v95-clean-launch-flow.has-results .hero.simple-hero {
+  padding: clamp(14px, 1.5vw, 20px) clamp(18px, 2.2vw, 28px) !important;
+}
+
+body.v95-clean-launch-flow.has-results .hero-copy h1 {
+  font-size: clamp(1.35rem, 1.85vw, 1.9rem) !important;
+  max-width: 760px !important;
+}
+
+body.v95-clean-launch-flow.has-results .hero-copy > p:not(.eyebrow),
+body.v95-clean-launch-flow.has-results .hero-actions {
+  display: none !important;
+}
+
+/* Input area: keep launch comfortable, then make loaded clean input compact enough that the next action is obvious. */
+body.v95-clean-launch-flow #domain-input {
+  padding: clamp(18px, 2.1vw, 24px) !important;
+}
+
+body.v95-clean-launch-flow #inputBox {
+  min-height: clamp(126px, 12vw, 160px) !important;
+  max-height: 190px !important;
+  line-height: 1.55 !important;
+  white-space: pre-wrap !important;
+  overflow: auto !important;
+}
+
+body.v95-clean-launch-flow.has-clean-input:not(.has-results) #inputBox {
+  min-height: 96px !important;
+  max-height: 118px !important;
+}
+
+body.v95-clean-launch-flow.has-results:not(.editing-input) #domain-input #inputBox {
+  display: none !important;
+}
+
+body.v95-clean-launch-flow.has-results:not(.editing-input) #domain-input .v89-first-action-row,
+body.v95-clean-launch-flow.has-results:not(.editing-input) #inputCoachPanel,
+body.v95-clean-launch-flow.has-results:not(.editing-input) #inputPreviewPanel {
+  display: none !important;
+}
+
+body.v95-clean-launch-flow.has-results:not(.editing-input) #domain-input {
+  padding: 14px 18px !important;
+}
+
+body.v95-clean-launch-flow.has-results:not(.editing-input) #domain-input .panel-title-row {
+  margin-bottom: 0 !important;
+}
+
+/* Best Picks: less empty white space, a clearer featured winner, and backup cards that stay readable. */
+body.v95-clean-launch-flow .top-picks-panel {
+  padding: clamp(20px, 2.4vw, 28px) !important;
+}
+
+body.v95-clean-launch-flow .top-picks-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  max-width: 920px !important;
+  margin: 18px auto 0 !important;
+  align-items: stretch !important;
+}
+
+body.v95-clean-launch-flow .top-pick-card,
+body.v95-clean-launch-flow .premium-decision-card {
+  min-height: 0 !important;
+  padding: clamp(16px, 2vw, 22px) !important;
+}
+
+body.v95-clean-launch-flow .top-pick-card:first-child,
+body.v95-clean-launch-flow .decision-primary-card:first-child {
+  grid-column: 1 / -1 !important;
+  justify-self: center !important;
+  width: min(100%, 640px) !important;
+}
+
+body.v95-clean-launch-flow .top-pick-card:first-child .decision-domain,
+body.v95-clean-launch-flow .decision-primary-card:first-child .decision-domain {
+  font-size: clamp(1.7rem, 2.7vw, 2.3rem) !important;
+  line-height: 1.04 !important;
+}
+
+body.v95-clean-launch-flow .decision-domain {
+  font-size: clamp(1.35rem, 2vw, 1.75rem) !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+body.v95-clean-launch-flow .decision-reason {
+  font-size: .95rem !important;
+  line-height: 1.45 !important;
+}
+
+body.v95-clean-launch-flow .decision-step-line {
+  font-size: .88rem !important;
+  min-height: 0 !important;
+}
+
+body.v95-clean-launch-flow .decision-actions {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}
+
+body.v95-clean-launch-flow .decision-actions .decision-secondary,
+body.v95-clean-launch-flow:not(.advanced-mode) .top-pick-quiet-more {
+  display: none !important;
+}
+
+body.v95-clean-launch-flow .card-disclosure {
+  margin-top: 4px !important;
+  font-size: .74rem !important;
+  line-height: 1.35 !important;
+}
+
+/* The secondary list should read like an optional appendix, not another primary sales surface. */
+
+body.v95-clean-launch-flow.has-results:not(.show-all-results) .results-panel {
+  display: none !important;
+}
+
+body.v95-clean-launch-flow.show-all-results .results-panel {
+  display: block !important;
+}
+
+body.v95-clean-launch-flow .result-card.compact-result-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-areas:
+    "main status"
+    "actions actions"
+    "details details"
+    "disclosure disclosure" !important;
+  gap: 10px 16px !important;
+}
+
+body.v95-clean-launch-flow .result-card.compact-result-row {
+  padding: 18px 20px !important;
+  border-radius: 18px !important;
+}
+
+body.v95-clean-launch-flow .result-card.compact-result-row .result-card-actions.compact-actions {
+  grid-template-columns: minmax(160px, 260px) auto !important;
+}
+
+body.v95-clean-launch-flow .result-card.compact-result-row .compact-disclosure {
+  font-size: .76rem !important;
+}
+
+@media (min-width: 980px) {
+  body.v95-clean-launch-flow.has-results:not(.show-all-results) .top-picks-panel {
+    padding-bottom: 30px !important;
+  }
+}
+
+@media (max-width: 980px) {
+  body.v95-clean-launch-flow .top-picks-grid {
+    grid-template-columns: 1fr !important;
+    max-width: 680px !important;
+  }
+
+  body.v95-clean-launch-flow .top-pick-card:first-child,
+  body.v95-clean-launch-flow .decision-primary-card:first-child {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.v95-clean-launch-flow {
+    --v95-gutter: 18px;
+  }
+
+  body.v95-clean-launch-flow .shell {
+    width: min(100% - 18px, var(--v95-max)) !important;
+  }
+
+  body.v95-clean-launch-flow .hero-copy h1 {
+    font-size: clamp(1.8rem, 9vw, 2.35rem) !important;
+  }
+
+  body.v95-clean-launch-flow #domain-input .panel-title-row,
+  body.v95-clean-launch-flow .top-picks-title-row {
+    align-items: flex-start !important;
+  }
+
+  body.v95-clean-launch-flow .public-note-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.v95-clean-launch-flow .site-footer {
+    gap: 14px !important;
+  }
+}
+

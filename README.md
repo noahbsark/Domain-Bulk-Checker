@@ -1,6 +1,27 @@
-# Domain Shortlist — v94 Results Focus Fix
+# Domain Shortlist — v95 Clean Launch Flow
 
-## v94 screenshot fixes
+## v95 screenshot fixes
+
+- Shortens the hero headline to fit better at 125%-150% Windows display scaling.
+- Adds inline offscreen hiding to the accessibility skip link so clipped top-left text should not flash before CSS finishes loading.
+- Makes clean sample/pasted input more compact before results.
+- Collapses the paste textarea after results unless the user clicks **Edit list**.
+- Tightens Best Picks spacing so the #1 card is featured without leaving excessive empty space.
+- Keeps All Results secondary and collapsed by default.
+- Updates cache-busters and smoke tests for v95.
+
+## Local test commands
+
+```bash
+node --check app.js
+node scripts/smoke-test.mjs
+python3 -m http.server 4173
+```
+
+
+---
+
+## Previous v94 screenshot fixes
 
 - Fixes the stale cache/body-class issue so the newest layout CSS actually applies.
 - Fully hides the accessibility skip link until keyboard focus so no clipped text appears in the top-left corner.

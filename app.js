@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v94-results-focus-2026-06-19";
+const UI_VERSION = "v95-clean-launch-flow-2026-06-19";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -6586,7 +6586,7 @@ function renderResults() {
   document.body.classList.toggle("has-saved", savedShortlist.size > 0);
   updateAllResultsDensity();
   if (!hasAnyResults) document.body.classList.remove("editing-input");
-  // v94: keep the secondary All Results section collapsed until the user explicitly opens it.
+  // v95: keep the secondary All Results section collapsed until the user explicitly opens it.
   // The Best Picks cards are the recommended public path; other controls still add show-all-results when needed.
   const visibleRows = displayedResults();
   if (!results.length || results.every(r => !r)) {
@@ -8555,10 +8555,12 @@ function bindEvents() {
       "google.com",
       "probate-helper-247.com"
     ].join("\n");
+    el.inputBox.scrollTop = 0;
+    el.inputBox.scrollLeft = 0;
     el.keywordsInput.value = "rent, buy, probate";
     rescoreResults();
     updateInputCount();
-    setStatus("Loaded sample domains. Click Check my list, then review the Best Picks cards.");
+    setStatus("Loaded sample domains, one per line. Click Check my list, then review the Best Picks cards.");
   });
   if (el.heroSampleBtn) el.heroSampleBtn.addEventListener("click", () => el.pasteDemoBtn.click());
   if (el.simpleOnboardingSampleBtn) el.simpleOnboardingSampleBtn.addEventListener("click", () => {
