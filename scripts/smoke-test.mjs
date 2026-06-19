@@ -32,10 +32,10 @@ const missingIds = [...new Set([...app.matchAll(getIdRegex)].map(match => match[
   .filter(id => !ids.has(id));
 pass(missingIds.length === 0, `Missing IDs referenced by app.js: ${missingIds.join(", ")}`);
 
-pass(/body\.v91-launch-polish \.skip-link:not\(:focus\)[\s\S]*clip-path:\s*inset\(50%\)/.test(css),
-  "Skip link offscreen style should prevent clipped top-left text.");
-pass(index.includes("<h2>Important notes</h2>") && /body\.v91-launch-polish #privacy-limits[\s\S]*position:\s*static !important/.test(css),
-  "Privacy/notes panel should be a normal static panel, not a floating pill.");
+pass(/body\.v92-scale-layout-fix \.skip-link:not\(:focus\):not\(:focus-visible\)[\s\S]*left:\s*-10000px !important[\s\S]*clip-path:\s*inset\(100%\)/.test(css),
+  "Skip link should be fully offscreen until keyboard focus.");
+pass(index.includes("<h2>Important notes</h2>") && /body\.v92-scale-layout-fix #privacy-limits[\s\S]*display:\s*block !important/.test(css),
+  "Important notes should be restored as a normal static panel.");
 pass(index.includes("Registrar links may be affiliate links") && app.includes("registrarLinkDisclosureText"),
   "Affiliate disclosure should appear near registrar actions.");
 pass(!app.includes('rel="sponsored noopener noreferrer"'),
@@ -50,8 +50,8 @@ const robotSitemap = robots.match(/Sitemap:\s*(https:\/\/[^\s]+\/sitemap\.xml)/)
 const sitemapBase = sitemap.match(/<loc>(https:\/\/[^<]+\/)[^/<]*<\/loc>/)?.[1] || "";
 pass(robotSitemap.startsWith(sitemapBase),
   `robots.txt sitemap URL should match sitemap.xml base. robots=${robotSitemap}, sitemapBase=${sitemapBase}`);
-pass(index.includes("v91-launch-polish") && app.includes("v91-launch-polish"),
-  "Index and app version should include v91 launch polish.");
+pass(index.includes("v92-scale-layout-fix") && app.includes("v92-scale-layout-fix"),
+  "Index and app version should include v92 scale/layout fix.");
 
 if (failures.length) {
   console.error("Smoke test failed:");

@@ -1,4 +1,13 @@
-# Domain Shortlist — v91 Launch Polish
+# Domain Shortlist — v92 Scale/Layout Fix
+
+
+## v92 screenshot fixes
+
+- Reduces the oversized launch hero so it behaves better on Windows display scaling and browser zoom changes.
+- Hides the skip link fully until keyboard focus so clipped text no longer appears in the top-left corner.
+- Restores the Important Notes content that was hidden by an older CSS rule.
+- Fixes All Checked Names card layout so registrar buttons, details, and notes no longer overlap.
+- Shortens the primary registrar CTA to “Check at Namecheap” to avoid awkward wrapping.
 
 ## v91 screenshot-driven polish
 

@@ -1,5 +1,5 @@
 /* Domain Shortlist - public beta static GitHub Pages app */
-const UI_VERSION = "v91-launch-polish-2026-06-19";
+const UI_VERSION = "v92-scale-layout-fix-2026-06-19";
 
 const SPECIAL_SUFFIXES = new Set([
   "co.uk", "org.uk", "ac.uk", "gov.uk", "ltd.uk", "me.uk", "net.uk", "plc.uk",
@@ -7672,7 +7672,7 @@ function renderDomainDetail(row) {
       }).join("")}</div>`
     : `<p class="muted">No close extension variants are currently visible in this batch.</p>`;
   const checkButton = lookupUrl
-    ? `<a class="top-pick-cta drawer-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">Check availability at ${escapeHtml(selectedRegistrarLabel())}</a>`
+    ? `<a class="top-pick-cta drawer-cta" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">Check at ${escapeHtml(selectedRegistrarLabel())}</a>`
     : "";
   el.domainDetailTitle.textContent = domain || "Domain details";
   el.domainDetailContent.innerHTML = `
@@ -7766,7 +7766,7 @@ function renderTopPickCards() {
     const concernsHtml = topPickConcernTags(row).map(tag => cardTagHtml(tag.label, tag.kind)).join("");
     const tld = row.effective_tld || effectiveSuffix(domain);
     const availability = availabilityText(row);
-    const checkButtonLabel = index === 0 ? `Check availability at ${selectedRegistrarLabel()}` : "Check registrar";
+    const checkButtonLabel = index === 0 ? `Check at ${selectedRegistrarLabel()}` : "Check registrar";
     const checkButton = lookupUrl
       ? `<a class="top-pick-cta ${index === 0 ? "primary-registrar-cta" : "secondary-registrar-cta"}" href="${escapeAttr(lookupUrl)}" target="_blank" rel="${escapeAttr(registrarLinkRel(selectedRegistrarKey(), domain))}">${escapeHtml(checkButtonLabel)}</a>`
       : "";
